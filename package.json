@@ -5,14 +5,9 @@
   "main": "public/electron.js",
   "homepage": "./",
   "dependencies": {
-    "@testing-library/jest-dom": "^5.11.4",
-    "@testing-library/react": "^11.1.0",
-    "@testing-library/user-event": "^12.1.10",
+    "electron-is-dev": "^1.2.0",
     "react": "^17.0.1",
-    "react-dom": "^17.0.1",
-    "react-scripts": "4.0.0",
-    "wait-on": "^5.2.0",
-    "web-vitals": "^0.2.4"
+    "react-dom": "^17.0.1"
   },
   "scripts": {
     "react-start": "react-scripts start",
@@ -21,7 +16,7 @@
     "electron-build": "electron-builder",
     "release": "yarn react-build && electron-builder --publish=always",
     "build": "yarn react-build && yarn electron-build",
-    "start": "concurrently \"yarn react-start\" \"wait-on http://localhost:3000 && electron .\"",
+    "start": "concurrently \"BROWSER=none yarn react-start\" \"wait-on http://localhost:3000 && electron .\"",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -44,9 +39,24 @@
     ]
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^5.11.5",
+    "@testing-library/react": "^11.1.0",
+    "@testing-library/user-event": "^12.1.10",
     "concurrently": "^5.3.0",
     "electron": "^10.1.5",
     "electron-builder": "^22.9.1",
-    "electron-is-dev": "^1.2.0"
+    "react-scripts": "^4.0.0",
+    "wait-on": "^5.2.0",
+    "web-vitals": "^0.2.4"
+  },
+  "build": {
+    "appId": "org.chen.lanzou",
+    "asar": true,
+    "files": [
+      "build/**/*"
+    ],
+    "mac": {
+      "category": "org.chen.lanzou.tool"
+    }
   }
 }
