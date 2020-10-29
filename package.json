@@ -2,6 +2,8 @@
   "name": "lanzouyun-electron",
   "version": "0.1.0",
   "private": true,
+  "main": "public/electron.js",
+  "homepage": "./",
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
@@ -9,11 +11,17 @@
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-scripts": "4.0.0",
+    "wait-on": "^5.2.0",
     "web-vitals": "^0.2.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "react-start": "react-scripts start",
+    "react-build": "react-scripts build",
+    "electron-start": "electron .",
+    "electron-build": "electron-builder",
+    "release": "yarn react-build && electron-builder --publish=always",
+    "build": "yarn react-build && yarn electron-build",
+    "start": "concurrently \"yarn react-start\" \"wait-on http://localhost:3000 && electron .\"",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -34,5 +42,11 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "concurrently": "^5.3.0",
+    "electron": "^10.1.5",
+    "electron-builder": "^22.9.1",
+    "electron-is-dev": "^1.2.0"
   }
 }
