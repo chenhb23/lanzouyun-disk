@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "baseUrl": "./"
+//    "paths": {
+//      "@/*": ["./src/*"]
+//    }
+  }
+}

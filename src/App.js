@@ -1,4 +1,4 @@
-import {useEffect} from "react";
+import React, {useEffect} from "react";
 import logo from './logo.svg';
 import './App.css';
 
@@ -19,8 +19,7 @@ function App() {
         </p>
         <a
           className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
+          href="https://www.baidu.com"
           rel="noopener noreferrer"
         >
           Learn React

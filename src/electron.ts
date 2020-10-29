@@ -1,11 +1,24 @@
 // Modules to control application life and create native browser window
-const {app, BrowserWindow} = require('electron')
-const path = require('path')
-const isDev = require('electron-is-dev')
+import {app, BrowserWindow, session} from 'electron'
+import * as path from 'path'
+import * as querystring from 'querystring'
+// import isDev from 'electron-is-dev'
+// import config from '../project.config'
+const config = {
+  "lanzouUrl": "https://up.woozooo.com",
+  "page": {
+    "home": "/mydisk.php",
+    "login": "/account.php?action=login"
+  },
+  "api": {
+    "task": "/doupload.php"
+  }
+}
+
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let mainWindow
+let mainWindow: BrowserWindow
 
 function createWindow() {
   // Create the browser window.
@@ -18,11 +31,17 @@ function createWindow() {
     }
   })
 
-  mainWindow.loadURL(
-    isDev
-      ? 'http://localhost:3000'
-      : `file://${path.join(__dirname, "../build/index.html")}`
-  );
+  mainWindow.loadURL(config.lanzouUrl + config.page.login)
+  // mainWindow.loadURL(
+  //   isDev
+  //     ? 'http://localhost:3000'
+  //     : `file://${path.join(__dirname, "../build/index.html")}`
+  // );
+
+  // mainWindow.webContents.on("did-navigate", (event, url) => {
+  //   console.log(url)
+  //   console.log(config.lanzouUrl + config.page.home === url)
+  // })
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools()
@@ -33,6 +52,27 @@ function createWindow() {
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     mainWindow = null
+  })
+
+  function setCookies(filter) {
+    session.defaultSession.cookies.get(filter).then(value => {
+      const cookie = value.map(item => `${item.name}=${item.value}`).join('; ')
+      console.log('cookie: ', cookie)
+      // todo: 保存 cookie, 跳转
+      mainWindow.loadURL('http://localhost:3000')
+    })
+  }
+
+  session.defaultSession.webRequest.onResponseStarted({
+    urls: [config.lanzouUrl + config.api.task],
+  }, details => {
+    if (details.responseHeaders['Set-Cookie']?.length) {
+      const cookieStr = details.responseHeaders['Set-Cookie'].join('; ')
+      const cookieObj = querystring.parse(cookieStr, '; ')
+      if (cookieObj.domaim) setCookies({domain: cookieObj.domaim})
+    } else {
+      setCookies({url: config.lanzouUrl})
+    }
   })
 }
 

@@ -44,4 +44,6 @@ const test2 = () => {
   req.end()
 }
 
+console.log(querystring.parse('folder_id_c=-1; expires=Fri, 13-Nov-2020 14:56:20 GMT; path=/; domain=woozooo.com', '; '))
+
 // upload()
