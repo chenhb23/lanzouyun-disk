@@ -6,6 +6,7 @@
   "homepage": "./",
   "dependencies": {
     "electron-is-dev": "^1.2.0",
+    "form-data": "^3.0.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
   },

@@ -12,11 +12,9 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 800,
-    // webPreferences: {
-    //   nodeIntegration: true, // 允许渲染进程中使用node模块
-    // },
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(__dirname, 'preload.js'),
+      webSecurity: false, // 不使用网页安全性，跨域
     }
   })
 
