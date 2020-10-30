@@ -1,15 +1,14 @@
-import React, {useEffect} from "react";
+import React, {useEffect, useState} from "react";
 import logo from './logo.svg';
 import './App.css';
 
 function App() {
-  // const [paths, setPaths] = useState([])
+  const [paths, setPaths] = useState([])
 
   useEffect(function () {
     // console.log(window.fs.statSync)
     // upload({})
-
-    console.log(window.fs.readdirSync('.'))
+    setPaths(window.fs.readdirSync('/'))
   }, [])
 
   return (
@@ -24,7 +23,7 @@ function App() {
           href="https://www.baidu.com"
           rel="noopener noreferrer"
         >
-          Learn React
+          Learn React {JSON.stringify(paths)}
         </a>
       </header>
     </div>

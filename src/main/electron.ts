@@ -5,7 +5,7 @@ import * as querystring from 'querystring'
 // import Store from 'electron-store'
 const Store = require('electron-store')
 
-const isDev = true
+const isDev = false
 
 const store = new Store()
 console.log(app.getPath('userData'))

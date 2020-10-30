@@ -8,11 +8,11 @@ const signSuffix = '.lzy.zip'
  * 判断是否是分割的文件
  * @returns {boolean}
  */
-function isSpecificFile(filePath) {
+function isSpecificFile(filePath: string) {
   return new RegExp(`^.*${signSuffix}$`).test(filePath)
 }
 
-function createSpecificName(fileName, index) {
+function createSpecificName(fileName: string, index) {
   return `${fileName}.${`${index}`.padStart(3, '0')}${signSuffix}`
 }
 
@@ -24,7 +24,7 @@ function createLanZouTempDir() {
   return fs.mkdtempSync(lanzouDir + '/')
 }
 
-function sizeToByte(size) {
+function sizeToByte(size: string | number) {
   if (typeof size === "string") {
     const getUnit = (unit) => ({
       get k() {return 1024},
@@ -40,11 +40,17 @@ function sizeToByte(size) {
   return size
 }
 
+interface SplitData {
+  path: string
+  isFile: boolean
+  fileName: string
+  size: number
+}
 // todo: 95m
 /**
  * 返回分割后的路径？
  */
-function split(filePath, size = '75m') {
+function split(filePath, size = '75m'): Promise<SplitData> {
   return new Promise((resolve, reject) => {
     if (!filePath) {
       reject('文件路径不能为空')
@@ -53,7 +59,7 @@ function split(filePath, size = '75m') {
 
     const fileSize = fs.statSync(filePath).size
     const basename = path.basename(filePath)
-    const fileInfo = {path: filePath, isFile: true, fileName: basename, size: fileSize}
+    const fileInfo: SplitData = {path: filePath, isFile: true, fileName: basename, size: fileSize}
 
     const splitSize = sizeToByte(size)
     if (fileSize <= splitSize) {

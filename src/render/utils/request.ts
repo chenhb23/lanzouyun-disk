@@ -3,7 +3,6 @@ import FormData from 'form-data'
 
 /**
  * 自动获取 cookie
- * @returns {Promise<unknown>}
  */
 function request() {
   return new Promise((resolve, reject) => {

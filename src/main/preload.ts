@@ -5,4 +5,5 @@ import electron from 'electron'
 
 global.fs = fs
 global.http = http
+global.electron = electron
 global.FormData = FormData
