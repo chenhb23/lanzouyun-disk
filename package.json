@@ -2,24 +2,28 @@
   "name": "lanzouyun-electron",
   "version": "0.1.0",
   "private": true,
-  "main": "build/electron.js",
+  "main": "build/main/start.js",
   "homepage": "./",
   "dependencies": {
     "electron-is-dev": "^1.2.0",
+    "electron-store": "^6.0.1",
     "form-data": "^3.0.0",
     "react": "^17.0.1",
-    "react-dom": "^17.0.1"
+    "react-dom": "^17.0.1",
+    "rimraf": "^3.0.2"
   },
   "scripts": {
     "react-start": "react-scripts start",
     "react-build": "react-scripts build",
-    "electron-start": "tsc ./src/electron.ts --outDir build && electron .",
+    "electron-start": "yarn tsc-build && electron .",
     "electron-build": "electron-builder",
     "release": "yarn react-build && electron-builder --publish=always",
     "build": "yarn react-build && yarn electron-build",
     "start": "concurrently \"BROWSER=none yarn react-start\" \"wait-on http://localhost:3000 && yarn electron-start\"",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "tsc-build": "tsc --noEmit false --module commonjs",
+    "run-test": "yarn tsc-build && node build/test.js"
   },
   "eslintConfig": {
     "extends": [
@@ -58,7 +62,6 @@
   },
   "build": {
     "appId": "org.chen.lanzou",
-    "asar": true,
     "files": [
       "build/**/*"
     ],

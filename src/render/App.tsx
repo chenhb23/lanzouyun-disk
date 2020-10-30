@@ -8,6 +8,8 @@ function App() {
   useEffect(function () {
     // console.log(window.fs.statSync)
     // upload({})
+
+    console.log(window.fs.readdirSync('.'))
   }, [])
 
   return (

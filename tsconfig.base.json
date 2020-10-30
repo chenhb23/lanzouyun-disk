@@ -4,8 +4,10 @@
     "strictNullChecks": false,
     "experimentalDecorators": true,
     "resolveJsonModule": true,
-    "baseUrl": "./"
-//    "paths": {
+    "baseUrl": "./",
+    "outDir": "./build",
+    "module": "CommonJS"
+    //    "paths": {
 //      "@/*": ["./src/*"]
 //    }
   }

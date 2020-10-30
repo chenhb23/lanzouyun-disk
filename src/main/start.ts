@@ -1,7 +1,15 @@
 // Modules to control application life and create native browser window
-import {app, BrowserWindow, session} from 'electron'
+import {app, BrowserWindow, session, ipcMain} from 'electron'
 import * as path from 'path'
 import * as querystring from 'querystring'
+// import Store from 'electron-store'
+const Store = require('electron-store')
+
+const isDev = true
+
+const store = new Store()
+console.log(app.getPath('userData'))
+
 // import isDev from 'electron-is-dev'
 // import config from '../project.config'
 const config = {
@@ -15,7 +23,6 @@ const config = {
   }
 }
 
-
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow: BrowserWindow
@@ -26,22 +33,17 @@ function createWindow() {
     width: 1400,
     height: 800,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.resolve(__dirname, 'preload.js'),
       webSecurity: false, // 不使用网页安全性，跨域
     }
   })
 
-  mainWindow.loadURL(config.lanzouUrl + config.page.login)
-  // mainWindow.loadURL(
-  //   isDev
-  //     ? 'http://localhost:3000'
-  //     : `file://${path.join(__dirname, "../build/index.html")}`
-  // );
-
-  // mainWindow.webContents.on("did-navigate", (event, url) => {
-  //   console.log(url)
-  //   console.log(config.lanzouUrl + config.page.home === url)
-  // })
+  // mainWindow.loadURL(config.lanzouUrl + config.page.login)
+  mainWindow.loadURL(
+    isDev
+      ? 'http://localhost:3000'
+      : `file://${path.join(__dirname, "../build/index.html")}`
+  );
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools()
@@ -58,21 +60,31 @@ function createWindow() {
     session.defaultSession.cookies.get(filter).then(value => {
       const cookie = value.map(item => `${item.name}=${item.value}`).join('; ')
       console.log('cookie: ', cookie)
-      // todo: 保存 cookie, 跳转
-      mainWindow.loadURL('http://localhost:3000')
+      store.set('cookie', cookie)
+      // mainWindow.loadURL('http://localhost:3000')
     })
   }
 
   session.defaultSession.webRequest.onResponseStarted({
     urls: [config.lanzouUrl + config.api.task],
   }, details => {
+    // console.log('details', details)
     if (details.responseHeaders['Set-Cookie']?.length) {
       const cookieStr = details.responseHeaders['Set-Cookie'].join('; ')
       const cookieObj = querystring.parse(cookieStr, '; ')
-      if (cookieObj.domaim) setCookies({domain: cookieObj.domaim})
-    } else {
-      setCookies({url: config.lanzouUrl})
+      if (cookieObj.domaim) {
+        setCookies({domain: cookieObj.domaim})
+        return
+      }
     }
+    setCookies({url: config.lanzouUrl})
+
+    if (details.referrer) store.set('referrer', details.referrer)
+  })
+
+  ipcMain.on(`aab`, (event, args) => {
+    console.log(event, args)
+    event.sender.send('aab', 'okkkkk')
   })
 }
 

@@ -1,8 +1,8 @@
-const fs = window.fs
-const http = window.http
-const FormData = window.FormData
+import * as fs from 'fs'
+import * as http from 'https'
+import FormData from 'form-data'
 
-export default async function upload({filePath = '/Users/chb/Downloads/webstorm/WebStorm-2020.2.2.dmg.ad.dmg'}) {
+async function upload({filePath = '/Users/chb/Downloads/webstorm/WebStorm-2020.2.2.dmg.ab.dmg'}) {
   let bytes = 0
 
   const fstat = fs.statSync(filePath)
@@ -10,6 +10,8 @@ export default async function upload({filePath = '/Users/chb/Downloads/webstorm/
 
   const fr = fs.createReadStream(filePath, {
     // highWaterMark: 0 // 限速
+    start: 0,
+    end: size / 2,
   })
   fr.on('data', chunk => {
     bytes += chunk.length
@@ -62,3 +64,5 @@ export default async function upload({filePath = '/Users/chb/Downloads/webstorm/
     .on("error", () => req.abort())
     .on("close", () => req.abort())
 }
+
+export default upload
