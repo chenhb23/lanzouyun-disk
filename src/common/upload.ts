@@ -71,3 +71,9 @@ async function upload({filePath = '/Users/chb/Downloads/webstorm/WebStorm-2020.2
 }
 
 export default upload
+
+/**
+ * 分割完再上传
+ * 上传进度 status update
+ * 上传速度： todo
+ * */

@@ -1,39 +1,50 @@
 import React, {useEffect, useState} from "react";
 import './App.css';
 import requireModule from "../common/requireModule";
-import {invoke} from "./utils/invokeIpc";
+import request from "../common/request";
 
-const fs = requireModule('fs')
+const FD = requireModule('form-data')
 
 function App() {
-  const [paths, setPaths] = useState([])
-
   useEffect(function () {
 
   }, [])
 
   function mergeFile() {
-    invoke('./store.get', null).then(value => {
+    const fd = new FD()
+    fd.append('task', 47)
+    fd.append('folder_id', 2513482)
+
+    request({
+      // method: 'get',idu.com',
+      path: '/doupload.php',
+      body: fd,
+    }).then(value => {
       console.log(value)
     })
   }
 
   return (
     <div className="App">
-      <header className="App-header">
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://www.baidu.com"
-          rel="noopener noreferrer"
-        >
-          Learn React {JSON.stringify(paths)}
-        </a>
-
-        <button onClick={mergeFile}>mergeFile</button>
-      </header>
+      <div className='side'>
+        <ul>
+          <li>文件</li>
+          <li>个人中心</li>
+          <li>回收站</li>
+        </ul>
+      </div>
+      <div className='main'>
+        <div className='header'>
+          <ul className='crumbs'>
+            <li>根目录</li>
+            <li>根目录</li>
+            <li>根目录</li>
+          </ul>
+        </div>
+        <div className='content'>
+          <button onClick={mergeFile}>test</button>
+        </div>
+      </div>
     </div>
   );
 }

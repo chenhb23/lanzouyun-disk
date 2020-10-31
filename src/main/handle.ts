@@ -1,7 +1,8 @@
 import {ipcMain} from 'electron'
 
+console.log('handle start')
+
 ipcMain.handle('trigger', async (event, method: string, ...args) => {
-  console.log(method, args)
   const [prefix, mod] = method.replace(/(\.{1,2}\/)?([\w.]+)$/, '$1,$2').split(',')
   let [module, ...func] = mod.split('.')
   if (prefix) {
@@ -16,5 +17,3 @@ ipcMain.handle('trigger', async (event, method: string, ...args) => {
     return module[func[0]][func[1]](...args)
   }
 })
-
-console.log('handle start')

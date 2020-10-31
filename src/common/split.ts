@@ -48,11 +48,10 @@ interface SplitData {
   fileName: string
   size: number
 }
-// todo: 95m
 /**
  * 返回分割后的路径？
  */
-function split(filePath, size = '75m'): Promise<SplitData> {
+function split(filePath, size = '95m'): Promise<SplitData> {
   return new Promise((resolve, reject) => {
     if (!filePath) {
       reject('文件路径不能为空')
