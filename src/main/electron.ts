@@ -2,7 +2,7 @@ import {app, BrowserWindow, session, ipcMain, dialog} from 'electron'
 import * as path from 'path'
 import * as querystring from 'querystring'
 import store from "./store";
-import './handle'
+import {setup} from './handle'
 import config from '../project.config'
 
 const isDev = true
@@ -33,6 +33,7 @@ function createWindow() {
       nodeIntegrationInWorker: true,
     }
   })
+  setup(mainWindow)
 
   // mainWindow.loadURL(config.lanzouUrl + config.page.login)
   mainWindow.loadURL(loadURL);

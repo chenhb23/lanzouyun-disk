@@ -5,65 +5,78 @@ import store from "../main/store";
 
 const querystring = requireModule('querystring')
 const http = requireModule('https')
-const FD = requireModule('form-data')
+const Form = requireModule('form-data')
+
+const form = new Form()
+type Fm = typeof form
+
+let cookie = ''
+const defaultPath = '/doupload.php'
 
 function parseJson(str) {
   try {return JSON.parse(str)}
   catch (e) {return str}
 }
 
-interface RequestParams extends RequestOptions {
-  body?: object | typeof FD
+export const baseHeaders = {
+  'accept': 'application/json, text/javascript, */*; q=0.01',
+  'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+  "accept-language": "zh-CN,zh;q=0.9",
+  "pragma": "no-cache",
+  "sec-fetch-dest": "empty",
+  "sec-fetch-mode": "cors",
+  "sec-fetch-site": "same-origin",
+}
+
+interface RequestParams<T extends object | Fm> extends RequestOptions {
+  body?: T
   // baseUrl?: string // todo
 }
 
-let cookie = ''
 /**
- * todo: 自动获取 cookie
+ *
  */
-function request(params: RequestParams) {
+function request<T, B>(params: RequestParams<B>): Promise<T> {
   return new Promise(async (resolve, reject) => {
     const url = new URL(config.lanzouUrl)
     const options: RequestOptions = {
       method: params.method || 'post',
       protocol: params.protocol || url.protocol,
       host: params.host || url.host,
-      path: params.path ?? '/',
+      path: params.path ?? defaultPath,
     }
 
     if (!cookie) {
       cookie = await store.get('cookie')
     }
     let headers = {
-      'Accept': 'application/json, text/javascript, */*; q=0.01',
-      "accept-language": "zh-CN,zh;q=0.9",
-      "pragma": "no-cache",
-      "sec-fetch-dest": "empty",
-      "sec-fetch-mode": "cors",
-      "sec-fetch-site": "same-origin",
+      ...baseHeaders,
       cookie,
       ...params.headers,
-      // "cookie": store.get('cookie')
     }
 
     let data = ''
-    if (params.body) {
-      if (params.body instanceof FD) {
-        Object.assign(headers, params.body.getHeaders())
+    const body: Fm = params.body
+    if (body) {
+      if (body instanceof Form) {
+        console.log('form upload')
+        Object.assign(headers, (body as Fm).getHeaders())
       } else {
-        data = querystring.stringify(params.body)
+        data = querystring.stringify(body)
       }
     }
 
-    const req = http.request({
-      ...options,
-      headers,
-    }, res => {
+    // console.log('options', options, headers)
+
+    const req = http.request({...options, headers}, res => {
       let data = ''
       res.setEncoding('utf8')
       res.on("data", chunk => (data += chunk))
       res.on("end", () => {
-        resolve(parseJson(data))
+        const json = parseJson(data)
+        console.log(`${options.path}：`)
+        console.log(json)
+        resolve(json)
       })
       res.on("error", reject)
     })
@@ -71,7 +84,15 @@ function request(params: RequestParams) {
     if (data) {
       req.write(data)
       req.end()
-    } else params.body.pipe(req)
+    } else {
+      let bytes = 0;
+      body.on("data", chunk => {
+        bytes += chunk.length
+        console.log(bytes)
+        // todo: 触发 onProgress
+      })
+      body.pipe(req)
+    }
   })
 }
 

@@ -6,5 +6,8 @@ export default {
   },
   "api": {
     "task": "/doupload.php"
-  }
+  },
+  "splitSize": "1m",
+  "signSuffix": ".lzy.zip",
+  "homeTempDir": ".lanzouyun",
 }

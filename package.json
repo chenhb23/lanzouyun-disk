@@ -47,6 +47,7 @@
     "@testing-library/jest-dom": "^5.11.5",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
+    "@types/cheerio": "^0.22.22",
     "@types/node": "^14.14.6",
     "@types/react": "^16.9.55",
     "@types/react-dom": "^16.9.9",

@@ -21,8 +21,11 @@
 }
 
 .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   height: 50px;
-  line-height: 50px;
+  /*line-height: 50px;*/
   padding: 0 10px;
   border-bottom: 1px solid #efefef;
 }
@@ -36,8 +39,17 @@
   cursor: pointer;
 }
 
+.functions > li {
+  display: inline-block;
+  margin-right: 5px;
+  cursor: pointer;
+}
+
 .content {
   /*flex: 1;*/
+  height: 100%;
+  overflow-y: scroll;
+  padding: 12px 18px;
 }
 
 
