@@ -1,6 +1,9 @@
-import * as fs from 'fs'
+import {PathLike, WriteStream} from "fs";
+import requireModule from './requireModule'
 
-function write(filePath: fs.PathLike, target: fs.WriteStream) {
+const fs = requireModule('fs')
+
+function write(filePath: PathLike, target: WriteStream) {
   return new Promise((resolve, reject) => {
     const rs = fs.createReadStream(filePath)
     rs.pipe(target, {end: false}).on("error", reject)
@@ -8,7 +11,7 @@ function write(filePath: fs.PathLike, target: fs.WriteStream) {
   })
 }
 
-async function merge(files: fs.PathLike[], target: fs.PathLike) {
+async function merge(files: PathLike[], target: PathLike) {
   const ws = fs.createWriteStream(target, {flags: 'w'})
   for (const file of files) {
     await write(file, ws)

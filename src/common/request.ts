@@ -1,5 +1,7 @@
-import * as http from 'https'
-import FormData from 'form-data'
+import requireModule from "./requireModule";
+
+const http = requireModule('https')
+const FormData = requireModule('form-data')
 
 /**
  * 自动获取 cookie
@@ -7,7 +9,11 @@ import FormData from 'form-data'
 function request() {
   return new Promise((resolve, reject) => {
     // todo: 自己传入 formdata
-    const req = http.request({}, res => {
+    const req = http.request({
+      method: 'get',
+      path: '/',
+      host: 'www.baidu.com',
+    }, res => {
       let data = ''
       res.setEncoding('utf8')
       res.on("data", chunk => (data += chunk))

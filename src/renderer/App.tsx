@@ -1,20 +1,26 @@
 import React, {useEffect, useState} from "react";
-import logo from './logo.svg';
 import './App.css';
+import requireModule from "../common/requireModule";
+import {invoke} from "./utils/invokeIpc";
+
+const fs = requireModule('fs')
 
 function App() {
   const [paths, setPaths] = useState([])
 
   useEffect(function () {
-    // console.log(window.fs.statSync)
-    // upload({})
-    setPaths(window.fs.readdirSync('/'))
+
   }, [])
+
+  function mergeFile() {
+    invoke('./store.get', null).then(value => {
+      console.log(value)
+    })
+  }
 
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo"/>
         <p>
           Edit <code>src/App.js</code> and save to reload.
         </p>
@@ -25,6 +31,8 @@ function App() {
         >
           Learn React {JSON.stringify(paths)}
         </a>
+
+        <button onClick={mergeFile}>mergeFile</button>
       </header>
     </div>
   );

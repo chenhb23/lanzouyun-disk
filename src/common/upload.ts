@@ -1,6 +1,11 @@
-import * as fs from 'fs'
-import * as http from 'https'
-import FormData from 'form-data'
+// import * as fs from 'fs'
+// import * as http from 'https'
+// import FormData from 'form-data'
+import requireModule from "./requireModule";
+
+const fs = requireModule('fs')
+const http = requireModule('http')
+const FormData = requireModule('form-data')
 
 async function upload({filePath = '/Users/chb/Downloads/webstorm/WebStorm-2020.2.2.dmg.ab.dmg'}) {
   let bytes = 0

@@ -3,8 +3,8 @@ import * as fs from 'fs'
 import * as path from 'path'
 import rimraf from 'rimraf'
 
-import split from './render/utils/split'
-import merge from "./render/utils/merge";
+import split from './common/split'
+import merge from "./common/merge";
 
 const filePath = '/Users/chb/Downloads/webstorm/WebStorm-2020.2.2.dmg.ac.dmg'
 const slice1 = filePath + '.test1'

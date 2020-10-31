@@ -1,6 +1,10 @@
-import * as fs from 'fs'
-import * as path from 'path'
-import * as os from 'os'
+// import * as fs from 'fs'
+// import * as path from 'path'
+// import * as os from 'os'
+import requireModule from "./requireModule";
+const fs = requireModule('fs-extra')
+const path = requireModule('path')
+const os = requireModule('os')
 
 const signSuffix = '.lzy.zip'
 
@@ -18,9 +22,7 @@ function createSpecificName(fileName: string, index) {
 
 function createLanZouTempDir() {
   const lanzouDir = path.resolve(os.homedir(), '.lanzouyun')
-  if (!fs.existsSync(lanzouDir)) {
-    fs.mkdirSync(lanzouDir)
-  }
+  fs.ensureDirSync(lanzouDir)
   return fs.mkdtempSync(lanzouDir + '/')
 }
 
