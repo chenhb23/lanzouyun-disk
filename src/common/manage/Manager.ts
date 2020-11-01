@@ -1,25 +1,9 @@
-import {UploadStatus, UploadTask} from "./UploadManager";
-
-// export default abstract class Manager<Task> {
-//   abstract get queue(): number;
-//
-//   tasks: {[key: string]: Task} = {}
-//
-//   abstract addTask(...args)
-//
-//   abstract start(...args)
-//
-//   abstract startAll()
-//
-//   abstract pause(...args)
-//
-//   abstract pauseAll()
-//
-//   abstract del(...args)
-//
-//   abstract delAll()
-// }
-//
+export enum TaskStatus {
+  pause,
+  pending,
+  finish,
+  fail // 文件夹被删除可导致任务失败
+}
 
 export default interface Manager<Task> {
   readonly queue: number;
@@ -40,3 +24,4 @@ export default interface Manager<Task> {
 
   removeAll()
 }
+

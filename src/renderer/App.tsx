@@ -1,6 +1,6 @@
 import React, {useEffect, useMemo, useReducer, useState} from "react";
 import './App.css';
-import {autorun, computed, makeAutoObservable, observable, remove, obser} from 'mobx'
+import {autorun, computed, makeAutoObservable, observable, remove} from 'mobx'
 // import request, {baseHeaders} from "../common/request";
 import requireModule from "../main/requireModule";
 import {ls, lsFile} from "../common/file/ls";
@@ -10,6 +10,7 @@ import config from '../main/project.config'
 import {isSpecificFile, mkTempDirSync} from "../common/util";
 import {observer} from "mobx-react";
 import {uploadManager} from "../common/manage/UploadManager";
+import Footer from "./Footer";
 
 const FD = requireModule('form-data')
 const fs = requireModule('fs')
@@ -122,9 +123,6 @@ function App() {
         await download(file.id, tempDir)
         await delay(500)
       }
-      // files.forEach(file => {
-      //
-      // })
       // 合并所有文件到目标文件夹
     }
   }
@@ -182,7 +180,7 @@ function App() {
           </ul>
         </div>
         <div className='content'>
-          <ul>
+          <ul className='files'>
             {list.text?.map((item, i) => {
               return 'fol_id' in item ? (
                 <li key={i} onClick={() => listFile(item.fol_id)}>
@@ -197,6 +195,7 @@ function App() {
               )
             })}
           </ul>
+          <Footer />
         </div>
       </div>
     </div>

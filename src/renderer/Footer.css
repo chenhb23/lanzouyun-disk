@@ -1,0 +1,7 @@
+.upload {
+  display: flex;
+  flex-direction: column;
+  height: 100px;
+  background-color: #efefef;
+  padding: 0 12px;
+}

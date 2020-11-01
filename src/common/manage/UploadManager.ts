@@ -1,23 +1,15 @@
-import {makeAutoObservable, remove, IObserverTree} from "mobx";
-import Manager from "./Manager";
+import {makeAutoObservable} from "mobx";
+import Manager, {TaskStatus} from "./Manager";
 import requireModule from "../../main/requireModule";
-import {isExist, isExistByName} from "../file/isExist";
+import {isExistByName} from "../file/isExist";
 import {mkdir} from "../file/mkdir";
-import {delay, sizeToByte} from "../util";
-import config from '../../main/project.config'
 import split from "../split";
 import request from "../request";
 import {createUploadForm} from "../file/upload";
+import {delay} from "../util";
 
 const fs = requireModule('fs-extra')
 const path = requireModule('path')
-
-export enum UploadStatus {
-  pause,
-  uploading,
-  finish,
-  fail // 文件夹被删除可导致任务失败
-}
 
 interface AddTask {
   filePath: string // 作为 ID
@@ -41,7 +33,7 @@ export interface UploadTask extends AddTask {
 
 export interface SubUploadTask {
   size: number
-  status: UploadStatus,
+  status: TaskStatus,
   resolve: number
 
   fileName: string
@@ -68,8 +60,13 @@ export class UploadManager implements Manager<UploadTask> {
 
   checkTaskFinish(id: string) {
     console.log('checkTaskFinish', id)
-    if (this.tasks[id]?.subTasks.every(item => item.status === UploadStatus.finish)) {
+    if (this.tasks[id]?.subTasks.every(item => item.status === TaskStatus.finish)) {
       this.remove(id)
+    }
+
+    const tasks = Object.keys(this.tasks)[0]
+    if (tasks) {
+      this.start(tasks);
     }
   }
 
@@ -82,7 +79,7 @@ export class UploadManager implements Manager<UploadTask> {
     const uploadTask = {
       ...task,
       get taskCount() {
-        return this.subTasks.filter(item => item.status === UploadStatus.uploading).length
+        return this.subTasks.filter(item => item.status === TaskStatus.pending).length
       },
       get resolve() { // todo: 可以移到外部去计算
         return this.subTasks.reduce((total, item) => total + item.resolve, 0)
@@ -112,13 +109,13 @@ export class UploadManager implements Manager<UploadTask> {
       if (!task.initial) {
         await this.genSubTask(task.filePath)
       }
-      const subTask = this.tasks[id].subTasks.find(item => [UploadStatus.pause, UploadStatus.fail].includes(item.status))
+      const subTask = this.tasks[id].subTasks.find(item => [TaskStatus.pause, TaskStatus.fail].includes(item.status))
       if (subTask) {
         // 更新上传状态前， check status
         if (!this.checkTaskQueue()) return
 
         // 更新上传状态
-        subTask.status = UploadStatus.uploading;
+        subTask.status = TaskStatus.pending;
 
         const fr = fs.createReadStream(subTask.filePath, subTask.endByte ? {
           start: subTask.startByte,
@@ -132,19 +129,22 @@ export class UploadManager implements Manager<UploadTask> {
           id: subTask.fileName,
         })
 
-        return request({
+        request({
           path: '/fileup.php',
           body: form,
           onData: bytes => {
             subTask.resolve = bytes
           },
         }).then(() => {
-          subTask.status = UploadStatus.finish
+          subTask.status = TaskStatus.finish
           this.checkTaskFinish(id)
         }).catch(reason => {
           console.log(reason)
-          subTask.status = UploadStatus.fail
+          subTask.status = TaskStatus.fail
         })
+
+        await delay()
+        this.start(id)
       }
     }
   }
@@ -154,9 +154,7 @@ export class UploadManager implements Manager<UploadTask> {
 
   remove(id: string) {
     console.log(`删除: ${id}`)
-    // delete this.tasks[id]
-    // this.tasks = {...this.tasks}
-    remove(this.tasks, id)
+    delete this.tasks[id]
   }
 
   removeAll() {
@@ -174,7 +172,7 @@ export class UploadManager implements Manager<UploadTask> {
     if (splitData.isFile) {
       this.tasks[id].subTasks = [{
         size: task.size,
-        status: UploadStatus.pause,
+        status: TaskStatus.pause,
         resolve: 0,
         filePath: task.filePath,
         folderId: task.folderId,
@@ -188,7 +186,7 @@ export class UploadManager implements Manager<UploadTask> {
       }
       this.tasks[id].subTasks = splitData.splitFiles.map(file => ({
         size: file.size,
-        status: UploadStatus.pause,
+        status: TaskStatus.pause,
         resolve: 0,
         filePath: task.filePath,
         folderId: subFolderId,
