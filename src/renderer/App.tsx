@@ -1,6 +1,6 @@
 import React, {useEffect, useMemo, useReducer, useState} from "react";
 import './App.css';
-import {autorun, computed, makeAutoObservable, observable} from 'mobx'
+import {autorun, computed, makeAutoObservable, observable, remove, obser} from 'mobx'
 // import request, {baseHeaders} from "../common/request";
 import requireModule from "../main/requireModule";
 import {ls, lsFile} from "../common/file/ls";
@@ -8,12 +8,79 @@ import {parseDownloadUrl} from "../common/file/download";
 import upload from "../common/file/upload";
 import config from '../main/project.config'
 import {isSpecificFile, mkTempDirSync} from "../common/util";
+import {observer} from "mobx-react";
+import {uploadManager} from "../common/manage/UploadManager";
 
 const FD = requireModule('form-data')
 const fs = requireModule('fs')
 const path = requireModule('path')
 const querystring = requireModule('querystring')
 const electron = requireModule('electron')
+
+class Timer {
+  constructor() {
+    makeAutoObservable(this)
+  }
+
+  task: {[key: string]: any} = {
+    a: {
+      id: 'aa',
+      subTasks: [
+        {id: '1', taskName: '1', status: 'pause'},
+        {id: '2', taskName: '2', status: 'pause'},
+        {id: '3', taskName: '3', status: 'pause'},
+      ]
+    },
+    b: {
+      id: 'bb',
+      subTasks: [
+        {id: '1', taskName: '1', status: 'pause'},
+        {id: '2', taskName: '2', status: 'pause'},
+        {id: '3', taskName: '3', status: 'pause'},
+      ]
+    }
+  }
+}
+
+const timer = new Timer()
+
+const Todo1 = observer(() => (
+  <div>
+    <div onClick={() => {
+      remove(timer.task, 'b')
+      // const {a, ...left} = timer.task
+      //
+      // timer.task = left
+    }}>handle</div>
+    {Object.keys(timer.task).map(item => timer.task[item].subTasks).flat().map(item => (
+      <div key={item.id}>{item.status}</div>
+    ))}
+  </div>
+))
+
+const Todo2 = observer(() => {
+  console.log(uploadManager.tasks)
+
+  return (
+    <div>
+      <p>{uploadManager.queue}</p>
+      {Object.keys(uploadManager.tasks).map(filePath => (
+        <p key={filePath}>{filePath}</p>
+      ))}
+
+    </div>
+  )
+})
+
+
+function Father() {
+  return (
+    <div>
+      <Todo1/>
+      <Todo2/>
+    </div>
+  )
+}
 
 type List = AsyncReturnType<typeof ls>
 const delay = (time = 500) => new Promise(resolve => setTimeout(resolve, time))
@@ -81,6 +148,7 @@ function App() {
           <li>文件</li>
           <li>个人中心</li>
           <li>回收站</li>
+          <Father />
         </ul>
       </div>
       <div className='main'>
@@ -100,7 +168,13 @@ function App() {
             })}>上传 {currentFolder}</li>*/}
             <li>
               <input type='file' onChange={event => {
-                uploadFile(event.target.files[0].path)
+                const file = event.target.files[0]
+                uploadManager.addTask({
+                  fileName: file.name,
+                  filePath: file.path,
+                  folderId: currentFolder,
+                  size: file.size,
+                })
                 // console.log(event.target.files[0].path)
                 // console.log(path.basename(event.target.files[0].path))
               }}/>

@@ -1,26 +1,42 @@
+import {UploadStatus, UploadTask} from "./UploadManager";
 
-interface Task {
-  status: 'uploading' | 'pause'
+// export default abstract class Manager<Task> {
+//   abstract get queue(): number;
+//
+//   tasks: {[key: string]: Task} = {}
+//
+//   abstract addTask(...args)
+//
+//   abstract start(...args)
+//
+//   abstract startAll()
+//
+//   abstract pause(...args)
+//
+//   abstract pauseAll()
+//
+//   abstract del(...args)
+//
+//   abstract delAll()
+// }
+//
+
+export default interface Manager<Task> {
+  readonly queue: number;
+
+  tasks: {[key: string]: Task}
+
+  addTask(...args)
+
+  start(...args)
+
+  startAll()
+
+  pause(...args)
+
+  pauseAll()
+
+  remove(...args)
+
+  removeAll()
 }
-
-interface SubTask {
-  status: 'uploading' | 'pause'
-  isFinish: boolean
-}
-
-export default abstract class Manager {
-  abstract addTask(...args)
-
-  abstract start(...args)
-
-  abstract startAll()
-
-  abstract pause(...args)
-
-  abstract pauseAll()
-
-  abstract del(...args)
-
-  abstract delAll()
-}
-

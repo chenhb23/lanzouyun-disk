@@ -146,7 +146,7 @@ interface FormOptions {
   folderId: FolderId
   id?: string
 }
-function createUploadForm(options: FormOptions) {
+export function createUploadForm(options: FormOptions) {
   const form = new FormData()
   form.append('task', 1)
   form.append('ve', '2')

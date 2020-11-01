@@ -10,9 +10,7 @@ interface LsOptions {
  */
 export async function ls(folder_id = -1, {all = true} = {} as LsOptions) {
   const [res1, res2] = await Promise.all([
-    request<Do47Res, Do47>({
-      body: {task: 47, folder_id}
-    }),
+    lsDir(folder_id),
     lsFile(folder_id),
   ])
 
@@ -37,4 +35,14 @@ export async function lsFile(folder_id: FolderId) {
   } while (len)
 
   return fileList
+}
+
+/**
+ * 列出该文件夹下的id
+ * @param folder_id
+ */
+export async function lsDir(folder_id) {
+  return request<Do47Res, Do47>({
+    body: {task: 47, folder_id}
+  })
 }

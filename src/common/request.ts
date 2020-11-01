@@ -30,7 +30,7 @@ export const baseHeaders = {
 
 interface RequestParams<T extends object | Fm> extends RequestOptions {
   body?: T
-  // baseUrl?: string // todo
+  onData?: (bytes: number) => void
 }
 
 /**
@@ -85,12 +85,15 @@ function request<T, B>(params: RequestParams<B>): Promise<T> {
       req.write(data)
       req.end()
     } else {
-      let bytes = 0;
-      body.on("data", chunk => {
-        bytes += chunk.length
-        console.log(bytes)
-        // todo: 触发 onProgress
-      })
+      if (typeof params.onData === "function") {
+        let bytes = 0;
+        body.on("data", chunk => {
+          bytes += chunk.length
+          params.onData(bytes)
+          // console.log(bytes)
+        })
+      }
+
       body.pipe(req)
     }
   })

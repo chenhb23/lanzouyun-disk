@@ -1,25 +1,33 @@
 import Manager from "./Manager";
 
-export default class DownloadManager extends Manager {
-  addTask(...args) {
+interface DownloadTask {}
+
+export default class DownloadManager implements Manager<DownloadTask> {
+  addTask(args) {
   }
 
-  del(...args) {
+  remove(args) {
   }
 
-  delAll() {
+  removeAll() {
   }
 
-  pause(...args) {
+  pause(args) {
   }
 
   pauseAll() {
   }
 
-  start(...args) {
+  start(args) {
   }
 
   startAll() {
   }
+
+  get queue(): number {
+    return 0;
+  }
+
+  tasks: { [p: string]: DownloadTask };
 
 }
