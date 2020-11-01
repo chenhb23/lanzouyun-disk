@@ -10,8 +10,8 @@ const fs = requireModule('fs-extra')
 const path = requireModule('path')
 
 type AddTask = {
-  id: FileId // id
-  name_all: string // name_all
+  fileId: FileId // id
+  fileName: string // name_all
 } | {
   folderId: FolderId // fol_id
   fileName: string // name
@@ -80,7 +80,7 @@ export class DownloadManager implements Manager<DownloadTask> {
    */
   addTask(task: AddTask) {
     const isFile = 'fileId' in task
-    const id = 'fileId' in task ? task.id : task.folderId
+    const id = 'fileId' in task ? task.fileId : task.folderId
 
     const downloadTask = {
       get taskCount() {
@@ -89,7 +89,7 @@ export class DownloadManager implements Manager<DownloadTask> {
       get resolve() {
         return this.subTasks.reduce((total, item) => total + item.resolve, 0)
       },
-      fileName: task.name_all,
+      fileName: task.fileName,
       id,
       isFile,
       initial: false,

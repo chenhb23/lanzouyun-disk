@@ -199,7 +199,7 @@ function App() {
                   {`${item.name} / ${item.size} / ${item.time}`}
                   {/*<span onClick={() => download(item.id)}>（下载）</span>*/}
                   <span onClick={() => downloadManager.addTask({
-                    id: item.id,
+                    fileId: item.id,
                     fileName: item.name_all,
                   })}>（下载）</span>
                 </li>
