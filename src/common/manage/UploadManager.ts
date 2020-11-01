@@ -43,6 +43,9 @@ export interface SubUploadTask {
   endByte?: number
 }
 
+/**
+ * todo：队列系统待完善
+ */
 export class UploadManager implements Manager<UploadTask> {
   constructor() {
     makeAutoObservable(this)
@@ -166,7 +169,7 @@ export class UploadManager implements Manager<UploadTask> {
   pauseAll() {
   }
 
-  async genSubTask(id) {
+  async genSubTask(id: string) {
     const task = this.tasks[id]
     const splitData = await split(task.filePath, {fileSize: task.size, skipSplit: true})
     if (splitData.isFile) {

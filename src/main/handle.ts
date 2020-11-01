@@ -22,39 +22,42 @@ function setupTrigger() {
 }
 
 function setupDownload(win: BrowserWindow) {
-  ipcMain.on('download', (event, downloadUrl, folderPath) => {
-    win?.webContents?.session?.once("will-download", (event, item, webContents) => {
-      console.log(item.getFilename(), folderPath)
-      console.log(downloadUrl)
+  ipcMain.on('download', (ipcEvent, downloadMsg: IpcDownloadMsg) => {
+    const {folderPath, replyId, downUrl} = downloadMsg
 
+    win?.webContents?.session?.once("will-download", (event, item, webContents) => {
       if (folderPath) item.setSavePath(path.resolve(folderPath, item.getFilename()))
 
       item.on("updated", (event1, state) => {
         if (state === "progressing") {
           if (item.isPaused()) {
-            console.log('Download is paused');
+            ipcEvent.reply(`pause${replyId}`)
           } else {
-            // todo: 更新进度
-            console.log(`Received bytes: ${item.getReceivedBytes()}`)
+            const receivedByte = item.getReceivedBytes()
+            ipcEvent.reply(`progressing${replyId}`, receivedByte)
+            // console.log(`Received bytes: ${receivedByte}`)
           }
         } else if (state === 'interrupted') {
-          console.log('Download is interrupted but can be resumed')
-          // check file name
+          ipcEvent.reply(`failed${replyId}`)
+          // console.log('Download is interrupted but can be resumed')
+          // check file name is correct
         }
       })
 
       item.once("done", (event1, state) => {
         if (state === "completed") {
-          // todo: 给个提示？
-          console.log('Download successfully');
+          // console.log('Download successfully');
+          ipcEvent.reply(`done${replyId}`)
         } else {
-          console.log(`Download failed: ${state}`)
+          ipcEvent.reply(`failed${replyId}`)
+          // console.log(`Download failed: ${state}`)
         }
-        // todo: 移除列表任务
       })
+
+      ipcEvent.reply(`start${replyId}`)
     })
 
-    _win.webContents.downloadURL(downloadUrl)
+    _win.webContents.downloadURL(downUrl)
   })
 }
 

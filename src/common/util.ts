@@ -5,6 +5,8 @@ const fs = requireModule('fs-extra')
 const path = requireModule('path')
 const os = requireModule('os')
 
+export const delay = (ms = 1000) => new Promise(resolve => setTimeout(resolve, ms))
+
 export function sizeToByte(size: string | number) {
   if (typeof size === "string") {
     const getUnit = (unit) => ({
@@ -54,4 +56,6 @@ export function mkTempDirSync() {
   return fs.mkdtempSync(lanzouDir + '/')
 }
 
-export const delay = (ms = 1000) => new Promise(resolve => setTimeout(resolve, ms))
+export function isFile(name: string) {
+  return /\.[0-9a-zA-Z]+$/.test(name)
+}

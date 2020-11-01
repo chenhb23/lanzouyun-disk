@@ -4,13 +4,14 @@ import {autorun, computed, makeAutoObservable, observable, remove} from 'mobx'
 // import request, {baseHeaders} from "../common/request";
 import requireModule from "../main/requireModule";
 import {ls, lsFile} from "../common/file/ls";
-import {parseDownloadUrl} from "../common/file/download";
+import {parseDownloadUrl, sendDownloadTask} from "../common/file/download";
 import upload from "../common/file/upload";
 import config from '../main/project.config'
-import {isSpecificFile, mkTempDirSync} from "../common/util";
+import {isFile, isSpecificFile, mkTempDirSync} from "../common/util";
 import {observer} from "mobx-react";
 import {uploadManager} from "../common/manage/UploadManager";
 import Footer from "./Footer";
+import {downloadManager} from "../common/manage/DownloadManager";
 
 const FD = requireModule('form-data')
 const fs = requireModule('fs')
@@ -114,6 +115,7 @@ function App() {
 
   async function downloadFolder(folder: FolderInfo) {
     const files = await lsFile(folder.fol_id)
+    // 去重
     if (files.length) {
       // 创建临时文件夹
       const tempDir = mkTempDirSync()
@@ -135,17 +137,19 @@ function App() {
     console.log('上传成功！')
   }
 
-  function isFile(name: string) {
-    return /\.[0-9a-zA-Z]+$/.test(name)
-  }
-
   return (
     <div className="App">
       <div className='side'>
         <ul>
           <li>文件</li>
           <li>个人中心</li>
-          <li>回收站</li>
+          <li onClick={() => {
+            sendDownloadTask({
+              downUrl: 'https://vip.d0.baidupan.com/file/?B2EAPg08BDUEDVRsCz4AbFdoUmpRWAIgAeBV2FC7V74FsQLID3IObgMVUTUKJlB/U3kEb1NrAi5ROgN/U3ZTfAd9AD4NIAR2BDRUawszAGRXUlI+UWoCPQE1VWJQNFdiBTQCYA9rDmwDc1FhCi1QbFM7BDNTOQI0UWQDN1MpUyIHdwBqDWIEYARgVDILcAAwVzxSeFE+AjEBKVVqUG1XbwVhAm0PMQ5vA2BRMQpuUDRTMAQ4UzkCM1EwAzJTN1NkBzAAYA1gBDUEN1Q6C24AYFc1UjRRPAI2AT9VfVB2Vz8FdQJzDycOKQMwUXUKN1A1UzQEMFM7AjBRZAM1UzlTYQchACMNOQQ9BDdUZAtiADBXO1JnUToCMgE0VWRQNVdnBTECew90Di8DJVE6Cm9Qf1MvBGdTYAJ3UWsDNFM5U2IHMwBmDWkEYwRlVDoLbQAnV3hSJ1F5Aj0BN1VlUDxXYgU0AmwPYg5jA2BRNQp4UCRTYARxUzECMVFnAzdTIVNkBzMAeQ1hBGEEa1QsC24AM1c8',
+              replyId: 'bbbbbbb',
+              folderPath: 'cccccccc'
+            })
+          }}>回收站</li>
           <Father />
         </ul>
       </div>
@@ -185,12 +189,19 @@ function App() {
               return 'fol_id' in item ? (
                 <li key={i} onClick={() => listFile(item.fol_id)}>
                   {item.name + '（文件夹）'}
-                  {isFile(item.name) && <span onClick={() => downloadFolder(item)}>（下载）</span>}
+                  {isFile(item.name) && <span onClick={() => downloadManager.addTask({
+                    folderId: item.fol_id,
+                    fileName: item.name,
+                  })}>（下载）</span>}
                 </li>
               ) : (
                 <li key={i} title={item.name_all}>
                   {`${item.name} / ${item.size} / ${item.time}`}
-                  <span onClick={() => download(item.id)}>（下载）</span>
+                  {/*<span onClick={() => download(item.id)}>（下载）</span>*/}
+                  <span onClick={() => downloadManager.addTask({
+                    id: item.id,
+                    fileName: item.name_all,
+                  })}>（下载）</span>
                 </li>
               )
             })}
