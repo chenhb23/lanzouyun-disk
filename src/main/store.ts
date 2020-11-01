@@ -1,5 +1,5 @@
-import requireModule from "../common/requireModule";
-import {invoke} from "../renderer/utils/invokeIpc";
+import requireModule from "./requireModule";
+import {invoke} from "./utils/invokeIpc";
 
 const electron = requireModule('electron')
 

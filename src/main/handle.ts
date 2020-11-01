@@ -24,6 +24,9 @@ function setupTrigger() {
 function setupDownload(win: BrowserWindow) {
   ipcMain.on('download', (event, downloadUrl, folderPath) => {
     win?.webContents?.session?.once("will-download", (event, item, webContents) => {
+      console.log(item.getFilename(), folderPath)
+      console.log(downloadUrl)
+
       if (folderPath) item.setSavePath(path.resolve(folderPath, item.getFilename()))
 
       item.on("updated", (event1, state) => {

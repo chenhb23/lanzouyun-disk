@@ -1,25 +1,12 @@
 // import * as fs from 'fs'
 // import * as path from 'path'
 // import * as os from 'os'
-import requireModule from "./requireModule";
-import {sizeToByte} from "./util"
-import config from '../project.config'
+import requireModule from "../main/requireModule";
+import {createSpecificIndexName, mkTempDirSync, sizeToByte} from "./util"
+import config from '../main/project.config'
 
 const fs = requireModule('fs-extra')
 const path = requireModule('path')
-const os = requireModule('os')
-
-const signSuffix = config.signSuffix
-
-function createSpecificName(fileName: string, index) {
-  return `${fileName}.${`${index}`.padStart(3, '0')}${signSuffix}`
-}
-
-function createLanZouTempDir() {
-  const lanzouDir = path.resolve(os.homedir(), config.homeTempDir)
-  fs.ensureDirSync(lanzouDir)
-  return fs.mkdtempSync(lanzouDir + '/')
-}
 
 interface SplitData {
   path: string
@@ -66,7 +53,7 @@ function split(filePath, {splitSize = config.splitSize, fileSize, skipSplit} = {
       return
     }
 
-    const tempDir = createLanZouTempDir();
+    const tempDir = mkTempDirSync();
     fileInfo.isFile = false
     fileInfo.path = tempDir
 
@@ -74,7 +61,7 @@ function split(filePath, {splitSize = config.splitSize, fileSize, skipSplit} = {
     let finishSize = 0;
     for (let i = 0; i < splitFileSize; i++) {
       // todo: 后缀名，表示名
-      const specialName = createSpecificName(basename, i + 1)
+      const specialName = createSpecificIndexName(basename, i + 1)
       const writePath: string = path.resolve(tempDir, specialName)
       const startByte = splitByte * i
       const endByte = Math.min(fSize, splitByte * (i + 1) - 1)

@@ -1,6 +1,6 @@
-import requireModule from "./requireModule";
+import requireModule from "../main/requireModule";
 import {RequestOptions} from "https";
-import config from '../project.config'
+import config from '../main/project.config'
 import store from "../main/store";
 
 const querystring = requireModule('querystring')

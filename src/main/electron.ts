@@ -3,7 +3,7 @@ import * as path from 'path'
 import * as querystring from 'querystring'
 import store from "./store";
 import {setup} from './handle'
-import config from '../project.config'
+import config from './project.config'
 
 const isDev = true
 

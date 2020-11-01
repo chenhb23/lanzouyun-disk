@@ -2,13 +2,15 @@
   "name": "lanzouyun-electron",
   "version": "0.1.0",
   "private": true,
-  "main": "build/main/electron.js",
+  "main": "build/electron.js",
   "homepage": "./",
   "dependencies": {
     "electron-is-dev": "^1.2.0",
     "electron-store": "^6.0.1",
     "form-data": "^3.0.0",
     "fs-extra": "^9.0.1",
+    "mobx": "^6.0.1",
+    "mobx-react": "^7.0.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
   },
@@ -65,7 +67,7 @@
     "appId": "org.chen.lanzou",
     "asar": true,
     "files": [
-      "build/**/*"
+      "build"
     ],
     "mac": {
       "category": "org.chen.lanzou.tool"

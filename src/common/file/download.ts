@@ -1,5 +1,5 @@
 import request, {baseHeaders} from "../request";
-import requireModule from "../requireModule";
+import requireModule from "../../main/requireModule";
 
 const querystring = requireModule('querystring')
 

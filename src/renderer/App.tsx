@@ -1,23 +1,30 @@
-import React, {useEffect, useMemo, useState} from "react";
+import React, {useEffect, useMemo, useReducer, useState} from "react";
 import './App.css';
+import {autorun, computed, makeAutoObservable, observable} from 'mobx'
 // import request, {baseHeaders} from "../common/request";
-import requireModule from "../common/requireModule";
-import {ls} from "../common/file/ls";
+import requireModule from "../main/requireModule";
+import {ls, lsFile} from "../common/file/ls";
 import {parseDownloadUrl} from "../common/file/download";
 import upload from "../common/file/upload";
+import config from '../main/project.config'
+import {isSpecificFile, mkTempDirSync} from "../common/util";
 
-// const Cheerio = requireModule('cheerio')
 const FD = requireModule('form-data')
 const fs = requireModule('fs')
+const path = requireModule('path')
 const querystring = requireModule('querystring')
 const electron = requireModule('electron')
 
+type List = AsyncReturnType<typeof ls>
+const delay = (time = 500) => new Promise(resolve => setTimeout(resolve, time))
+
 function App() {
-  const [list, setList] = useState({} as AsyncReturnType<typeof ls>)
+  const [list, setList] = useState({} as List)
   const currentFolder = useMemo(() => list.info?.find(item => item.now === 1)?.folderid || -1, [list])
 
   useEffect(function () {
     listFile(-1)
+    // console.log(isFile('软件'))
   }, [])
 
   function listFile(folder_id) {
@@ -30,11 +37,29 @@ function App() {
     console.log('test2')
   }
 
-  function download(fileId: FileId) {
-    parseDownloadUrl(fileId).then(value => {
-      console.log('download url', value)
-      electron.ipcRenderer.send('download', value)
+  function download(fileId: FileId, folderPath?: string) {
+    return parseDownloadUrl(fileId).then(downloadUrl => {
+      console.log('download url', downloadUrl)
+      electron.ipcRenderer.send('download', downloadUrl, folderPath)
     })
+  }
+
+  async function downloadFolder(folder: FolderInfo) {
+    const files = await lsFile(folder.fol_id)
+    if (files.length) {
+      // 创建临时文件夹
+      const tempDir = mkTempDirSync()
+      console.log('tempDir:', tempDir)
+      // 全部下载到临时文件夹
+      for (const file of files) {
+        await download(file.id, tempDir)
+        await delay(500)
+      }
+      // files.forEach(file => {
+      //
+      // })
+      // 合并所有文件到目标文件夹
+    }
   }
 
   async function uploadFile(filePath) {
@@ -45,6 +70,10 @@ function App() {
     console.log('上传成功！')
   }
 
+  function isFile(name: string) {
+    return /\.[0-9a-zA-Z]+$/.test(name)
+  }
+
   return (
     <div className="App">
       <div className='side'>
@@ -52,7 +81,6 @@ function App() {
           <li>文件</li>
           <li>个人中心</li>
           <li>回收站</li>
-          <li onClick={test}>test</li>
         </ul>
       </div>
       <div className='main'>
@@ -73,6 +101,8 @@ function App() {
             <li>
               <input type='file' onChange={event => {
                 uploadFile(event.target.files[0].path)
+                // console.log(event.target.files[0].path)
+                // console.log(path.basename(event.target.files[0].path))
               }}/>
             </li>
           </ul>
@@ -81,11 +111,14 @@ function App() {
           <ul>
             {list.text?.map((item, i) => {
               return 'fol_id' in item ? (
-                <li key={i} onClick={() => listFile(item.fol_id)}>{item.name + '（文件夹）'}</li>
+                <li key={i} onClick={() => listFile(item.fol_id)}>
+                  {item.name + '（文件夹）'}
+                  {isFile(item.name) && <span onClick={() => downloadFolder(item)}>（下载）</span>}
+                </li>
               ) : (
                 <li key={i} title={item.name_all}>
                   {`${item.name} / ${item.size} / ${item.time}`}
-                  <span onClick={() => download(item.id)}>'（下载）'</span>
+                  <span onClick={() => download(item.id)}>（下载）</span>
                 </li>
               )
             })}
@@ -93,7 +126,8 @@ function App() {
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 export default App;
+

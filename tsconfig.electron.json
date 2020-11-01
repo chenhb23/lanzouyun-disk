@@ -3,7 +3,10 @@
   "compilerOptions": {
     "outDir": "build",
     "noEmit": false,
-    "module": "CommonJS"
+    "module": "CommonJS",
+    "lib": [
+      "es2015"
+    ]
   },
   "include": [
     "./src/main",
