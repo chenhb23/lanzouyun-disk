@@ -3,6 +3,7 @@ import {observer} from "mobx-react";
 import './Footer.css'
 import {uploadManager} from "../common/manage/UploadManager";
 import {downloadManager} from "../common/manage/DownloadManager";
+import {byteToSize} from "../common/util";
 
 const Footer = observer(() => {
   return (
@@ -11,7 +12,7 @@ const Footer = observer(() => {
         {Object.keys(uploadManager.tasks).map(key => {
           const item = uploadManager.tasks[key]
           return (
-            <p key={item.fileName}>{`${item.fileName}: ${item.resolve}`}</p>
+            <p key={item.fileName}>{`${item.fileName}: ${byteToSize(item.resolve)}`}</p>
           )
         })}
       </div>
@@ -19,7 +20,7 @@ const Footer = observer(() => {
         {Object.keys(downloadManager.tasks).map(key => {
           const item = downloadManager.tasks[key]
           return (
-            <p key={item.id}>{`${item.fileName}: ${item.resolve}`}</p>
+            <p key={item.id}>{`${item.fileName}: ${byteToSize(item.resolve)}`}</p>
           )
         })}
       </div>

@@ -1,18 +1,12 @@
 import React, {useEffect, useMemo, useState} from "react";
 import './App.css';
-import requireModule from "../main/requireModule";
-import {ls, lsFile} from "../common/file/ls";
-import {parseDownloadUrl} from "../common/file/download";
-import upload from "../common/file/upload";
-import {isFile, mkTempDirSync} from "../common/util";
+import {ls} from "../common/file/ls";
+import {isFile} from "../common/util";
 import {uploadManager} from "../common/manage/UploadManager";
 import Footer from "./Footer";
 import {downloadManager} from "../common/manage/DownloadManager";
 
-const electron = requireModule('electron')
-
 type List = AsyncReturnType<typeof ls>
-const delay = (time = 500) => new Promise(resolve => setTimeout(resolve, time))
 
 function App() {
   const [list, setList] = useState({} as List)
@@ -20,49 +14,10 @@ function App() {
 
   useEffect(function () {
     listFile(-1)
-    // console.log(isFile('软件'))
-    // console.log("restoreFileName('V 拷贝 4@2x.png.lzy.zip')", restoreFileName('V 拷贝 4@2x.png.lzy.zip'))
   }, [])
 
   function listFile(folder_id) {
     ls(folder_id).then(value => setList(value))
-  }
-
-  function test() {
-    console.log('test')
-    electron.ipcRenderer.send('download', 'download url', 'aaaa')
-    console.log('test2')
-  }
-
-  function download(fileId: FileId, folderPath?: string) {
-    return parseDownloadUrl(fileId).then(downloadUrl => {
-      console.log('download url', downloadUrl)
-      electron.ipcRenderer.send('download', downloadUrl, folderPath)
-    })
-  }
-
-  async function downloadFolder(folder: FolderInfo) {
-    const files = await lsFile(folder.fol_id)
-    // 去重
-    if (files.length) {
-      // 创建临时文件夹
-      const tempDir = mkTempDirSync()
-      console.log('tempDir:', tempDir)
-      // 全部下载到临时文件夹
-      for (const file of files) {
-        await download(file.id, tempDir)
-        await delay(500)
-      }
-      // 合并所有文件到目标文件夹
-    }
-  }
-
-  async function uploadFile(filePath) {
-    await upload({
-      folderId: currentFolder,
-      filePath: filePath,
-    })
-    console.log('上传成功！')
   }
 
   return (
@@ -85,12 +40,8 @@ function App() {
 
           <ul className='functions'>
             <li>新建文件夹：todo</li>
-            {/*<li onClick={() => upload({
-              folderId: currentFolder,
-              filePath: '/Users/chb/Downloads/Geekbench_5_5.2.5.dmg'
-            })}>上传 {currentFolder}</li>*/}
             <li>
-              <input type='file' onChange={event => {
+              <input type='file' value={''} onChange={event => {
                 const file = event.target.files[0]
                 console.log('file', file)
                 uploadManager.addTask({
@@ -100,8 +51,6 @@ function App() {
                   size: file.size,
                   type: file.type,
                 })
-                // console.log(event.target.files[0].path)
-                // console.log(path.basename(event.target.files[0].path))
               }}/>
             </li>
           </ul>
@@ -120,7 +69,6 @@ function App() {
               ) : (
                 <li key={i} title={item.name_all}>
                   {`${item.name} / ${item.size} / ${item.time}`}
-                  {/*<span onClick={() => download(item.id)}>（下载）</span>*/}
                   <span onClick={() => downloadManager.addTask({
                     id: item.id,
                     name_all: item.name_all,
@@ -129,8 +77,8 @@ function App() {
               )
             })}
           </ul>
-          <Footer />
         </div>
+        <Footer />
       </div>
     </div>
   )

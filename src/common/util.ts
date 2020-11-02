@@ -32,6 +32,19 @@ export function sizeToByte(size: string | number) {
   return size
 }
 
+export function byteToSize(byte: number) {
+  const formatSize = (total, persize) => {
+    return Math.floor(total * 100 / persize) / 100
+  }
+
+  if (byte < sizeToByte('1k')) return `0`
+  if (byte < sizeToByte('1m')) return `${formatSize(byte, sizeToByte('1k'))}KB`
+  if (byte < sizeToByte('1g')) return `${formatSize(byte, sizeToByte('1m'))}MB`
+  if (byte < sizeToByte('1t')) return `${formatSize(byte, sizeToByte('1g'))}GB`
+}
+
+console.log('byteToSize', byteToSize(10000))
+
 /**
  * 判断是否是分割的文件夹
  */
