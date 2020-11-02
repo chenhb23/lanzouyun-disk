@@ -1,88 +1,15 @@
-import React, {useEffect, useMemo, useReducer, useState} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import './App.css';
-import {autorun, computed, makeAutoObservable, observable, remove} from 'mobx'
-// import request, {baseHeaders} from "../common/request";
 import requireModule from "../main/requireModule";
 import {ls, lsFile} from "../common/file/ls";
-import {parseDownloadUrl, sendDownloadTask} from "../common/file/download";
+import {parseDownloadUrl} from "../common/file/download";
 import upload from "../common/file/upload";
-import config from '../main/project.config'
-import {isFile, isSpecificFile, mkTempDirSync} from "../common/util";
-import {observer} from "mobx-react";
+import {isFile, mkTempDirSync} from "../common/util";
 import {uploadManager} from "../common/manage/UploadManager";
 import Footer from "./Footer";
 import {downloadManager} from "../common/manage/DownloadManager";
 
-const FD = requireModule('form-data')
-const fs = requireModule('fs')
-const path = requireModule('path')
-const querystring = requireModule('querystring')
 const electron = requireModule('electron')
-
-class Timer {
-  constructor() {
-    makeAutoObservable(this)
-  }
-
-  task: {[key: string]: any} = {
-    a: {
-      id: 'aa',
-      subTasks: [
-        {id: '1', taskName: '1', status: 'pause'},
-        {id: '2', taskName: '2', status: 'pause'},
-        {id: '3', taskName: '3', status: 'pause'},
-      ]
-    },
-    b: {
-      id: 'bb',
-      subTasks: [
-        {id: '1', taskName: '1', status: 'pause'},
-        {id: '2', taskName: '2', status: 'pause'},
-        {id: '3', taskName: '3', status: 'pause'},
-      ]
-    }
-  }
-}
-
-const timer = new Timer()
-
-const Todo1 = observer(() => (
-  <div>
-    <div onClick={() => {
-      remove(timer.task, 'b')
-      // const {a, ...left} = timer.task
-      //
-      // timer.task = left
-    }}>handle</div>
-    {Object.keys(timer.task).map(item => timer.task[item].subTasks).flat().map(item => (
-      <div key={item.id}>{item.status}</div>
-    ))}
-  </div>
-))
-
-const Todo2 = observer(() => {
-  console.log(uploadManager.tasks)
-
-  return (
-    <div>
-      <p>{uploadManager.queue}</p>
-      {Object.keys(uploadManager.tasks).map(filePath => (
-        <p key={filePath}>{filePath}</p>
-      ))}
-
-    </div>
-  )
-})
-
-
-function Father() {
-  return (
-    <div>
-      <Todo1/>
-      <Todo2/>
-    </div>
-  )
-}
 
 type List = AsyncReturnType<typeof ls>
 const delay = (time = 500) => new Promise(resolve => setTimeout(resolve, time))
@@ -94,6 +21,7 @@ function App() {
   useEffect(function () {
     listFile(-1)
     // console.log(isFile('软件'))
+    // console.log("restoreFileName('V 拷贝 4@2x.png.lzy.zip')", restoreFileName('V 拷贝 4@2x.png.lzy.zip'))
   }, [])
 
   function listFile(folder_id) {
@@ -143,14 +71,7 @@ function App() {
         <ul>
           <li>文件</li>
           <li>个人中心</li>
-          <li onClick={() => {
-            sendDownloadTask({
-              downUrl: 'https://vip.d0.baidupan.com/file/?B2EAPg08BDUEDVRsCz4AbFdoUmpRWAIgAeBV2FC7V74FsQLID3IObgMVUTUKJlB/U3kEb1NrAi5ROgN/U3ZTfAd9AD4NIAR2BDRUawszAGRXUlI+UWoCPQE1VWJQNFdiBTQCYA9rDmwDc1FhCi1QbFM7BDNTOQI0UWQDN1MpUyIHdwBqDWIEYARgVDILcAAwVzxSeFE+AjEBKVVqUG1XbwVhAm0PMQ5vA2BRMQpuUDRTMAQ4UzkCM1EwAzJTN1NkBzAAYA1gBDUEN1Q6C24AYFc1UjRRPAI2AT9VfVB2Vz8FdQJzDycOKQMwUXUKN1A1UzQEMFM7AjBRZAM1UzlTYQchACMNOQQ9BDdUZAtiADBXO1JnUToCMgE0VWRQNVdnBTECew90Di8DJVE6Cm9Qf1MvBGdTYAJ3UWsDNFM5U2IHMwBmDWkEYwRlVDoLbQAnV3hSJ1F5Aj0BN1VlUDxXYgU0AmwPYg5jA2BRNQp4UCRTYARxUzECMVFnAzdTIVNkBzMAeQ1hBGEEa1QsC24AM1c8',
-              replyId: 'bbbbbbb',
-              folderPath: 'cccccccc'
-            })
-          }}>回收站</li>
-          <Father />
+          <li>回收站</li>
         </ul>
       </div>
       <div className='main'>
@@ -190,8 +111,8 @@ function App() {
                 <li key={i} onClick={() => listFile(item.fol_id)}>
                   {item.name + '（文件夹）'}
                   {isFile(item.name) && <span onClick={() => downloadManager.addTask({
-                    folderId: item.fol_id,
-                    fileName: item.name,
+                    fol_id: item.fol_id,
+                    name: item.name,
                   })}>（下载）</span>}
                 </li>
               ) : (
@@ -199,8 +120,8 @@ function App() {
                   {`${item.name} / ${item.size} / ${item.time}`}
                   {/*<span onClick={() => download(item.id)}>（下载）</span>*/}
                   <span onClick={() => downloadManager.addTask({
-                    fileId: item.id,
-                    fileName: item.name_all,
+                    id: item.id,
+                    name_all: item.name_all,
                   })}>（下载）</span>
                 </li>
               )

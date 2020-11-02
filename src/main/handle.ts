@@ -26,6 +26,7 @@ function setupDownload(win: BrowserWindow) {
     const {folderPath, replyId, downUrl} = downloadMsg
 
     win?.webContents?.session?.once("will-download", (event, item, webContents) => {
+      console.log('folderPath', downloadMsg, folderPath, item.getFilename())
       if (folderPath) item.setSavePath(path.resolve(folderPath, item.getFilename()))
 
       item.on("updated", (event1, state) => {
@@ -55,6 +56,9 @@ function setupDownload(win: BrowserWindow) {
       })
 
       ipcEvent.reply(`start${replyId}`)
+      // delay(200).then(() => {
+      //   ipcEvent.reply(`start${replyId}`)
+      // })
     })
 
     _win.webContents.downloadURL(downUrl)

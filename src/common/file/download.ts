@@ -1,5 +1,6 @@
 import request, {baseHeaders} from "../request";
 import requireModule from "../../main/requireModule";
+import {autorun, observable} from "mobx";
 
 const querystring = requireModule('querystring')
 const electron = requireModule('electron')
@@ -69,10 +70,38 @@ export async function parseTargetUrl(info: Pick<FileDownloadInfo, 'is_newd' | 'f
   return `${value2.dom}/file/${value2.url}`
 }
 
-export function sendDownloadTask(ipcMessage: IpcDownloadMsg) {
-  return new Promise((resolve, reject) => {
+/**
+ * 等待状态的返回
+ */
+const waitStatus = (observableQueue, sign) => {
+  return new Promise(resolve => {
+    autorun((r) => {
+      if (!observableQueue.length ||  observableQueue[0] === sign) {
+        r.dispose()
+        resolve()
+      }
+    })
+  })
+}
+
+/**
+ * 向主线程发送下载任务
+ */
+const downloadTaskFactory = () => {
+  let queue = observable([])
+  return (ipcMessage: IpcDownloadMsg) => new Promise(async (resolve, reject) => {
+    const sign = ipcMessage.replyId
+    queue.push(sign)
+    await waitStatus(queue, sign)
+
     electron.ipcRenderer.send('download', ipcMessage)
-    electron.ipcRenderer.once(`start${ipcMessage.replyId}`, resolve)
+    electron.ipcRenderer.once(`start${ipcMessage.replyId}`, () => {
+      console.log('==log== start:', ipcMessage.replyId)
+      queue.shift()
+      resolve()
+    })
     // todo: 超时时间？
   })
 }
+
+export const sendDownloadTask = downloadTaskFactory()

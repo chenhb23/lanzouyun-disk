@@ -2,19 +2,20 @@ import requireModule from "../../main/requireModule";
 import Manager, {TaskStatus} from "./Manager";
 import {getFileDetail, parseTargetUrl, sendDownloadTask} from "../file/download";
 import {lsFile} from "../file/ls";
-import {delay, mkTempDirSync} from "../util";
+import {delay, isSpecificFile, mkTempDirSync, restoreFileName} from "../util";
 import merge from "../merge";
+import {makeAutoObservable} from "mobx";
 
 const electron = requireModule('electron')
 const fs = requireModule('fs-extra')
 const path = requireModule('path')
 
 type AddTask = {
-  fileId: FileId // id
-  fileName: string // name_all
+  id: FileId // id
+  name_all: string // name_all
 } | {
-  folderId: FolderId // fol_id
-  fileName: string // name
+  fol_id: FolderId // fol_id
+  name: string // name
 }
 
 export interface DownloadTask {
@@ -30,6 +31,7 @@ export interface DownloadTask {
 }
 
 export interface SubDownloadTask {
+  id: FileId
   resolve: number
   tempDir: string // 文件临时保存目录
   name: string // 显示到列表
@@ -39,7 +41,14 @@ export interface SubDownloadTask {
   // pwd: string // todo: 支持密码下载
 }
 
+/**
+ * 优化多任务下载，防止抢占资源的现象
+ */
 export class DownloadManager implements Manager<DownloadTask> {
+  constructor() {
+    makeAutoObservable(this)
+  }
+
   tasks: { [p: string]: DownloadTask } = {}
 
   get queue(): number {
@@ -54,18 +63,25 @@ export class DownloadManager implements Manager<DownloadTask> {
     const task = this.tasks[id]
     console.log('checkTaskFinish', task.fileName)
     if (task.subTasks.every(item => item.status === TaskStatus.finish)) {
-      if (task.isFile) {
-        this.remove(id)
-      } else {
+      const targetDir = path.resolve(task.fileDir, task.fileName)
+
+      if (!task.isFile) {
         // 合并文件
-        const tempDir = task.subTasks[0].tempDir
-        console.log(tempDir)
-        const files = fs.readdirSync(tempDir)
-        await merge(files, path.resolve(task.fileDir, task.fileName))
-        await delay(200)
+        const tempDir = task.subTasks[0].tempDir;
+        console.log(tempDir);
+        const files = fs.readdirSync(tempDir).map(item => path.resolve(tempDir, item))
+        console.log('files', files)
+        await merge(files, targetDir);
+        await delay(200);
         // 删除临时文件夹
-        fs.removeSync(tempDir)
+        fs.removeSync(tempDir);
+      } else {
+        if (isSpecificFile(task.fileName)) {
+          fs.renameSync(targetDir, restoreFileName(targetDir))
+        }
       }
+
+      this.remove(id);
     }
 
     const tasks = Object.keys(this.tasks)[0]
@@ -79,8 +95,9 @@ export class DownloadManager implements Manager<DownloadTask> {
    * @param task
    */
   addTask(task: AddTask) {
-    const isFile = 'fileId' in task
-    const id = 'fileId' in task ? task.fileId : task.folderId
+    const isFile = 'id' in task
+    const id = 'id' in task ? task.id : task.fol_id
+    let fileName = 'id' in task ? task.name_all : task.name
 
     const downloadTask = {
       get taskCount() {
@@ -89,13 +106,13 @@ export class DownloadManager implements Manager<DownloadTask> {
       get resolve() {
         return this.subTasks.reduce((total, item) => total + item.resolve, 0)
       },
-      fileName: task.fileName,
+      fileName,
       id,
       isFile,
       initial: false,
       fileDir: '/Users/chb/Desktop/tempDownload', // todo: 选择默认 dir
       subTasks: [],
-    } as DownloadTask
+    } as DownloadTask;
 
     this.tasks[id] = downloadTask
     this.start(id)
@@ -111,9 +128,11 @@ export class DownloadManager implements Manager<DownloadTask> {
       if (subTask) {
         if (!this.checkTaskQueue()) return
 
+        console.log('start task:======================', subTask.id, subTask.name)
         subTask.status = TaskStatus.pending
+
         const downloadUrl = await parseTargetUrl(subTask)
-        const replyId = subTask.f_id
+        const replyId = `${subTask.id}`
         const ipcMessage: IpcDownloadMsg = {
           replyId,
           downUrl: downloadUrl,
@@ -121,10 +140,11 @@ export class DownloadManager implements Manager<DownloadTask> {
         }
 
         await sendDownloadTask(ipcMessage)
-        electron.ipcRenderer.on(`progressing${replyId}`, receivedByte => {
+        electron.ipcRenderer.on(`progressing${replyId}`, (event, receivedByte) => {
           subTask.resolve = receivedByte
         })
         electron.ipcRenderer.on(`done${replyId}`, () => {
+          console.log('done', subTask.name)
           subTask.status = TaskStatus.finish
           this.checkTaskFinish(id)
         })
@@ -132,18 +152,20 @@ export class DownloadManager implements Manager<DownloadTask> {
           subTask.status = TaskStatus.fail
         })
 
-        await delay()
+        // await delay()
         this.start(id)
-        // electron.ipcRenderer.send('download', downloadUrl, folderPath)
       }
     }
+  }
+
+  setListener() {
+
   }
 
   startAll() {
   }
 
   remove(id) {
-    console.log(`删除: ${id}`)
     delete this.tasks[id]
   }
 
@@ -161,6 +183,7 @@ export class DownloadManager implements Manager<DownloadTask> {
     if (task.isFile) {
       const info = await getFileDetail(task.id);
       task.subTasks.push({
+        id: task.id,
         resolve: 0,
         tempDir: task.fileDir,
         name: task.fileName,
@@ -174,6 +197,7 @@ export class DownloadManager implements Manager<DownloadTask> {
       const files = await lsFile(task.id)
       const fileInfos = await Promise.all(files.map(file => getFileDetail(file.id)))
       const subTasks = fileInfos.map((info, index) => ({
+        id: files[index].id,
         resolve: 0,
         tempDir,
         name: files[index].name_all,
@@ -183,6 +207,8 @@ export class DownloadManager implements Manager<DownloadTask> {
       }))
       task.subTasks.push(...subTasks)
     }
+
+    task.initial = true
   }
 }
 

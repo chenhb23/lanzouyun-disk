@@ -38,6 +38,13 @@ export function isSpecificFile(name: string) {
   return new RegExp(`^.*${config.signSuffix}$`).test(name)
 }
 
+export function restoreFileName(name: string) {
+  if (isSpecificFile(name)) {
+    return name.replace(config.signSuffix, '')
+  }
+  return name
+}
+
 export function createSpecificIndexName(fileName: string, index) {
   return `${fileName}.${`${index}`.padStart(3, '0')}${config.signSuffix}`
 }
