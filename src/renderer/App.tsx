@@ -2,9 +2,9 @@ import React, {useEffect, useMemo, useState} from "react";
 import './App.css';
 import {ls} from "../common/file/ls";
 import {isFile} from "../common/util";
-import {uploadManager} from "../common/manage/UploadManager";
+import {uploadManager} from "../common/manager/UploadManager";
 import Footer from "./Footer";
-import {downloadManager} from "../common/manage/DownloadManager";
+import {downloadManager} from "../common/manager/DownloadManager";
 
 type List = AsyncReturnType<typeof ls>
 

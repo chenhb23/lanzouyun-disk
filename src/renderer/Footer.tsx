@@ -1,8 +1,8 @@
 import React from "react";
 import {observer} from "mobx-react";
 import './Footer.css'
-import {uploadManager} from "../common/manage/UploadManager";
-import {downloadManager} from "../common/manage/DownloadManager";
+import {uploadManager} from "../common/manager/UploadManager";
+import {downloadManager} from "../common/manager/DownloadManager";
 import {byteToSize} from "../common/util";
 
 const Footer = observer(() => {
