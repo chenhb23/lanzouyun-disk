@@ -1,13 +1,13 @@
 import {makeAutoObservable} from 'mobx'
 import Manager, {TaskStatus} from './Manager'
-import requireModule from '../../main/requireModule'
+import requireModule from '../requireModule'
 import {isExistByName} from '../file/isExist'
 import {mkdir} from '../file/mkdir'
 import split from '../split'
 import request from '../request'
 import {createUploadForm} from '../file/upload'
 import {debounce, delay} from '../util'
-import config from '../../main/project.config'
+import config from '../../project.config'
 
 const fs = requireModule('fs-extra')
 const path = requireModule('path')

@@ -1,5 +1,5 @@
-import requireModule from '../../main/requireModule'
-import config from '../../main/project.config'
+import requireModule from '../requireModule'
+import config from '../../project.config'
 import {createSpecificName, sizeToByte} from '../util'
 import split from '../split'
 import request from '../request'

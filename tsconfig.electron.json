@@ -10,6 +10,7 @@
   },
   "include": [
     "./src/main",
+    "./src/electron.ts",
     "./src/types"
   ]
 }

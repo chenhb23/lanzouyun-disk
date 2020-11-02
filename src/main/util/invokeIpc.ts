@@ -1,4 +1,4 @@
-import requireModule from '../requireModule'
+import requireModule from '../../common/requireModule'
 
 const electron = requireModule('electron')
 

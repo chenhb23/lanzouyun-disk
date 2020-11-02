@@ -1,6 +1,7 @@
 import {BrowserWindow, ipcMain} from 'electron'
 import path from 'path'
 import {debounce} from '../common/util'
+import store from './store'
 
 let _win: BrowserWindow
 
@@ -26,7 +27,6 @@ function setupDownload(win: BrowserWindow) {
     })
 
     win?.webContents?.session?.once('will-download', (event, item) => {
-      console.log('folderPath', downloadMsg, folderPath, item.getFilename())
       if (folderPath) item.setSavePath(path.resolve(folderPath, item.getFilename()))
 
       item.on('updated', (event1, state) => {
@@ -56,19 +56,21 @@ function setupDownload(win: BrowserWindow) {
       })
 
       ipcEvent.reply(`start${replyId}`)
-      // delay(200).then(() => {
-      //   ipcEvent.reply(`start${replyId}`)
-      // })
     })
 
     _win.webContents.downloadURL(downUrl)
   })
 }
 
-function setupDialog() {}
+function setupStore() {
+  ipcMain.handle('store', (event, method, ...args) => {
+    return store[method](...args)
+  })
+}
 
 export function unsetup() {
   ipcMain.removeHandler('trigger')
+  ipcMain.removeHandler('store')
 }
 
 export function setup(win: BrowserWindow) {
@@ -76,4 +78,5 @@ export function setup(win: BrowserWindow) {
   _win = win
   setupTrigger()
   setupDownload(win)
+  setupStore()
 }

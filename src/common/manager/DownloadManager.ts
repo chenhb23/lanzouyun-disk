@@ -1,4 +1,4 @@
-import requireModule from '../../main/requireModule'
+import requireModule from '../requireModule'
 import Manager, {TaskStatus} from './Manager'
 import {getFileDetail, parseTargetUrl, sendDownloadTask} from '../file/download'
 import {lsFile} from '../file/ls'

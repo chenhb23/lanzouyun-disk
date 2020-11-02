@@ -1,5 +1,5 @@
 import {PathLike, WriteStream} from 'fs'
-import requireModule from '../main/requireModule'
+import requireModule from './requireModule'
 
 const fs = requireModule('fs')
 

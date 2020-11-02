@@ -1,6 +1,6 @@
-import requireModule from '../main/requireModule'
+import requireModule from './requireModule'
 import {createSpecificIndexName, mkTempDirSync, sizeToByte} from './util'
-import config from '../main/project.config'
+import config from '../project.config'
 
 const fs = requireModule('fs-extra')
 const path = requireModule('path')

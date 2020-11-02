@@ -1,5 +1,5 @@
 import request, {baseHeaders} from '../request'
-import requireModule from '../../main/requireModule'
+import requireModule from '../requireModule'
 import {autorun, observable} from 'mobx'
 
 const querystring = requireModule('querystring')

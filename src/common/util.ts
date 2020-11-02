@@ -1,5 +1,5 @@
-import config from '../main/project.config'
-import requireModule from '../main/requireModule'
+import config from '../project.config'
+import requireModule from './requireModule'
 
 const fs = requireModule('fs-extra')
 const path = requireModule('path')
