@@ -4,10 +4,10 @@ interface IpcDownloadMsg {
   /**
    * `start${replyId}`
    * `done${replyId}`
-   * `pause${replyId}`
    * `progressing${replyId}`
    * `failed${replyId}`
-   * * * * --`interrupted${replyId}`--
+   // * `pause${replyId}`
+   // * `interrupted${replyId}`
    */
   replyId: string
   folderPath?: string

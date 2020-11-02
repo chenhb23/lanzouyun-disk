@@ -7,6 +7,7 @@ const os = requireModule('os')
 
 export const delay = (ms = 1000) => new Promise(resolve => setTimeout(resolve, ms))
 
+// 95.0 M
 export function sizeToByte(size: string | number) {
   if (typeof size === "string") {
     const getUnit = (unit) => ({
@@ -65,4 +66,15 @@ export function mkTempDirSync() {
 
 export function isFile(name: string) {
   return /\.[0-9a-zA-Z]+$/.test(name)
+}
+
+export const debounce = (fn, {time = 1000} = {}) => {
+  let isEnable = true
+  return (...args) => {
+    if (isEnable) {
+      isEnable = false
+      setTimeout(() => isEnable = true, time)
+      return fn(...args)
+    }
+  }
 }

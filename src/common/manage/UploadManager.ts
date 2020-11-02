@@ -6,7 +6,8 @@ import {mkdir} from "../file/mkdir";
 import split from "../split";
 import request from "../request";
 import {createUploadForm} from "../file/upload";
-import {delay} from "../util";
+import {debounce, delay} from "../util";
+import config from "../../main/project.config";
 
 const fs = requireModule('fs-extra')
 const path = requireModule('path')
@@ -16,6 +17,7 @@ interface AddTask {
   folderId: FolderId
   size: number
   fileName: string
+  type: string
 }
 
 export interface UploadTask extends AddTask {
@@ -33,6 +35,7 @@ export interface UploadTask extends AddTask {
 
 export interface SubUploadTask {
   size: number
+  type: string
   status: TaskStatus,
   resolve: number
 
@@ -62,7 +65,6 @@ export class UploadManager implements Manager<UploadTask> {
   }
 
   checkTaskFinish(id: string) {
-    console.log('checkTaskFinish', id)
     if (this.tasks[id]?.subTasks.every(item => item.status === TaskStatus.finish)) {
       this.remove(id)
     }
@@ -89,15 +91,17 @@ export class UploadManager implements Manager<UploadTask> {
       },
       subTasks: [],
     } as UploadTask
+
+    const id = uploadTask.filePath
     if (!uploadTask.size) {
-      uploadTask.size = fs.statSync(uploadTask.filePath).size
+      uploadTask.size = fs.statSync(id).size
     }
     if (!uploadTask.fileName) {
-      uploadTask.fileName = path.basename(uploadTask.filePath)
+      uploadTask.fileName = path.basename(id)
     }
-    this.tasks[uploadTask.filePath] = uploadTask
+    this.tasks[id] = uploadTask
     // todo: 自动触发任务
-    this.start(uploadTask.filePath)
+    this.start(id)
   }
 
   /**
@@ -117,6 +121,7 @@ export class UploadManager implements Manager<UploadTask> {
         // 更新上传状态前， check status
         if (!this.checkTaskQueue()) return
 
+        console.log('==开始任务：==', task, subTask)
         // 更新上传状态
         subTask.status = TaskStatus.pending;
 
@@ -124,30 +129,39 @@ export class UploadManager implements Manager<UploadTask> {
           start: subTask.startByte,
           end: subTask.endByte,
         }: undefined)
+
         const form = createUploadForm({
           fr,
           size: subTask.size,
           name: subTask.fileName,
           folderId: subTask.folderId,
           id: subTask.fileName,
+          type: subTask.type
+        });
+
+        const updateResolve = debounce((bytes) => {
+          subTask.resolve = bytes
         })
 
-        request({
+        request<Do1Res, any>({
           path: '/fileup.php',
           body: form,
-          onData: bytes => {
-            subTask.resolve = bytes
-          },
-        }).then(() => {
-          subTask.status = TaskStatus.finish
-          this.checkTaskFinish(id)
+          onData: updateResolve,
+        }).then((value) => {
+          if (value.zt === 1) {
+            subTask.status = TaskStatus.finish
+            this.checkTaskFinish(id)
+          } else {
+            console.log(value)
+            subTask.status = TaskStatus.fail
+          }
         }).catch(reason => {
           console.log(reason)
           subTask.status = TaskStatus.fail
         })
 
-        await delay()
-        this.start(id)
+        // await delay()
+        // this.start(id)
       }
     }
   }
@@ -172,6 +186,12 @@ export class UploadManager implements Manager<UploadTask> {
   async genSubTask(id: string) {
     const task = this.tasks[id]
     const splitData = await split(task.filePath, {fileSize: task.size, skipSplit: true})
+
+    let type = task.type
+    if (config.supportList.every(item => !task.filePath.endsWith(`.${item}`))) {
+      type = ''
+    }
+
     if (splitData.isFile) {
       this.tasks[id].subTasks = [{
         size: task.size,
@@ -180,6 +200,7 @@ export class UploadManager implements Manager<UploadTask> {
         filePath: task.filePath,
         folderId: task.folderId,
         fileName: task.fileName,
+        type,
       }];
     } else {
       // todo: 检查目录的生成
@@ -196,6 +217,7 @@ export class UploadManager implements Manager<UploadTask> {
         fileName: file.name,
         startByte: file.startByte,
         endByte: file.endByte,
+        type,
       }));
     }
 

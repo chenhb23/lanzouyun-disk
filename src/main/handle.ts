@@ -1,5 +1,6 @@
 import {BrowserWindow, ipcMain} from 'electron'
 import path from "path"
+import {debounce} from "../common/util";
 
 let _win: BrowserWindow
 
@@ -24,6 +25,9 @@ function setupTrigger() {
 function setupDownload(win: BrowserWindow) {
   ipcMain.on('download', (ipcEvent, downloadMsg: IpcDownloadMsg) => {
     const {folderPath, replyId, downUrl} = downloadMsg
+    const debounceEvent = debounce((replyId, ...args) => {
+      ipcEvent.reply(replyId, ...args)
+    })
 
     win?.webContents?.session?.once("will-download", (event, item, webContents) => {
       console.log('folderPath', downloadMsg, folderPath, item.getFilename())
@@ -32,10 +36,10 @@ function setupDownload(win: BrowserWindow) {
       item.on("updated", (event1, state) => {
         if (state === "progressing") {
           if (item.isPaused()) {
-            ipcEvent.reply(`pause${replyId}`)
+            // ipcEvent.reply(`pause${replyId}`) // todo
           } else {
             const receivedByte = item.getReceivedBytes()
-            ipcEvent.reply(`progressing${replyId}`, receivedByte)
+            debounceEvent(`progressing${replyId}`, receivedByte)
             // console.log(`Received bytes: ${receivedByte}`)
           }
         } else if (state === 'interrupted') {

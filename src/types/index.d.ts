@@ -27,19 +27,20 @@ interface FolderInfo {
 
 // 列表文件
 interface FileInfo {
-  downs: string // 下载次数
   filelock: "0"
-  icon: "dmg"
-  id: FileId // 文件id
   is_des: 0
   is_ico: 0
   is_lock: "0"
+  downs: string // 下载次数
+  id: FileId // 文件id
+  icon: "dmg"
   name: string // 文件名, 省略
   name_all: string // 文件名, 全部
   onof: Bool
   size: string // 文件大小
   time: string // 修改时间
 }
+
 // 分享信息
 interface FileDownloadInfo {
   f_id: string // 文件url id（和 is_newd 拼起来）
@@ -47,6 +48,20 @@ interface FileDownloadInfo {
   onof: Bool // 是否需要访问密码
   pwd: string // 提取密码
   taoc: string
+}
+
+// 文件上传的返回结果
+interface FileUploadRes {
+  f_id: string
+  is_newd: string // 域名
+  downs: string
+  icon: string
+  id: string
+  name: string
+  name_all: string
+  onof: string
+  size: string
+  time: string
 }
 ///////////////////////////////////////////////////////////////////
 // 列举文件夹
@@ -100,8 +115,15 @@ interface Do2Res {
   text: FolderId // "2514952"
   zt: 1
 }
-
 ///////////////////////////////////////////////////////////////////
+interface Do1Res {
+  info: string
+  text: FileUploadRes | null
+  zt:
+    | 0 // 无法识别文件内容，请联系客服处理
+    | 1 // 成功
+}
+
 ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////

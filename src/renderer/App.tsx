@@ -92,11 +92,13 @@ function App() {
             <li>
               <input type='file' onChange={event => {
                 const file = event.target.files[0]
+                console.log('file', file)
                 uploadManager.addTask({
                   fileName: file.name,
                   filePath: file.path,
                   folderId: currentFolder,
                   size: file.size,
+                  type: file.type,
                 })
                 // console.log(event.target.files[0].path)
                 // console.log(path.basename(event.target.files[0].path))
@@ -108,8 +110,8 @@ function App() {
           <ul className='files'>
             {list.text?.map((item, i) => {
               return 'fol_id' in item ? (
-                <li key={i} onClick={() => listFile(item.fol_id)}>
-                  {item.name + '（文件夹）'}
+                <li key={i}>
+                  <span onClick={() => listFile(item.fol_id)}>{item.name + '（文件夹）'}</span>
                   {isFile(item.name) && <span onClick={() => downloadManager.addTask({
                     fol_id: item.fol_id,
                     name: item.name,
