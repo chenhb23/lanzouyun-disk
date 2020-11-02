@@ -2,11 +2,11 @@ export enum TaskStatus {
   pause,
   pending,
   finish,
-  fail // 文件夹被删除可导致任务失败
+  fail, // 文件夹被删除可导致任务失败
 }
 
 export default interface Manager<Task> {
-  readonly queue: number;
+  readonly queue: number
 
   tasks: {[key: string]: Task}
 
@@ -24,4 +24,3 @@ export default interface Manager<Task> {
 
   removeAll()
 }
-

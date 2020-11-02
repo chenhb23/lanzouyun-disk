@@ -1,8 +1,5 @@
-// import * as fs from 'fs'
-// import * as path from 'path'
-// import * as os from 'os'
-import requireModule from "../main/requireModule";
-import {createSpecificIndexName, mkTempDirSync, sizeToByte} from "./util"
+import requireModule from '../main/requireModule'
+import {createSpecificIndexName, mkTempDirSync, sizeToByte} from './util'
 import config from '../main/project.config'
 
 const fs = requireModule('fs-extra')
@@ -14,9 +11,9 @@ interface SplitData {
   name: string
   size: number
   splitFiles: {
-    path: string,
-    name: string,
-    size: number,
+    path: string
+    name: string
+    size: number
     startByte: number
     endByte: number
   }[]
@@ -53,12 +50,12 @@ function split(filePath, {splitSize = config.splitSize, fileSize, skipSplit} = {
       return
     }
 
-    const tempDir = mkTempDirSync();
+    const tempDir = mkTempDirSync()
     fileInfo.isFile = false
     fileInfo.path = tempDir
 
-    const splitFileSize = Math.ceil(fSize / splitByte);
-    let finishSize = 0;
+    const splitFileSize = Math.ceil(fSize / splitByte)
+    let finishSize = 0
     for (let i = 0; i < splitFileSize; i++) {
       // todo: 后缀名，表示名
       const specialName = createSpecificIndexName(basename, i + 1)
@@ -75,10 +72,10 @@ function split(filePath, {splitSize = config.splitSize, fileSize, skipSplit} = {
       })
 
       if (!skipSplit) {
-        const rs = fs.createReadStream(filePath, {start: startByte, end: endByte});
+        const rs = fs.createReadStream(filePath, {start: startByte, end: endByte})
         const ws = fs.createWriteStream(writePath)
         rs.pipe(ws)
-        rs.on("end", () => {
+        rs.on('end', () => {
           if ((finishSize += 1) === splitFileSize) resolve(fileInfo)
         })
       }

@@ -1,25 +1,27 @@
-import requireModule from "../../main/requireModule";
-import Manager, {TaskStatus} from "./Manager";
-import {getFileDetail, parseTargetUrl, sendDownloadTask} from "../file/download";
-import {lsFile} from "../file/ls";
-import {delay, isSpecificFile, mkTempDirSync, restoreFileName} from "../util";
-import merge from "../merge";
-import {makeAutoObservable} from "mobx";
+import requireModule from '../../main/requireModule'
+import Manager, {TaskStatus} from './Manager'
+import {getFileDetail, parseTargetUrl, sendDownloadTask} from '../file/download'
+import {lsFile} from '../file/ls'
+import {delay, isSpecificFile, mkTempDirSync, restoreFileName} from '../util'
+import merge from '../merge'
+import {makeAutoObservable} from 'mobx'
 
 const electron = requireModule('electron')
 const fs = requireModule('fs-extra')
 const path = requireModule('path')
 
-type AddTask = {
-  id: FileId // id
-  name_all: string // name_all
-} | {
-  fol_id: FolderId // fol_id
-  name: string // name
-}
+type AddTask =
+  | {
+      id: FileId // id
+      name_all: string // name_all
+    }
+  | {
+      fol_id: FolderId // fol_id
+      name: string // name
+    }
 
 export interface DownloadTask {
-  readonly taskCount: number,
+  readonly taskCount: number
   readonly resolve: number
 
   fileName: string // fileName 与 folderId 联合 id
@@ -37,7 +39,7 @@ export interface SubDownloadTask {
   name: string // 显示到列表
   is_newd: string // 分享域名：is_newd
   f_id: string // 分享：f_id
-  status: TaskStatus, // 暂停下载需重新解析下载链接
+  status: TaskStatus // 暂停下载需重新解析下载链接
   // pwd: string // todo: 支持密码下载
 }
 
@@ -49,7 +51,7 @@ export class DownloadManager implements Manager<DownloadTask> {
     makeAutoObservable(this)
   }
 
-  tasks: { [p: string]: DownloadTask } = {}
+  tasks: {[p: string]: DownloadTask} = {}
 
   get queue(): number {
     return Object.keys(this.tasks).reduce((total, key) => total + this.tasks[key].taskCount, 0)
@@ -67,26 +69,26 @@ export class DownloadManager implements Manager<DownloadTask> {
 
       if (!task.isFile) {
         // 合并文件
-        const tempDir = task.subTasks[0].tempDir;
-        console.log(tempDir);
+        const tempDir = task.subTasks[0].tempDir
+        console.log(tempDir)
         const files = fs.readdirSync(tempDir).map(item => path.resolve(tempDir, item))
         console.log('files', files)
-        await merge(files, targetDir);
-        await delay(200);
+        await merge(files, targetDir)
+        await delay(200)
         // 删除临时文件夹
-        fs.removeSync(tempDir);
+        fs.removeSync(tempDir)
       } else {
         if (isSpecificFile(task.fileName)) {
           fs.renameSync(targetDir, restoreFileName(targetDir))
         }
       }
 
-      this.remove(id);
+      this.remove(id)
     }
 
     const tasks = Object.keys(this.tasks)[0]
     if (tasks) {
-      this.start(tasks);
+      this.start(tasks)
     }
   }
 
@@ -97,7 +99,7 @@ export class DownloadManager implements Manager<DownloadTask> {
   addTask(task: AddTask) {
     const isFile = 'id' in task
     const id = 'id' in task ? task.id : task.fol_id
-    let fileName = 'id' in task ? task.name_all : task.name
+    const fileName = 'id' in task ? task.name_all : task.name
 
     const downloadTask = {
       get taskCount() {
@@ -112,7 +114,7 @@ export class DownloadManager implements Manager<DownloadTask> {
       initial: false,
       fileDir: '/Users/chb/Desktop/tempDownload', // todo: 选择默认 dir
       subTasks: [],
-    } as DownloadTask;
+    } as DownloadTask
 
     this.tasks[id] = downloadTask
     this.start(id)
@@ -120,7 +122,7 @@ export class DownloadManager implements Manager<DownloadTask> {
 
   async start(id: FileId) {
     let task: DownloadTask
-    if (task = this.tasks[id]) {
+    if ((task = this.tasks[id])) {
       if (!task.initial) {
         await this.genSubTask(id)
       }
@@ -169,30 +171,24 @@ export class DownloadManager implements Manager<DownloadTask> {
     }
   }
 
-  setListener() {
+  setListener() {}
 
-  }
-
-  startAll() {
-  }
+  startAll() {}
 
   remove(id) {
     delete this.tasks[id]
   }
 
-  removeAll() {
-  }
+  removeAll() {}
 
-  pause(args) {
-  }
+  pause(args) {}
 
-  pauseAll() {
-  }
+  pauseAll() {}
 
   async genSubTask(id: FileId) {
     const task = this.tasks[id]
     if (task.isFile) {
-      const info = await getFileDetail(task.id);
+      const info = await getFileDetail(task.id)
       task.subTasks.push({
         id: task.id,
         resolve: 0,
@@ -201,7 +197,7 @@ export class DownloadManager implements Manager<DownloadTask> {
         is_newd: info.is_newd, // todo: 生成 url
         f_id: info.f_id,
         status: TaskStatus.pause,
-      });
+      })
     } else {
       // 创建临时目录
       const tempDir = mkTempDirSync()

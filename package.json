@@ -27,6 +27,11 @@
     "tsc-build": "tsc --noEmit false --module commonjs",
     "tsc-electron-build": "tsc -p tsconfig.electron.json"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
   "lint-staged": {
     "src/**/*.{ts,tsx,js,jsx}": [
       "prettier --write",

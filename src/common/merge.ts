@@ -1,14 +1,13 @@
-import {PathLike, WriteStream} from "fs";
+import {PathLike, WriteStream} from 'fs'
 import requireModule from '../main/requireModule'
-import {delay} from "./util";
 
 const fs = requireModule('fs')
 
 function write(filePath: PathLike, target: WriteStream) {
   return new Promise((resolve, reject) => {
     const rs = fs.createReadStream(filePath)
-    rs.pipe(target, {end: false}).on("error", reject)
-    rs.on("end", resolve).on("error", reject)
+    rs.pipe(target, {end: false}).on('error', reject)
+    rs.on('end', resolve).on('error', reject)
   })
 }
 

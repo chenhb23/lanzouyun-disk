@@ -1,13 +1,13 @@
-import {makeAutoObservable} from "mobx";
-import Manager, {TaskStatus} from "./Manager";
-import requireModule from "../../main/requireModule";
-import {isExistByName} from "../file/isExist";
-import {mkdir} from "../file/mkdir";
-import split from "../split";
-import request from "../request";
-import {createUploadForm} from "../file/upload";
-import {debounce, delay} from "../util";
-import config from "../../main/project.config";
+import {makeAutoObservable} from 'mobx'
+import Manager, {TaskStatus} from './Manager'
+import requireModule from '../../main/requireModule'
+import {isExistByName} from '../file/isExist'
+import {mkdir} from '../file/mkdir'
+import split from '../split'
+import request from '../request'
+import {createUploadForm} from '../file/upload'
+import {debounce, delay} from '../util'
+import config from '../../main/project.config'
 
 const fs = requireModule('fs-extra')
 const path = requireModule('path')
@@ -21,7 +21,7 @@ interface AddTask {
 }
 
 export interface UploadTask extends AddTask {
-  readonly taskCount: number,
+  readonly taskCount: number
   readonly resolve: number
 
   // filePath: string // 作为 ID
@@ -36,7 +36,7 @@ export interface UploadTask extends AddTask {
 export interface SubUploadTask {
   size: number
   type: string
-  status: TaskStatus,
+  status: TaskStatus
   resolve: number
 
   fileName: string
@@ -54,7 +54,7 @@ export class UploadManager implements Manager<UploadTask> {
     makeAutoObservable(this)
   }
 
-  tasks: { [key: string]: UploadTask; } = {}
+  tasks: {[key: string]: UploadTask} = {}
 
   get queue() {
     return Object.keys(this.tasks).reduce((total, key) => total + this.tasks[key].taskCount, 0)
@@ -71,7 +71,7 @@ export class UploadManager implements Manager<UploadTask> {
 
     const tasks = Object.keys(this.tasks)[0]
     if (tasks) {
-      this.start(tasks);
+      this.start(tasks)
     }
   }
 
@@ -113,7 +113,7 @@ export class UploadManager implements Manager<UploadTask> {
    */
   async start(id: string) {
     let task: UploadTask
-    if (task = this.tasks[id]) {
+    if ((task = this.tasks[id])) {
       if (!task.initial) {
         await this.genSubTask(task.filePath)
       }
@@ -124,12 +124,17 @@ export class UploadManager implements Manager<UploadTask> {
 
         console.log('==开始任务：==', task, subTask)
         // 更新上传状态
-        subTask.status = TaskStatus.pending;
+        subTask.status = TaskStatus.pending
 
-        const fr = fs.createReadStream(subTask.filePath, subTask.endByte ? {
-          start: subTask.startByte,
-          end: subTask.endByte,
-        }: undefined)
+        const fr = fs.createReadStream(
+          subTask.filePath,
+          subTask.endByte
+            ? {
+                start: subTask.startByte,
+                end: subTask.endByte,
+              }
+            : undefined
+        )
 
         const form = createUploadForm({
           fr,
@@ -137,10 +142,10 @@ export class UploadManager implements Manager<UploadTask> {
           name: subTask.fileName,
           folderId: subTask.folderId,
           id: subTask.fileName,
-          type: subTask.type
-        });
+          type: subTask.type,
+        })
 
-        const updateResolve = debounce((bytes) => {
+        const updateResolve = debounce(bytes => {
           subTask.resolve = bytes
         })
 
@@ -148,18 +153,20 @@ export class UploadManager implements Manager<UploadTask> {
           path: '/fileup.php',
           body: form,
           onData: updateResolve,
-        }).then((value) => {
-          if (value.zt === 1) {
-            subTask.status = TaskStatus.finish
-            this.checkTaskFinish(id)
-          } else {
-            console.log(value.info)
-            subTask.status = TaskStatus.fail
-          }
-        }).catch(reason => {
-          console.log(reason)
-          subTask.status = TaskStatus.fail
         })
+          .then(value => {
+            if (value.zt === 1) {
+              subTask.status = TaskStatus.finish
+              this.checkTaskFinish(id)
+            } else {
+              console.log(value.info)
+              subTask.status = TaskStatus.fail
+            }
+          })
+          .catch(reason => {
+            console.log(reason)
+            subTask.status = TaskStatus.fail
+          })
 
         await delay(300)
         this.start(id)
@@ -167,8 +174,7 @@ export class UploadManager implements Manager<UploadTask> {
     }
   }
 
-  startAll() {
-  }
+  startAll() {}
 
   /**
    * todo: 先停止上传任务再删除任务
@@ -177,14 +183,11 @@ export class UploadManager implements Manager<UploadTask> {
     delete this.tasks[id]
   }
 
-  removeAll() {
-  }
+  removeAll() {}
 
-  pause(...args) {
-  }
+  pause(...args) {}
 
-  pauseAll() {
-  }
+  pauseAll() {}
 
   async genSubTask(id: string) {
     const task = this.tasks[id]
@@ -196,15 +199,17 @@ export class UploadManager implements Manager<UploadTask> {
     }
 
     if (splitData.isFile) {
-      this.tasks[id].subTasks = [{
-        size: task.size,
-        status: TaskStatus.pause,
-        resolve: 0,
-        filePath: task.filePath,
-        folderId: task.folderId,
-        fileName: task.fileName,
-        type,
-      }];
+      this.tasks[id].subTasks = [
+        {
+          size: task.size,
+          status: TaskStatus.pause,
+          resolve: 0,
+          filePath: task.filePath,
+          folderId: task.folderId,
+          fileName: task.fileName,
+          type,
+        },
+      ]
     } else {
       // todo: 检查目录的生成
       let subFolderId = await isExistByName(task.folderId, task.fileName).then(value => value?.fol_id)
@@ -221,7 +226,7 @@ export class UploadManager implements Manager<UploadTask> {
         startByte: file.startByte,
         endByte: file.endByte,
         type,
-      }));
+      }))
     }
 
     this.tasks[id].initial = true
@@ -229,4 +234,3 @@ export class UploadManager implements Manager<UploadTask> {
 }
 
 export const uploadManager = new UploadManager()
-

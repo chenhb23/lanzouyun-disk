@@ -1,7 +1,7 @@
-import requireModule from "../main/requireModule";
-import {RequestOptions} from "https";
+import requireModule from '../main/requireModule'
+import {RequestOptions} from 'https'
 import config from '../main/project.config'
-import store from "../main/store";
+import store from '../main/store'
 
 const querystring = requireModule('querystring')
 const http = requireModule('https')
@@ -14,21 +14,24 @@ let cookie = ''
 const defaultPath = '/doupload.php'
 
 function parseJson(str) {
-  try {return JSON.parse(str)}
-  catch (e) {return str}
+  try {
+    return JSON.parse(str)
+  } catch (e) {
+    return str
+  }
 }
 
 export const baseHeaders = {
-  'accept': 'application/json, text/javascript, */*; q=0.01',
+  accept: 'application/json, text/javascript, */*; q=0.01',
   'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-  "accept-language": "zh-CN,zh;q=0.9",
-  "pragma": "no-cache",
-  "sec-fetch-dest": "empty",
-  "sec-fetch-mode": "cors",
-  "sec-fetch-site": "same-origin",
+  'accept-language': 'zh-CN,zh;q=0.9',
+  pragma: 'no-cache',
+  'sec-fetch-dest': 'empty',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-site': 'same-origin',
 }
 
-interface RequestParams<T extends object | Fm> extends RequestOptions {
+interface RequestParams<T extends Record<string, unknown> | Fm> extends RequestOptions {
   body?: T
   onData?: (bytes: number) => void
 }
@@ -49,7 +52,7 @@ function request<T, B>(params: RequestParams<B>): Promise<T> {
     if (!cookie) {
       cookie = await store.get('cookie')
     }
-    let headers = {
+    const headers = {
       ...baseHeaders,
       cookie,
       ...params.headers,
@@ -71,22 +74,22 @@ function request<T, B>(params: RequestParams<B>): Promise<T> {
     const req = http.request({...options, headers}, res => {
       let data = ''
       res.setEncoding('utf8')
-      res.on("data", chunk => (data += chunk))
-      res.on("end", () => {
+      res.on('data', chunk => (data += chunk))
+      res.on('end', () => {
         const json = parseJson(data)
         // console.log(json)
         resolve(json)
       })
-      res.on("error", reject)
+      res.on('error', reject)
     })
 
     if (data) {
       req.write(data)
       req.end()
     } else {
-      if (typeof params.onData === "function") {
-        let bytes = 0;
-        body.on("data", chunk => {
+      if (typeof params.onData === 'function') {
+        let bytes = 0
+        body.on('data', chunk => {
           bytes += chunk.length
           params.onData(bytes)
           // console.log(bytes)

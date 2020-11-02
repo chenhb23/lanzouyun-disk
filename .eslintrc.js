@@ -24,5 +24,11 @@ module.exports = {
   ],
   "rules": {
     'prettier/prettier': 'error',
+    'no-async-promise-executor': 'off',
+    'react/prop-types': 'off',
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
+    '@typescript-eslint/no-empty-interface': 'off',
+    '@typescript-eslint/no-empty-function': 'off',
+    '@typescript-eslint/no-var-requires': 'off',
   }
 };

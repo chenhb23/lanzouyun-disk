@@ -1,4 +1,4 @@
-import {lsDir} from "./ls";
+import {lsDir} from './ls'
 
 export async function isExist(folderId: FolderId) {
   if (folderId === -1) return true

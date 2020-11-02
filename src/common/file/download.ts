@@ -1,12 +1,11 @@
-import request, {baseHeaders} from "../request";
-import requireModule from "../../main/requireModule";
-import {autorun, observable} from "mobx";
+import request, {baseHeaders} from '../request'
+import requireModule from '../../main/requireModule'
+import {autorun, observable} from 'mobx'
 
 const querystring = requireModule('querystring')
 const electron = requireModule('electron')
 
-interface DownloadOptions {
-}
+interface DownloadOptions {}
 
 /**
  * 添加到下载任务栏
@@ -14,9 +13,7 @@ interface DownloadOptions {
  * 下载文件，合并文件
  * onSuccess
  */
-export async function download() {
-
-}
+export async function download() {}
 
 interface DownloadUrlRes {
   dom: string // 域名
@@ -39,7 +36,7 @@ export async function parseDownloadUrl(file_id: FileId) {
 
 export async function getFileDetail(file_id: FileId) {
   const {info} = await request<Do22Res, Do22>({
-    body: {task: 22, file_id}
+    body: {task: 22, file_id},
   })
   return info
 }
@@ -63,8 +60,8 @@ export async function parseTargetUrl(info: Pick<FileDownloadInfo, 'is_newd' | 'f
     body: querystring.stringify({
       action: 'downprocess',
       sign: ajaxdata,
-      ves: 1
-    })
+      ves: 1,
+    }),
   }).then<DownloadUrlRes>(value2 => value2.json())
 
   return `${value2.dom}/file/${value2.url}`
@@ -75,8 +72,8 @@ export async function parseTargetUrl(info: Pick<FileDownloadInfo, 'is_newd' | 'f
  */
 const waitStatus = (observableQueue, sign) => {
   return new Promise(resolve => {
-    autorun((r) => {
-      if (!observableQueue.length ||  observableQueue[0] === sign) {
+    autorun(r => {
+      if (!observableQueue.length || observableQueue[0] === sign) {
         r.dispose()
         resolve()
       }
@@ -88,20 +85,21 @@ const waitStatus = (observableQueue, sign) => {
  * 向主线程发送下载任务
  */
 const downloadTaskFactory = () => {
-  let queue = observable([])
-  return (ipcMessage: IpcDownloadMsg) => new Promise(async (resolve, reject) => {
-    const sign = ipcMessage.replyId
-    queue.push(sign)
-    await waitStatus(queue, sign)
+  const queue = observable([])
+  return (ipcMessage: IpcDownloadMsg) =>
+    new Promise(async (resolve, reject) => {
+      const sign = ipcMessage.replyId
+      queue.push(sign)
+      await waitStatus(queue, sign)
 
-    electron.ipcRenderer.send('download', ipcMessage)
-    electron.ipcRenderer.once(`start${ipcMessage.replyId}`, () => {
-      console.log('==log== start:', ipcMessage.replyId)
-      queue.shift()
-      resolve()
+      electron.ipcRenderer.send('download', ipcMessage)
+      electron.ipcRenderer.once(`start${ipcMessage.replyId}`, () => {
+        console.log('==log== start:', ipcMessage.replyId)
+        queue.shift()
+        resolve()
+      })
+      // todo: 超时时间？
     })
-    // todo: 超时时间？
-  })
 }
 
 export const sendDownloadTask = downloadTaskFactory()

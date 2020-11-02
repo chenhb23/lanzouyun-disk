@@ -1,5 +1,5 @@
 import config from '../main/project.config'
-import requireModule from "../main/requireModule";
+import requireModule from '../main/requireModule'
 
 const fs = requireModule('fs-extra')
 const path = requireModule('path')
@@ -9,22 +9,26 @@ export const delay = (ms = 1000) => new Promise(resolve => setTimeout(resolve, m
 
 // 95.0 M
 export function sizeToByte(size: string | number) {
-  if (typeof size === "string") {
-    const getUnit = (unit) => ({
-      get k() {
-        return 1024
-      },
-      get m() {
-        return this.k * 1024
-      },
-      get g() {
-        return this.m * 1024
-      },
-      get t() {
-        return this.g * 1024
-      },
-    }[unit] || 1)
-    const [_, num, unit] = size.toLowerCase().replace(' ', '').match(/^(\d+)([kmgt]?)$/)
+  if (typeof size === 'string') {
+    const getUnit = unit =>
+      ({
+        get k() {
+          return 1024
+        },
+        get m() {
+          return this.k * 1024
+        },
+        get g() {
+          return this.m * 1024
+        },
+        get t() {
+          return this.g * 1024
+        },
+      }[unit] || 1)
+    const [_, num, unit] = size
+      .toLowerCase()
+      .replace(' ', '')
+      .match(/^(\d+)([kmgt]?)$/)
 
     return +num * getUnit(unit)
   }
@@ -34,7 +38,7 @@ export function sizeToByte(size: string | number) {
 
 export function byteToSize(byte: number) {
   const formatSize = (total, persize) => {
-    return Math.floor(total * 100 / persize) / 100
+    return Math.floor((total * 100) / persize) / 100
   }
 
   if (byte < sizeToByte('1k')) return `0`
@@ -84,7 +88,7 @@ export const debounce = (fn, {time = 1000} = {}) => {
   return (...args) => {
     if (isEnable) {
       isEnable = false
-      setTimeout(() => isEnable = true, time)
+      setTimeout(() => (isEnable = true), time)
       return fn(...args)
     }
   }
