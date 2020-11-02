@@ -5,6 +5,7 @@ import {isFile} from "../common/util";
 import {uploadManager} from "../common/manager/UploadManager";
 import Footer from "./Footer";
 import {downloadManager} from "../common/manager/DownloadManager";
+import {Dragarea} from "./Dragarea";
 
 type List = AsyncReturnType<typeof ls>
 
@@ -41,9 +42,8 @@ function App() {
           <ul className='functions'>
             <li>新建文件夹：todo</li>
             <li>
-              <input type='file' value={''} onChange={event => {
-                const file = event.target.files[0]
-                console.log('file', file)
+              <Dragarea onChange={files => {
+                const file = files[0]
                 uploadManager.addTask({
                   fileName: file.name,
                   filePath: file.path,
@@ -51,11 +51,24 @@ function App() {
                   size: file.size,
                   type: file.type,
                 })
-              }}/>
+              }} />
             </li>
           </ul>
         </div>
-        <div className='content'>
+        <div className='content' onDragOver={event => {
+          event.preventDefault()
+          event.stopPropagation()
+        }}
+             onDrop={event => {
+               const file = event.dataTransfer.files[0]
+               uploadManager.addTask({
+                 fileName: file.name,
+                 filePath: file.path,
+                 folderId: currentFolder,
+                 size: file.size,
+                 type: file.type,
+               })
+             }}>
           <ul className='files'>
             {list.text?.map((item, i) => {
               return 'fol_id' in item ? (
@@ -78,7 +91,7 @@ function App() {
             })}
           </ul>
         </div>
-        <Footer />
+        <Footer/>
       </div>
     </div>
   )

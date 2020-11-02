@@ -43,8 +43,6 @@ export function byteToSize(byte: number) {
   if (byte < sizeToByte('1t')) return `${formatSize(byte, sizeToByte('1g'))}GB`
 }
 
-console.log('byteToSize', byteToSize(10000))
-
 /**
  * 判断是否是分割的文件夹
  */

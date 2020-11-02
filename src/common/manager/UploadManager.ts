@@ -81,12 +81,13 @@ export class UploadManager implements Manager<UploadTask> {
   addTask(task: OptionProps<AddTask, 'size' | 'fileName'>) {
     console.log(`任务被添加: ${task.filePath}`)
     // todo: 检查是否存在上传的任务
+    // todo: 检查特殊符合: ()（）
     const uploadTask = {
       ...task,
       get taskCount() {
         return this.subTasks.filter(item => item.status === TaskStatus.pending).length
       },
-      get resolve() { // todo: 可以移到外部去计算
+      get resolve() {
         return this.subTasks.reduce((total, item) => total + item.resolve, 0)
       },
       subTasks: [],

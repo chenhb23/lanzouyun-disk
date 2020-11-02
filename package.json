@@ -15,7 +15,7 @@
     "react-dom": "^17.0.1"
   },
   "scripts": {
-    "react-start": "react-scripts start",
+    "react-start": "BROWSER=none react-scripts start",
     "react-build": "react-scripts build",
     "electron-start": "yarn tsc-electron-build && electron .",
     "electron-build": "yarn tsc-electron-build && electron-builder",
