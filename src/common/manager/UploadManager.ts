@@ -152,7 +152,7 @@ export class UploadManager implements Manager<UploadTask> {
             subTask.status = TaskStatus.finish
             this.checkTaskFinish(id)
           } else {
-            console.log(value)
+            console.log(value.info)
             subTask.status = TaskStatus.fail
           }
         }).catch(reason => {
@@ -160,8 +160,8 @@ export class UploadManager implements Manager<UploadTask> {
           subTask.status = TaskStatus.fail
         })
 
-        // await delay()
-        // this.start(id)
+        await delay(300)
+        this.start(id)
       }
     }
   }
@@ -169,8 +169,10 @@ export class UploadManager implements Manager<UploadTask> {
   startAll() {
   }
 
+  /**
+   * todo: 先停止上传任务再删除任务
+   */
   remove(id: string) {
-    console.log(`删除: ${id}`)
     delete this.tasks[id]
   }
 

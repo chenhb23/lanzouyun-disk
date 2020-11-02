@@ -140,17 +140,28 @@ export class DownloadManager implements Manager<DownloadTask> {
         }
 
         await sendDownloadTask(ipcMessage)
-        electron.ipcRenderer.on(`progressing${replyId}`, (event, receivedByte) => {
-          subTask.resolve = receivedByte
-        })
-        electron.ipcRenderer.on(`done${replyId}`, () => {
-          console.log('done', subTask.name)
-          subTask.status = TaskStatus.finish
-          this.checkTaskFinish(id)
-        })
-        electron.ipcRenderer.on(`failed${replyId}`, () => {
-          subTask.status = TaskStatus.fail
-        })
+
+        const removeListener = () => {
+          electron.ipcRenderer
+            .removeAllListeners(`progressing${replyId}`)
+            .removeAllListeners(`done${replyId}`)
+            .removeAllListeners(`failed${replyId}`)
+        }
+
+        electron.ipcRenderer
+          .on(`progressing${replyId}`, (event, receivedByte) => {
+            subTask.resolve = receivedByte
+          })
+          .once(`done${replyId}`, () => {
+            console.log('done', subTask.name)
+            subTask.status = TaskStatus.finish
+            this.checkTaskFinish(id)
+            removeListener()
+          })
+          .once(`failed${replyId}`, () => {
+            subTask.status = TaskStatus.fail
+            removeListener()
+          })
 
         // await delay()
         this.start(id)
