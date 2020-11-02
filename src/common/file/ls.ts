@@ -1,8 +1,10 @@
 import request from '../request'
+import {isFile} from '../util'
 
 interface LsOptions {
   all?: boolean // 查询全部，递归查询（速度较慢）
   // pageSize?: number // todo
+  // sort?: string // todo: 排序
 }
 
 /**
@@ -11,9 +13,10 @@ interface LsOptions {
 export async function ls(folder_id = -1, {all = true} = {} as LsOptions) {
   const [res1, res2] = await Promise.all([lsDir(folder_id), lsFile(folder_id)])
 
+  const sortFile = a => (isFile(a.name) ? 1 : -1)
   return {
     ...res1,
-    text: [...res1.text, ...res2],
+    text: [...res1.text.sort(sortFile), ...res2],
   }
 }
 

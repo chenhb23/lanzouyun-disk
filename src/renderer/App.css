@@ -1,11 +1,100 @@
-.App {
-  height: 100vh;
-  background-color: aliceblue;
-  display: flex;
-  flex: 1;
-  font-size: 14px;
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
+  'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  /*color: #282c34;*/
+  color: rgb(69,69,69);
+  font-size: 13px;
 }
 
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+}
+
+div {
+  box-sizing: border-box;
+}
+
+.icon {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  fill: currentColor;
+  overflow: hidden;
+}
+
+/*font-size: 14px;*/
+/*===================================*/
+
+.App {
+  height: 100vh;
+  background-color: #ffffff;
+  flex-direction: column;
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.header {
+  background-color: #F6F6F6;
+  height: 46px;
+  line-height: 46px;
+  padding-top: 22px;
+  padding-left: 10px;
+  padding-right: 10px;
+  -webkit-app-region: drag;
+  border-bottom: 1px solid rgb(232, 232,232);
+}
+.header button {
+  /*-webkit-app-region: no-drag;*/
+}
+.main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+/*aside 24 右边距*/
+.aside {
+  background-color: #F6F6F6;
+  width: 200px;
+}
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.bar {
+  height: 30px;
+  line-height: 30px;
+  border-bottom: 1px solid rgb(232, 232,232);
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.crumbs {
+  display: block;
+  list-style: none;
+  user-select: none;
+}
+.crumbs > li {
+  display: inline-block;
+  margin-right: 5px;
+  cursor: pointer;
+}
+.crumbs > li:first-child svg {
+  display: none;
+}
+
+/*
 .side {
   width: 120px;
   background-color: #282c34;
@@ -25,13 +114,13 @@
   justify-content: space-between;
   align-items: center;
   height: 50px;
-  /*line-height: 50px;*/
+  !*line-height: 50px;*!
   padding: 0 10px;
   border-bottom: 1px solid #efefef;
 }
 
 .crumbs {
-  /*color: red;*/
+  !*color: red;*!
 }
 .crumbs > li {
   display: inline-block;
@@ -49,14 +138,15 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  /*height: 100%;*/
+  !*height: 100%;*!
   overflow-y: scroll;
 }
 
 .files {
-  /*height: 100%;*/
+  !*height: 100%;*!
   display: flex;
   flex: 1;
   flex-direction: column;
   padding: 12px 18px;
 }
+*/

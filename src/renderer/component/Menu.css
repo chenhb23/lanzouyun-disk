@@ -1,0 +1,20 @@
+.Menu {
+  list-style: none;
+  user-select: none;
+}
+.MenuItem {
+  height: 36px;
+  line-height: 36px;
+  padding-left: 24px;
+  margin-bottom: 5px;
+}
+.MenuItem:hover, .MenuItem.active {
+  background-color: rgb(229,229,229);
+}
+
+.MenuTitle {
+  padding-left: 24px;
+  color: rgb(154,154,154);
+  font-size: 12px;
+  user-select: none;
+}

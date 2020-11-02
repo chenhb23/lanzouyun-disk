@@ -23,7 +23,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     // autoHideMenuBar: true,
-    // titleBarStyle: "customButtonsOnHover",
+    titleBarStyle: 'hidden',
     webPreferences: {
       preload: path.resolve(__dirname, 'main/preload.js'),
       webSecurity: false, // 不使用网页安全性，跨域
