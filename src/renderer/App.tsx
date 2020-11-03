@@ -1,53 +1,99 @@
-import React, {useEffect, useMemo, useState} from 'react'
+import React, {useEffect, useMemo, useRef, useState} from 'react'
 import './App.css'
-import {ls} from '../common/file/ls'
-import {isFile} from '../common/util'
+import {ls, lsDir} from '../common/core/ls'
+import {byteToSize, isFile} from '../common/util'
 import {uploadManager} from '../common/manager/UploadManager'
 import Footer from './Footer'
 import {downloadManager} from '../common/manager/DownloadManager'
 import {Dragarea} from './Dragarea'
-import {Icon} from './Icon'
+import {Icon} from './component/Icon'
 import {Menu, MenuItem, MenuProvider} from './component/Menu'
 import {TabPane, Tabs} from './component/Tabs'
 import {Split, Table} from './component/Table'
+import {Header} from './component/Header'
+import {Button} from './component/Button'
+import {Crumbs} from './component/Crumbs'
+import {Upload} from './Upload'
+import {observer} from 'mobx-react'
+import {Modal} from './component/Modal'
+import {Input, Textarea} from './component/Input'
+import {mkdir} from '../common/core/mkdir'
+import {message} from './component/Message'
+import {getFileDetail} from '../common/core/download'
+import requireModule from '../common/requireModule'
+import {rm} from '../common/core/rm'
+const electron = requireModule('electron')
 
 type List = AsyncReturnType<typeof ls>
 
-function App() {
+interface FolderForm {
+  name: string
+  folderDesc: string
+}
+
+const App = observer(() => {
+  const [test, setTest] = useState(false)
+
   const [menu, setMenu] = useState('')
 
   const [list, setList] = useState({} as List)
   const currentFolder = useMemo(() => list.info?.find(item => item.now === 1)?.folderid || -1, [list])
 
+  const [visible, setVisible] = useState(false)
+  const [form, setForm] = useState({} as FolderForm)
+
+  function cancel() {
+    setVisible(false)
+    setForm({} as FolderForm)
+  }
+
+  async function makeDir() {
+    await mkdir(currentFolder, form.name, form.folderDesc)
+    message.success('创建成功')
+    cancel()
+    listFile(currentFolder)
+  }
+
   useEffect(function () {
-    // listFile(-1)
+    listFile(-1)
   }, [])
 
   function listFile(folder_id) {
     ls(folder_id).then(value => setList(value))
   }
 
+  function taskLength(tasks) {
+    const len = Object.keys(tasks).length
+    return len ? `（${len}）` : ''
+  }
+
   return (
     <div className='App'>
-      <header className='header'></header>
       <main className='main'>
         <aside className='aside'>
-          {/*<MenuProvider defaultKey={'file'} onChange={key => setMenu(key)}>*/}
-          <MenuProvider defaultKey={'upload'} onChange={key => setMenu(key)}>
+          <MenuProvider defaultKey={'1'} onChange={key => setMenu(key)}>
             <Menu>
-              <MenuItem id={'file'} icon={'file'}>
+              <MenuItem id={'1'} icon={'file'}>
                 全部文件
               </MenuItem>
             </Menu>
             <Menu title={'传输列表'}>
-              <MenuItem id={'upload'} icon={'upload'}>
-                正在上传
+              <MenuItem id={'2'} icon={'upload'}>
+                正在上传 {taskLength(uploadManager.tasks)}
               </MenuItem>
-              <MenuItem id={'download'} icon={'download'}>
-                正在下载
+              <MenuItem id={'3'} icon={'download'}>
+                正在下载 {taskLength(downloadManager.tasks)}
               </MenuItem>
-              <MenuItem id={'finish'} icon={'finish'}>
-                传输完成
+              <MenuItem id={'4'} icon={'finish'}>
+                已完成
+              </MenuItem>
+            </Menu>
+            <Menu title={'工具列表'}>
+              <MenuItem id={'5'} icon={'upload'}>
+                解析Url
+              </MenuItem>
+              <MenuItem id={'6'} icon={'download'}>
+                文件分割
               </MenuItem>
             </Menu>
           </MenuProvider>
@@ -55,8 +101,58 @@ function App() {
         <div className='content'>
           <Tabs activeKey={menu}>
             <TabPane
-              id={'file'}
-              panetop={<Bar crumbs={list.info} onClick={folderid => listFile(folderid)} />}
+              id={'1'}
+              panetop={
+                <>
+                  <Header>
+                    <Button
+                      icon={'upload'}
+                      file
+                      onChange={files => {
+                        const file = files[0]
+                        uploadManager.addTask({
+                          fileName: file.name,
+                          filePath: file.path,
+                          folderId: currentFolder,
+                          size: file.size,
+                          type: file.type,
+                        })
+                      }}
+                    >
+                      上传
+                    </Button>
+                    <Button
+                      type={'primary'}
+                      onClick={() => {
+                        setVisible(true)
+                      }}
+                    >
+                      新建文件夹
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setTest(prevState => !prevState)
+                        if (test) {
+                          const dis = message.success('adsf')
+                          setTimeout(() => {
+                            dis()
+                          }, 600)
+                        } else {
+                          message.info('adsf')
+                        }
+                      }}
+                    >
+                      测试
+                    </Button>
+                  </Header>
+                  <Bar>
+                    <Crumbs
+                      crumbs={[{name: '全部文件', folderid: -1}, ...(list.info || [])]}
+                      onClick={folderid => listFile(folderid)}
+                    />
+                  </Bar>
+                </>
+              }
               onDragOver={event => {
                 event.preventDefault()
                 event.stopPropagation()
@@ -74,93 +170,139 @@ function App() {
             >
               <Table header={['文件名', '大小', '时间', '下载']}>
                 {list.text?.map(item => {
-                  return 'id' in item ? (
-                    <tr key={item.id}>
+                  const size = 'id' in item ? item.size : '-'
+                  const time = 'id' in item ? item.time : ''
+                  const downs = 'id' in item ? item.downs : ''
+                  const id = 'id' in item ? item.id : item.fol_id
+                  const fileName = 'id' in item ? item.name_all : item.name
+
+                  return (
+                    <tr key={id}>
                       <td>
-                        <Icon iconName={'file'} />
-                        <span>{item.name_all}</span>
+                        {'id' in item ? (
+                          <>
+                            <Icon iconName={'file'} />
+                            <span>{item.name_all}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Icon iconName='folder' />
+                            <span onClick={() => listFile(item.fol_id)}>{item.name}</span>
+                          </>
+                        )}
+                        <div className='handle'>
+                          {'id' in item && (
+                            <Icon
+                              iconName={'share'}
+                              onClick={async () => {
+                                const info = await getFileDetail(item.id)
+                                const shareUrl = `${info.is_newd}/${info.f_id}`
+                                // todo: 分享文件夹
+                                electron.clipboard.writeText(shareUrl)
+                                message.success(`分享链接已复制：\n${shareUrl}`)
+                              }}
+                            />
+                          )}
+                          {isFile(item.name) && (
+                            <Icon
+                              iconName={'download'}
+                              onClick={() =>
+                                downloadManager.addTask({
+                                  id,
+                                  fileName,
+                                  isFile: 'id' in item,
+                                })
+                              }
+                            />
+                          )}
+                          <Icon
+                            iconName={'delete'}
+                            onClick={async () => {
+                              const {zt, info} = await rm(id, 'id' in item)
+                              if (zt === 1) {
+                                message.success('已删除')
+                                listFile(currentFolder)
+                              } else {
+                                message.info(info)
+                              }
+                            }}
+                          />
+                        </div>
                       </td>
-                      <td>{item.size}</td>
-                      <td>{item.time}</td>
-                      <td>{item.downs}</td>
-                      <td></td>
-                    </tr>
-                  ) : (
-                    <tr key={item.fol_id}>
-                      {isFile(item.name) ? (
-                        <td>
-                          <Icon iconName={'file'} />
-                          <span
-                            onClick={() =>
-                              downloadManager.addTask({
-                                fol_id: item.fol_id,
-                                name: item.name,
-                              })
-                            }
-                          >
-                            {item.name}
-                          </span>
-                        </td>
-                      ) : (
-                        <td>
-                          <Icon iconName='folder' />
-                          <span onClick={() => listFile(item.fol_id)}>{item.name}</span>
-                        </td>
-                      )}
-                      <td>-</td>
-                      <td></td>
-                      <td></td>
+                      <td>{size}</td>
+                      <td>{time}</td>
+                      <td>{downs}</td>
                       <td></td>
                     </tr>
                   )
                 })}
               </Table>
             </TabPane>
-            <TabPane id={'upload'}>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
-              <p>2</p>
+            <TabPane
+              id={'2'}
+              panetop={
+                <>
+                  <Header>
+                    <Button>全部暂停</Button>
+                    <Button>全部开始</Button>
+                    <Button>全部删除</Button>
+                  </Header>
+                  <Bar>
+                    <span>正在上传</span>
+                  </Bar>
+                </>
+              }
+            >
+              <Table header={['文件名', '大小', '操作']}>
+                {Object.keys(uploadManager.tasks).map(key => {
+                  const item = uploadManager.tasks[key]
+                  return (
+                    <tr key={key}>
+                      <td>
+                        <Icon iconName={'file'} />
+                        <span>{item.fileName}</span>
+                      </td>
+                      <td>{`${byteToSize(item.resolve)} / ${byteToSize(item.size)}`}</td>
+                      <td>{/*todo:操作*/}</td>
+                      <td></td>
+                    </tr>
+                  )
+                })}
+              </Table>
             </TabPane>
-            <TabPane id={'download'}>3</TabPane>
-            <TabPane id={'finish'}>3</TabPane>
+            <TabPane
+              id={'3'}
+              panetop={
+                <>
+                  <Header>
+                    <Button>全部暂停</Button>
+                    <Button>全部开始</Button>
+                    <Button>全部删除</Button>
+                  </Header>
+                  <Bar>
+                    <span>正在下载</span>
+                  </Bar>
+                </>
+              }
+            >
+              <Table header={['文件名', '大小', '操作']}>
+                {Object.keys(downloadManager.tasks).map(key => {
+                  const item = downloadManager.tasks[key]
+                  return (
+                    <tr key={key}>
+                      <td>
+                        <Icon iconName={'file'} />
+                        <span>{item.fileName}</span>
+                      </td>
+                      <td>{`${byteToSize(item.resolve)} / ${byteToSize(item.size)}`}</td>
+                      <td>{/*todo:操作*/}</td>
+                      <td></td>
+                    </tr>
+                  )
+                })}
+              </Table>
+            </TabPane>
+            <TabPane id={'4'}>3</TabPane>
           </Tabs>
         </div>
       </main>
@@ -256,29 +398,53 @@ function App() {
         </div>
         <Footer />
       </div>*/}
+
+      <Modal visible={visible}>
+        <div className='dialog'>
+          <h3>文件名</h3>
+          <Input
+            value={form.name}
+            onChange={event => setForm(prevState => ({...prevState, name: event.target.value}))}
+          />
+          <h3>文件描述</h3>
+          <Textarea
+            value={form.folderDesc}
+            placeholder={'可选项，建议160字数以内。'}
+            maxLength={160}
+            onChange={event => setForm(prevState => ({...prevState, folderDesc: event.target.value}))}
+          />
+          <div style={{textAlign: 'right', marginTop: 10}}>
+            <Button onClick={cancel}>取消</Button>
+            <Button type={'primary'} onClick={makeDir}>
+              保存
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
-}
+})
 
 export default App
 
 interface BarProps {
-  crumbs: CrumbsInfo[]
-  onClick: (folderid) => void
+  // crumbs: CrumbsInfo[]
+  // onClick: (folderid) => void
 }
 
 const Bar: React.FC<BarProps> = props => {
   return (
     <div className='bar'>
-      <ul className='crumbs'>
-        <li onClick={() => props.onClick(-1)}>全部文件</li>
-        {props.crumbs.map(item => (
-          <li key={item.folderid} onClick={() => props.onClick(item.folderid)}>
-            <Icon iconName='right' />
-            {item.name}
-          </li>
-        ))}
-      </ul>
+      {props.children}
+      {/*<ul className='crumbs'>*/}
+      {/*  <li onClick={() => props.onClick(-1)}>全部文件</li>*/}
+      {/*  {props.crumbs.map(item => (*/}
+      {/*    <li key={item.folderid} onClick={() => props.onClick(item.folderid)}>*/}
+      {/*      <Icon iconName='right' />*/}
+      {/*      {item.name}*/}
+      {/*    </li>*/}
+      {/*  ))}*/}
+      {/*</ul>*/}
     </div>
   )
 }

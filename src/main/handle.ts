@@ -22,9 +22,12 @@ function setupTrigger() {
 function setupDownload(win: BrowserWindow) {
   ipcMain.on('download', (ipcEvent, downloadMsg: IpcDownloadMsg) => {
     const {folderPath, replyId, downUrl} = downloadMsg
-    const debounceEvent = debounce((replyId, ...args) => {
-      ipcEvent.reply(replyId, ...args)
-    })
+    const debounceEvent = debounce(
+      (replyId, ...args) => {
+        ipcEvent.reply(replyId, ...args)
+      },
+      {time: 220}
+    )
 
     win?.webContents?.session?.once('will-download', (event, item) => {
       if (folderPath) item.setSavePath(path.resolve(folderPath, item.getFilename()))
@@ -58,7 +61,7 @@ function setupDownload(win: BrowserWindow) {
       ipcEvent.reply(`start${replyId}`)
     })
 
-    _win.webContents.downloadURL(downUrl)
+    win.webContents.downloadURL(downUrl)
   })
 }
 

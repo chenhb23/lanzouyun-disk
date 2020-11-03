@@ -1,0 +1,18 @@
+.header {
+  /*background-color: #f6f6f6;*/
+  background-color: rgba(246,246,246, 0.5);
+  height: 46px;
+  line-height: 46px;
+  padding-top: 22px;
+  padding-left: 12px;
+  padding-right: 12px;
+  -webkit-app-region: drag;
+  /*border-bottom: 1px solid rgb(232, 232,232);*/
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.header button {
+  /*-webkit-app-region: no-drag;*/
+}

@@ -90,11 +90,13 @@ interface FormOptions {
   type?: string
 }
 export function createUploadForm(options: FormOptions) {
+  console.log('options', options)
   const form = new FormData()
   form.append('task', '1')
   form.append('ve', '2')
   form.append('lastModifiedDate', new Date().toString())
   form.append('type', options.type || 'application/octet-stream')
+  // form.append('type', 'application/octet-stream')
   form.append('id', options.id ?? 'WU_FILE_0')
   form.append('folder_id_bb_n', options.folderId)
   form.append('size', options.size)

@@ -1,0 +1,31 @@
+::-webkit-input-placeholder {
+  color: #ccc;
+}
+
+.Input, .Textarea {
+  border: 1px solid rgb(227, 227, 227);
+  border-radius: 3px;
+  width: 100%;
+  padding: 5px;
+  /*font-family: "Arial", "Apple LiSung";*/
+}
+
+.Input:focus, .Textarea:focus {
+  outline: rgba(76, 137, 247, 0.7) auto 1px;
+}
+
+.Input {
+  min-height: 24px;
+}
+
+.Textarea {
+  resize: none;
+  min-height: 100px;
+}
+
+.TextareaNumber {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  color: #a3a3a3;
+}

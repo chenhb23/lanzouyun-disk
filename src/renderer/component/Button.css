@@ -1,0 +1,38 @@
+.Button {
+  padding: 1px 10px;
+  border: 1px solid rgb(227, 227, 227);
+  border-radius: 2px;
+  outline: none;
+  color: rgb(106, 106, 106);
+  background-color: #ffffff;
+  min-width: 36px;
+  min-height: 23px;
+}
+
+.Button:hover {
+  opacity: 0.8;
+}
+
+.Button:active {
+  /*margin-top: 10px;*/
+  opacity: 1;
+}
+
+.Button + .Button {
+  margin-left: 10px;
+}
+
+.Button.primary {
+  background-color: rgb(76, 137, 247);
+  border-color: rgb(76, 137, 247);
+  color: #ffffff;
+}
+.Button.icon {
+  border-color: transparent;
+  background-color: transparent;
+}
+
+.ButtonLabel {
+  margin: -1px -10px;
+  padding: 1px 10px;
+}

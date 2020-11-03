@@ -28,7 +28,7 @@ export function sizeToByte(size: string | number) {
     const [_, num, unit] = size
       .toLowerCase()
       .replace(' ', '')
-      .match(/^(\d+)([kmgt]?)$/)
+      .match(/^(\d+\.?\d*)([kmgt]?)$/)
 
     return +num * getUnit(unit)
   }

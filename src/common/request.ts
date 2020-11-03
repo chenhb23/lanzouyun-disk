@@ -77,7 +77,7 @@ function request<T, B>(params: RequestParams<B>): Promise<T> {
       res.on('data', chunk => (data += chunk))
       res.on('end', () => {
         const json = parseJson(data)
-        // console.log(json)
+        console.log(json)
         resolve(json)
       })
       res.on('error', reject)

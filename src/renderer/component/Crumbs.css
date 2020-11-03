@@ -1,0 +1,13 @@
+.crumbs {
+  display: block;
+  list-style: none;
+  user-select: none;
+}
+.crumbs > li {
+  display: inline-block;
+  margin-right: 5px;
+  cursor: pointer;
+}
+.crumbs > li:first-child svg {
+  display: none;
+}

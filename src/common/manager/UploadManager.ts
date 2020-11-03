@@ -1,13 +1,14 @@
 import {makeAutoObservable} from 'mobx'
 import Manager, {TaskStatus} from './Manager'
 import requireModule from '../requireModule'
-import {isExistByName} from '../file/isExist'
-import {mkdir} from '../file/mkdir'
+import {isExistByName} from '../core/isExist'
+import {mkdir} from '../core/mkdir'
 import split from '../split'
 import request from '../request'
-import {createUploadForm} from '../file/upload'
-import {debounce, delay} from '../util'
+import {createUploadForm} from '../core/upload'
+import {createSpecificName, debounce, delay} from '../util'
 import config from '../../project.config'
+import {message} from '../../renderer/component/Message'
 
 const fs = requireModule('fs-extra')
 const path = requireModule('path')
@@ -66,6 +67,7 @@ export class UploadManager implements Manager<UploadTask> {
 
   checkTaskFinish(id: string) {
     if (this.tasks[id]?.subTasks.every(item => item.status === TaskStatus.finish)) {
+      console.log(`任务完成：${this.tasks[id].fileName}`)
       this.remove(id)
     }
 
@@ -100,6 +102,8 @@ export class UploadManager implements Manager<UploadTask> {
     if (!uploadTask.fileName) {
       uploadTask.fileName = path.basename(id)
     }
+    // config.supportList
+    // if ()
     this.tasks[id] = uploadTask
     // todo: 自动触发任务
     this.start(id)
@@ -115,7 +119,13 @@ export class UploadManager implements Manager<UploadTask> {
     let task: UploadTask
     if ((task = this.tasks[id])) {
       if (!task.initial) {
-        await this.genSubTask(task.filePath)
+        try {
+          await this.genSubTask(task.filePath)
+        } catch (e) {
+          message.info(e)
+          this.remove(id)
+          return
+        }
       }
       const subTask = this.tasks[id].subTasks.find(item => [TaskStatus.pause, TaskStatus.fail].includes(item.status))
       if (subTask) {
@@ -199,6 +209,11 @@ export class UploadManager implements Manager<UploadTask> {
     }
 
     if (splitData.isFile) {
+      let supportName = task.fileName
+      if (config.supportList.every(ext => !task.fileName.endsWith(`.${ext}`))) {
+        supportName = createSpecificName(task.fileName)
+      }
+
       this.tasks[id].subTasks = [
         {
           size: task.size,
@@ -206,7 +221,7 @@ export class UploadManager implements Manager<UploadTask> {
           resolve: 0,
           filePath: task.filePath,
           folderId: task.folderId,
-          fileName: task.fileName,
+          fileName: supportName,
           type,
         },
       ]

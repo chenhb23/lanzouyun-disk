@@ -1,8 +1,8 @@
 import requireModule from '../requireModule'
 import Manager, {TaskStatus} from './Manager'
-import {getFileDetail, parseTargetUrl, sendDownloadTask} from '../file/download'
-import {lsFile} from '../file/ls'
-import {delay, isSpecificFile, mkTempDirSync, restoreFileName} from '../util'
+import {getFileDetail, parseTargetUrl, sendDownloadTask} from '../core/download'
+import {lsFile} from '../core/ls'
+import {delay, isSpecificFile, mkTempDirSync, restoreFileName, sizeToByte} from '../util'
 import merge from '../merge'
 import {makeAutoObservable} from 'mobx'
 
@@ -10,19 +10,17 @@ const electron = requireModule('electron')
 const fs = requireModule('fs-extra')
 const path = requireModule('path')
 
-type AddTask =
-  | {
-      id: FileId // id
-      name_all: string // name_all
-    }
-  | {
-      fol_id: FolderId // fol_id
-      name: string // name
-    }
+type AddTask = {
+  id: string | number
+  fileName: string
+  // size?: number
+  isFile?: boolean // 默认 true
+}
 
 export interface DownloadTask {
   readonly taskCount: number
   readonly resolve: number
+  readonly size: number
 
   fileName: string // fileName 与 folderId 联合 id
   id: FolderId // id | fol_id
@@ -39,6 +37,7 @@ export interface SubDownloadTask {
   name: string // 显示到列表
   is_newd: string // 分享域名：is_newd
   f_id: string // 分享：f_id
+  size: number
   status: TaskStatus // 暂停下载需重新解析下载链接
   // pwd: string // todo: 支持密码下载
 }
@@ -94,12 +93,10 @@ export class DownloadManager implements Manager<DownloadTask> {
 
   /**
    * 下载的初始化在这里触发
-   * @param task
    */
-  addTask(task: AddTask) {
-    const isFile = 'id' in task
-    const id = 'id' in task ? task.id : task.fol_id
-    const fileName = 'id' in task ? task.name_all : task.name
+  addTask({isFile = true, ...task} = {} as AddTask) {
+    const id = task.id
+    const fileName = task.fileName
 
     const downloadTask = {
       get taskCount() {
@@ -107,6 +104,9 @@ export class DownloadManager implements Manager<DownloadTask> {
       },
       get resolve() {
         return this.subTasks.reduce((total, item) => total + item.resolve, 0)
+      },
+      get size() {
+        return this.subTasks.reduce((total, item) => total + item.size, 0)
       },
       fileName,
       id,
@@ -197,6 +197,7 @@ export class DownloadManager implements Manager<DownloadTask> {
         is_newd: info.is_newd, // todo: 生成 url
         f_id: info.f_id,
         status: TaskStatus.pause,
+        size: 0, //  todo
       })
     } else {
       // 创建临时目录
@@ -211,6 +212,7 @@ export class DownloadManager implements Manager<DownloadTask> {
         is_newd: info.is_newd, // todo: 生成 url
         f_id: info.f_id,
         status: TaskStatus.pause,
+        size: sizeToByte(files[index].size),
       }))
       task.subTasks.push(...subTasks)
     }

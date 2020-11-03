@@ -7,7 +7,7 @@ export interface TableProps {
 }
 
 export const Table: React.FC<TableProps> = props => {
-  const [widthList, setWidthList] = useState(props.header?.map((item, i) => (i === 0 ? 500 : 120)))
+  const [widthList, setWidthList] = useState(props.header?.map((item, i) => (i === 0 ? 460 : 160)))
   const [distanceList, setDistanceList] = useState(props.header?.map(() => 0))
 
   const setDistance = (dist, index) => {
@@ -65,10 +65,11 @@ export const Split: React.FC<SplitProps> = props => {
     if (isFocus) {
       document.addEventListener('mousemove', onMove)
       document.addEventListener('mouseup', onMouseup)
-    }
-    return () => {
-      document.removeEventListener('mousemove', onMove)
-      document.removeEventListener('mouseup', onMouseup)
+
+      return () => {
+        document.removeEventListener('mousemove', onMove)
+        document.removeEventListener('mouseup', onMouseup)
+      }
     }
   }, [isFocus])
 
