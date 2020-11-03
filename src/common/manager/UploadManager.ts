@@ -55,10 +55,10 @@ export class UploadManager implements Manager<UploadTask> {
     makeAutoObservable(this)
   }
 
-  tasks: {[key: string]: UploadTask} = {}
+  tasks: UploadTask[] = []
 
   get queue() {
-    return Object.keys(this.tasks).reduce((total, key) => total + this.tasks[key].taskCount, 0)
+    return this.tasks.reduce((total, item) => total + item.taskCount, 0)
   }
 
   checkTaskQueue() {
@@ -66,14 +66,15 @@ export class UploadManager implements Manager<UploadTask> {
   }
 
   checkTaskFinish(id: string) {
-    if (this.tasks[id]?.subTasks.every(item => item.status === TaskStatus.finish)) {
-      console.log(`任务完成：${this.tasks[id].fileName}`)
+    const task = this.tasks.find(item => item.filePath === id)
+
+    if (task?.subTasks.every(item => item.status === TaskStatus.finish)) {
+      console.log(`任务完成：${task.fileName}`)
       this.remove(id)
     }
 
-    const tasks = Object.keys(this.tasks)[0]
-    if (tasks) {
-      this.start(tasks)
+    if (this.tasks.length) {
+      this.start(this.tasks[0].filePath)
     }
   }
 
@@ -104,7 +105,7 @@ export class UploadManager implements Manager<UploadTask> {
     }
     // config.supportList
     // if ()
-    this.tasks[id] = uploadTask
+    this.tasks.push(uploadTask)
     // todo: 自动触发任务
     this.start(id)
   }
@@ -116,8 +117,8 @@ export class UploadManager implements Manager<UploadTask> {
    * * 检查是否有上传的文件夹
    */
   async start(id: string) {
-    let task: UploadTask
-    if ((task = this.tasks[id])) {
+    const task = this.tasks.find(item => item.filePath === id)
+    if (task) {
       if (!task.initial) {
         try {
           await this.genSubTask(task.filePath)
@@ -127,7 +128,7 @@ export class UploadManager implements Manager<UploadTask> {
           return
         }
       }
-      const subTask = this.tasks[id].subTasks.find(item => [TaskStatus.pause, TaskStatus.fail].includes(item.status))
+      const subTask = task.subTasks.find(item => [TaskStatus.pause, TaskStatus.fail].includes(item.status))
       if (subTask) {
         // 更新上传状态前， check status
         if (!this.checkTaskQueue()) return
@@ -190,7 +191,8 @@ export class UploadManager implements Manager<UploadTask> {
    * todo: 先停止上传任务再删除任务
    */
   remove(id: string) {
-    delete this.tasks[id]
+    // delete this.tasks[id]
+    this.tasks = this.tasks.filter(item => item.filePath !== id)
   }
 
   removeAll() {}
@@ -200,7 +202,7 @@ export class UploadManager implements Manager<UploadTask> {
   pauseAll() {}
 
   async genSubTask(id: string) {
-    const task = this.tasks[id]
+    const task = this.tasks.find(item => item.filePath === id)
     const splitData = await split(task.filePath, {fileSize: task.size, skipSplit: true})
 
     let type = task.type
@@ -214,7 +216,7 @@ export class UploadManager implements Manager<UploadTask> {
         supportName = createSpecificName(task.fileName)
       }
 
-      this.tasks[id].subTasks = [
+      task.subTasks = [
         {
           size: task.size,
           status: TaskStatus.pause,
@@ -231,7 +233,7 @@ export class UploadManager implements Manager<UploadTask> {
       if (!subFolderId) {
         subFolderId = await mkdir(task.folderId, task.fileName)
       }
-      this.tasks[id].subTasks = splitData.splitFiles.map(file => ({
+      task.subTasks = splitData.splitFiles.map(file => ({
         size: file.size,
         status: TaskStatus.pause,
         resolve: 0,
@@ -244,7 +246,7 @@ export class UploadManager implements Manager<UploadTask> {
       }))
     }
 
-    this.tasks[id].initial = true
+    task.initial = true
   }
 }
 

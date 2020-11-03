@@ -50,10 +50,11 @@ export class DownloadManager implements Manager<DownloadTask> {
     makeAutoObservable(this)
   }
 
-  tasks: {[p: string]: DownloadTask} = {}
+  finishTasks: DownloadTask[] = []
+  tasks: DownloadTask[] = []
 
   get queue(): number {
-    return Object.keys(this.tasks).reduce((total, key) => total + this.tasks[key].taskCount, 0)
+    return this.tasks.reduce((total, item) => total + item.taskCount, 0)
   }
 
   checkTaskQueue() {
@@ -61,17 +62,14 @@ export class DownloadManager implements Manager<DownloadTask> {
   }
 
   async checkTaskFinish(id) {
-    const task = this.tasks[id]
-    console.log('checkTaskFinish', task.fileName)
+    const task = this.tasks.find(item => item.id === id)
     if (task.subTasks.every(item => item.status === TaskStatus.finish)) {
       const targetDir = path.resolve(task.fileDir, task.fileName)
 
       if (!task.isFile) {
         // 合并文件
         const tempDir = task.subTasks[0].tempDir
-        console.log(tempDir)
         const files = fs.readdirSync(tempDir).map(item => path.resolve(tempDir, item))
-        console.log('files', files)
         await merge(files, targetDir)
         await delay(200)
         // 删除临时文件夹
@@ -82,12 +80,12 @@ export class DownloadManager implements Manager<DownloadTask> {
         }
       }
 
+      this.finishTasks.push(task)
       this.remove(id)
     }
 
-    const tasks = Object.keys(this.tasks)[0]
-    if (tasks) {
-      this.start(tasks)
+    if (this.tasks.length) {
+      this.start(this.tasks[0].id)
     }
   }
 
@@ -116,13 +114,13 @@ export class DownloadManager implements Manager<DownloadTask> {
       subTasks: [],
     } as DownloadTask
 
-    this.tasks[id] = downloadTask
+    this.tasks.push(downloadTask)
     this.start(id)
   }
 
   async start(id: FileId) {
-    let task: DownloadTask
-    if ((task = this.tasks[id])) {
+    const task = this.tasks.find(item => item.id === id)
+    if (task) {
       if (!task.initial) {
         await this.genSubTask(id)
       }
@@ -176,7 +174,8 @@ export class DownloadManager implements Manager<DownloadTask> {
   startAll() {}
 
   remove(id) {
-    delete this.tasks[id]
+    // delete this.tasks[id]
+    this.tasks = this.tasks.filter(item => item.id !== id)
   }
 
   removeAll() {}
@@ -186,7 +185,7 @@ export class DownloadManager implements Manager<DownloadTask> {
   pauseAll() {}
 
   async genSubTask(id: FileId) {
-    const task = this.tasks[id]
+    const task = this.tasks.find(item => item.id === id)
     if (task.isFile) {
       const info = await getFileDetail(task.id)
       task.subTasks.push({
@@ -218,6 +217,10 @@ export class DownloadManager implements Manager<DownloadTask> {
     }
 
     task.initial = true
+  }
+
+  removeAllFinish() {
+    this.finishTasks = []
   }
 }
 

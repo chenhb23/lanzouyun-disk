@@ -62,8 +62,8 @@ const App = observer(() => {
     ls(folder_id).then(value => setList(value))
   }
 
-  function taskLength(tasks) {
-    const len = Object.keys(tasks).length
+  function taskLength(tasks: any[]) {
+    const len = tasks?.length
     return len ? `（${len}）` : ''
   }
 
@@ -85,7 +85,7 @@ const App = observer(() => {
                 正在下载 {taskLength(downloadManager.tasks)}
               </MenuItem>
               <MenuItem id={'4'} icon={'finish'}>
-                已完成
+                已完成 {taskLength(downloadManager.finishTasks)}
               </MenuItem>
             </Menu>
             <Menu title={'工具列表'}>
@@ -254,10 +254,9 @@ const App = observer(() => {
               }
             >
               <Table header={['文件名', '大小', '操作']}>
-                {Object.keys(uploadManager.tasks).map(key => {
-                  const item = uploadManager.tasks[key]
+                {uploadManager.tasks.map(item => {
                   return (
-                    <tr key={key}>
+                    <tr key={item.filePath}>
                       <td>
                         <Icon iconName={'file'} />
                         <span>{item.fileName}</span>
@@ -286,10 +285,9 @@ const App = observer(() => {
               }
             >
               <Table header={['文件名', '大小', '操作']}>
-                {Object.keys(downloadManager.tasks).map(key => {
-                  const item = downloadManager.tasks[key]
+                {downloadManager.tasks.map(item => {
                   return (
-                    <tr key={key}>
+                    <tr key={item.id}>
                       <td>
                         <Icon iconName={'file'} />
                         <span>{item.fileName}</span>
@@ -302,102 +300,44 @@ const App = observer(() => {
                 })}
               </Table>
             </TabPane>
-            <TabPane id={'4'}>3</TabPane>
+            <TabPane
+              id={'4'}
+              panetop={
+                <>
+                  <Header>
+                    <Button
+                      onClick={() => {
+                        downloadManager.removeAllFinish()
+                      }}
+                    >
+                      清除全部记录
+                    </Button>
+                  </Header>
+                  <Bar>
+                    <span>已完成</span>
+                  </Bar>
+                </>
+              }
+            >
+              <Table header={['文件名', '大小', '操作']}>
+                {downloadManager.finishTasks.map(item => {
+                  return (
+                    <tr key={item.id}>
+                      <td>
+                        <Icon iconName={'file'} />
+                        <span>{item.fileName}</span>
+                      </td>
+                      <td>{`${byteToSize(item.size)}`}</td>
+                      <td>{/*todo:操作*/}</td>
+                      <td></td>
+                    </tr>
+                  )
+                })}
+              </Table>
+            </TabPane>
           </Tabs>
         </div>
       </main>
-
-      {/*<div className='side'>
-        <ul>
-          <li>
-            文件 <Icon iconName='folder' />
-          </li>
-        </ul>
-      </div>
-      <div className='main'>
-        <div className='header'>
-          <ul className='crumbs'>
-            <li onClick={() => listFile(-1)}>根目录</li>
-            {list.info?.map(item => (
-              <li key={item.folderid} onClick={() => listFile(item.folderid)}>
-                {item.name}
-              </li>
-            ))}
-          </ul>
-
-          <ul className='functions'>
-            <li>新建文件夹：todo</li>
-            <li>
-              <Dragarea
-                onChange={files => {
-                  const file = files[0]
-                  uploadManager.addTask({
-                    fileName: file.name,
-                    filePath: file.path,
-                    folderId: currentFolder,
-                    size: file.size,
-                    type: file.type,
-                  })
-                }}
-              />
-            </li>
-          </ul>
-        </div>
-        <div
-          className='content'
-          onDragOver={event => {
-            event.preventDefault()
-            event.stopPropagation()
-          }}
-          onDrop={event => {
-            const file = event.dataTransfer.files[0]
-            uploadManager.addTask({
-              fileName: file.name,
-              filePath: file.path,
-              folderId: currentFolder,
-              size: file.size,
-              type: file.type,
-            })
-          }}
-        >
-          <ul className='files'>
-            {list.text?.map((item, i) => {
-              return 'fol_id' in item ? (
-                <li key={i}>
-                  <span onClick={() => listFile(item.fol_id)}>{item.name + '（文件夹）'}</span>
-                  {isFile(item.name) && (
-                    <span
-                      onClick={() =>
-                        downloadManager.addTask({
-                          fol_id: item.fol_id,
-                          name: item.name,
-                        })
-                      }
-                    >
-                      （下载）
-                    </span>
-                  )}
-                </li>
-              ) : (
-                <li key={i} title={item.name_all}>
-                  {`${item.name} / ${item.size} / ${item.time}`}
-                  <span
-                    onClick={() =>
-                      downloadManager.addTask({
-                        id: item.id,
-                        name_all: item.name_all,
-                      })
-                    }
-                  >
-                    （下载）
-                  </span>
-                </li>
-              )
-            })}
-          </ul>
-        </div>
-        <Footer />
-      </div>*/}
 
       <Modal visible={visible}>
         <div className='dialog'>

@@ -8,7 +8,7 @@ export enum TaskStatus {
 export default interface Manager<Task> {
   readonly queue: number
 
-  tasks: {[key: string]: Task}
+  tasks: Task[]
 
   addTask(...args)
 
