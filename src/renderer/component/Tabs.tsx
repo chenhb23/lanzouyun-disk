@@ -14,7 +14,6 @@ export const Tabs: React.FC<TabsProps> = props => {
           className='TabsWrapper'
           style={child.props.id !== props.activeKey ? {display: 'none'} : {}}
         >
-          {child.props.panetop}
           {child}
         </div>
       ))}
@@ -24,7 +23,6 @@ export const Tabs: React.FC<TabsProps> = props => {
 
 export type TabPaneProps = {
   id: string
-  panetop?: React.ReactNode
 } & JSX.IntrinsicElements['div']
 
 export const TabPane: React.FC<TabPaneProps> = ({className = '', ...props}) => {

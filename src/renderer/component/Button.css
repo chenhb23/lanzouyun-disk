@@ -5,8 +5,10 @@
   outline: none;
   color: rgb(106, 106, 106);
   background-color: #ffffff;
-  min-width: 36px;
-  min-height: 23px;
+  /*min-width: 36px;*/
+  min-height: 27px;
+  position: relative;
+  white-space: nowrap;
 }
 
 .Button:hover {
@@ -14,7 +16,6 @@
 }
 
 .Button:active {
-  /*margin-top: 10px;*/
   opacity: 1;
 }
 
@@ -22,17 +23,33 @@
   margin-left: 10px;
 }
 
+.Button[disabled] {
+  background-color: #cccccc;
+  border-color: #cccccc;
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
 .Button.primary {
   background-color: rgb(76, 137, 247);
   border-color: rgb(76, 137, 247);
   color: #ffffff;
 }
-.Button.icon {
-  border-color: transparent;
-  background-color: transparent;
-}
+/*.Button.text {*/
+/*  border-color: transparent;*/
+/*  background-color: transparent;*/
+/*}*/
 
 .ButtonLabel {
   margin: -1px -10px;
   padding: 1px 10px;
+}
+
+.ButtonLoading {
+  animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+  from {transform: rotate(0deg)}
+  from {transform: rotate(359deg)}
 }

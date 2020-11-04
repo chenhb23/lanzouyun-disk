@@ -3,19 +3,26 @@ import './Button.css'
 import {Icon, IconName} from './Icon'
 
 export type ButtonProps = {
-  type?: 'primary' | 'default' | 'icon'
+  type?: 'primary' | 'default'
   icon?: IconName | React.ReactNode
   file?: boolean
   onChange?: (files: FileList) => void
+  loading?: boolean
 } & Omit<JSX.IntrinsicElements['button'], 'type'>
 
-export const Button: React.FC<ButtonProps> = ({type, className = '', icon, file, onChange, ...props}) => {
+export const Button: React.FC<ButtonProps> = props => {
+  const {type, className = '', icon, file, onChange, loading, ...rest} = props
+
   return (
-    <button className={`Button ${type} ${className}`} {...props}>
-      {icon && (typeof icon === 'string' ? <Icon iconName={icon} /> : icon)}
+    <button className={`Button ${type} ${className}`} {...rest}>
+      {loading ? (
+        <Icon className='ButtonLoading' iconName={'loading'} />
+      ) : (
+        icon && (typeof icon === 'string' ? <Icon iconName={icon} /> : icon)
+      )}
       {file ? (
         <label className='ButtonLabel'>
-          {props.children}
+          {rest.children}
           <input
             value=''
             style={{display: 'none'}}
@@ -26,7 +33,7 @@ export const Button: React.FC<ButtonProps> = ({type, className = '', icon, file,
           />
         </label>
       ) : (
-        props.children
+        rest.children
       )}
     </button>
   )

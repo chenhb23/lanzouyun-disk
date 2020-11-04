@@ -16,3 +16,8 @@
 .header button {
   /*-webkit-app-region: no-drag;*/
 }
+
+.header .child {
+  display: flex;
+  flex: 1;
+}

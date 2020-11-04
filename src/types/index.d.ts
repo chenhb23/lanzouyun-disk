@@ -63,6 +63,7 @@ interface FileUploadRes {
   size: string
   time: string
 }
+
 ///////////////////////////////////////////////////////////////////
 // 列举文件夹
 interface Do47 {
@@ -102,6 +103,7 @@ interface Do22Res {
   text: string | null
   zt: ZT
 }
+
 ///////////////////////////////////////////////////////////////////
 // 创建文件夹
 interface Do2 {
@@ -110,11 +112,13 @@ interface Do2 {
   folder_name: string // 上传文件夹
   folder_description: string // 文件夹描述
 }
+
 interface Do2Res {
   info: string // "创建成功"
   text: FolderId // "2514952"
   zt: 1
 }
+
 ///////////////////////////////////////////////////////////////////
 // 文件上传
 interface Do1Res {
@@ -124,30 +128,35 @@ interface Do1Res {
     | 0 // 无法识别文件内容，请联系客服处理
     | 1 // 成功
 }
+
 ///////////////////////////////////////////////////////////////////
 // 删除文件
 interface Do6 {
   task: 6
   file_id: FileId
 }
+
 interface Do6Res {
   info: string // '已删除'
   text: null
   zt: 1
 }
+
 ///////////////////////////////////////////////////////////////////
 // 删除文件夹
 interface Do3 {
   task: 3
   folder_id: FolderId
 }
+
 interface Do3Res {
   info: string // "删除成功"
   text: null
   zt: 1
 }
+
 ///////////////////////////////////////////////////////////////////
-interface PwdFile {
+interface ShareFileReq {
   lx: 2
   fid: 2521232
   uid: 1702063
@@ -158,6 +167,22 @@ interface PwdFile {
   up: 1
   ls: 1
   pwd: string
+}
+
+interface ShareFile {
+  duan: string // "ihyz5a"
+  icon: string // "zip"
+  id: string // "iNHbWhyz5ab"
+  name_all: string // "cn_windows_10_business_editions_version_1803_updated_march_2018_x64_dvd_12063730.iso.009.lzy.zip"
+  p_ico: number // 0
+  size: string // '69.0 M'
+  t: number // 0
+  time: string // '昨天11:13'
+}
+interface ShareFileRes {
+  info: 'success'
+  text: ShareFile[]
+  zt: 1
 }
 ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////

@@ -8,7 +8,7 @@ export interface HeaderProps {
 export const Header: React.FC<HeaderProps> = props => {
   return (
     <header className='header'>
-      <div>{props.children}</div>
+      <div className='child'>{props.children}</div>
       {props.right && <div>{props.right}</div>}
     </header>
   )

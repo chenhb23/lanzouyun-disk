@@ -1,5 +1,7 @@
-import request from '../request'
+import request, {baseHeaders} from '../request'
 import {isFile} from '../util'
+import requireModule from '../requireModule'
+const querystring = requireModule('querystring')
 
 interface LsOptions {
   all?: boolean // 查询全部，递归查询（速度较慢）
@@ -46,4 +48,87 @@ export async function lsDir(folder_id) {
   return request<Do47Res, Do47>({
     body: {task: 47, folder_id},
   })
+}
+
+/**
+ * 解析分享文件夹
+ * @param options
+ */
+export async function lsShareFolder(options: {url: string; pwd?: string}) {
+  const is_newd = new URL(options.url).origin
+  const html = await fetch(options.url).then(value => value.text())
+
+  const {url, ...body} = new Matcher(html)
+    .matchObject('url')
+    .matchDataVar('t')
+    .matchDataVar('k')
+    .matchData('lx')
+    .matchData('fid')
+    .matchData('uid')
+    .matchData('rep')
+    .matchData('up')
+    .matchData('ls')
+    .done()
+
+  // const pageSize = 40
+  let pg = 1,
+    len = 0
+  const shareFiles: ShareFile[] = []
+
+  do {
+    const {text} = await fetch(`${is_newd}${url}`, {
+      method: 'post',
+      headers: baseHeaders,
+      body: querystring.stringify({...body, pg: pg++, pwd: options.pwd}),
+    }).then<ShareFileRes>(value => value.json())
+    len = Array.isArray(text) ? text.length : text
+
+    shareFiles.push(...(text || []))
+  } while (len)
+
+  return shareFiles
+}
+
+// info: "sucess"
+// text: (41) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+// zt: 1
+
+// info: "请刷新，重试"
+// text: 0
+// zt: 4
+
+class Matcher {
+  out: Record<string, any> = {}
+  constructor(public html: string) {}
+
+  matchDataVar(key: string) {
+    const varName = this.html.match(new RegExp(`'${key}':'?(\\w+)'?,`))
+    if (varName) {
+      const result = this.html.match(new RegExp(`var ${varName[1]} = '(.+?)';`))
+      if (result) {
+        this.out[key] = result[1]
+      }
+    }
+    return this
+  }
+
+  matchData(key: string) {
+    const result = this.html.match(new RegExp(`'${key}':'?(\\w+)'?,`))
+    if (result) {
+      this.out[key] = result[1]
+    }
+    return this
+  }
+
+  matchObject(key: string) {
+    const result = this.html.match(new RegExp(`${key} : '(.+?)',`))
+    if (result) {
+      this.out[key] = result[1]
+    }
+    return this
+  }
+
+  done() {
+    return this.out
+  }
 }

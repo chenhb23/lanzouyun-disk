@@ -48,7 +48,9 @@ export async function getFileDetail(file_id: FileId) {
 export async function parseTargetUrl(info: Pick<FileDownloadInfo, 'is_newd' | 'f_id'>) {
   // 以下操作不需要 cookie
   const shareUrl = `${info.is_newd}/${info.f_id}`
-  const value = await fetch(shareUrl).then(value => value.text())
+  console.log('shareUrl', shareUrl)
+  const value = await fetch(shareUrl, {headers: baseHeaders}).then(value => value.text())
+  console.log(value)
   const [_, downloadFrame] = value.match(/<iframe.*src="(\/fn\?\w{5,}?)"/)
 
   const value1 = await fetch(info.is_newd + downloadFrame).then(value1 => value1.text())

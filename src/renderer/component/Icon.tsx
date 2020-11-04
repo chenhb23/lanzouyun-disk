@@ -35,4 +35,5 @@ export type IconName =
   | 'video'
   | 'img'
   | 'delete'
+  | 'loading'
   | string

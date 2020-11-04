@@ -2,6 +2,7 @@
   display: flex;
   flex: 1;
   overflow: hidden;
+  /*overflow-y: hidden;*/
 }
 .TabsWrapper {
   display: flex;
@@ -13,5 +14,6 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  overflow: scroll;
+  overflow-y: scroll;
+  /*overflow-y: hidden;*/
 }
