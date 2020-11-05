@@ -4,7 +4,7 @@ interface IpcDownloadMsg {
   /**
    * `start${replyId}`
    * `done${replyId}`
-   * `progressing${replyId}`
+   * `progressing${replyId}` receivedByte, totalBytes
    * `failed${replyId}`
    // * `pause${replyId}`
    // * `interrupted${replyId}`

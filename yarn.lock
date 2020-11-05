@@ -8049,6 +8049,13 @@ mkdirp@^0.5.1, mkdirp@^0.5.3, mkdirp@^0.5.4, mkdirp@^0.5.5, mkdirp@~0.5.1:
   dependencies:
     minimist "^1.2.5"
 
+mobx-persist@^0.4.1:
+  version "0.4.1"
+  resolved "https://registry.npm.taobao.org/mobx-persist/download/mobx-persist-0.4.1.tgz#fe5790eda04e0ee0b91c512d1347104e09363f9a"
+  integrity sha1-/leQ7aBODuC5HFEtE0cQTgk2P5o=
+  dependencies:
+    serializr "^1.1.11"
+
 mobx-react-lite@^3.0.0:
   version "3.0.1"
   resolved "https://registry.npm.taobao.org/mobx-react-lite/download/mobx-react-lite-3.0.1.tgz#417f54a819d1e3e00c073077f29373399c95b005"
@@ -10623,6 +10630,11 @@ serialize-javascript@^4.0.0:
   integrity sha1-tSXhI4SJpez8Qq+sw/6Z5mb0sao=
   dependencies:
     randombytes "^2.1.0"
+
+serializr@^1.1.11:
+  version "1.5.4"
+  resolved "https://registry.npm.taobao.org/serializr/download/serializr-1.5.4.tgz#3ddf1cb7b4465c9c3f72bab0cbc41e09dbe50c33"
+  integrity sha1-Pd8ct7RGXJw/crqwy8QeCdvlDDM=
 
 serve-index@^1.9.1:
   version "1.9.1"

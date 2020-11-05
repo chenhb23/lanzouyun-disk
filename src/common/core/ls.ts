@@ -11,6 +11,9 @@ interface LsOptions {
 
 /**
  * 列出文件夹下的所有文件 + 目录
+ * @example
+ * ls // folder_id
+ * ls https://xxxx/xxxx --pwd 123 // url, pwd
  */
 export async function ls(folder_id = -1, {all = true} = {} as LsOptions) {
   const [res1, res2] = await Promise.all([lsDir(folder_id), lsFile(folder_id)])
@@ -58,7 +61,8 @@ export async function lsShareFolder(options: {url: string; pwd?: string}) {
   const is_newd = new URL(options.url).origin
   const html = await fetch(options.url).then(value => value.text())
 
-  const {url, ...body} = new Matcher(html)
+  const {url, in7f8l, ...body} = new Matcher(html)
+    .matchVar('in7f8l')
     .matchObject('url')
     .matchDataVar('t')
     .matchDataVar('k')
@@ -100,6 +104,14 @@ export async function lsShareFolder(options: {url: string; pwd?: string}) {
 class Matcher {
   out: Record<string, any> = {}
   constructor(public html: string) {}
+
+  matchVar(key: string) {
+    const result = this.html.match(new RegExp(`var ${key} = '(.+?)';`))
+    if (result) {
+      this.out[key] = result[1]
+    }
+    return this
+  }
 
   matchDataVar(key: string) {
     const varName = this.html.match(new RegExp(`'${key}':'?(\\w+)'?,`))

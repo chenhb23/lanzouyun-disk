@@ -38,7 +38,7 @@ export default function Files() {
   }
 
   useEffect(() => {
-    listFile(-1)
+    // listFile(-1)
   }, [])
 
   function cancel() {

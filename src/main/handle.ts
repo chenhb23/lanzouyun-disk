@@ -1,9 +1,9 @@
-import {BrowserWindow, ipcMain} from 'electron'
+import {BrowserWindow, DownloadItem, ipcMain} from 'electron'
 import path from 'path'
 import {debounce} from '../common/util'
 import store from './store'
 
-let _win: BrowserWindow
+// let _win: BrowserWindow
 
 function setupTrigger() {
   ipcMain.handle('trigger', async (event, method: string, ...args) => {
@@ -20,6 +20,7 @@ function setupTrigger() {
 }
 
 function setupDownload(win: BrowserWindow) {
+  const downloadItems: {[replyId: string]: DownloadItem} = {}
   ipcMain.on('download', (ipcEvent, downloadMsg: IpcDownloadMsg) => {
     const {folderPath, replyId, downUrl} = downloadMsg
     const debounceEvent = debounce(
@@ -31,6 +32,7 @@ function setupDownload(win: BrowserWindow) {
 
     win?.webContents?.session?.once('will-download', (event, item) => {
       if (folderPath) item.setSavePath(path.resolve(folderPath, item.getFilename()))
+      downloadItems[replyId] = item
 
       item.on('updated', (event1, state) => {
         if (state === 'progressing') {
@@ -38,30 +40,35 @@ function setupDownload(win: BrowserWindow) {
             // ipcEvent.reply(`pause${replyId}`) // todo
           } else {
             const receivedByte = item.getReceivedBytes()
-            debounceEvent(`progressing${replyId}`, receivedByte)
-            // console.log(`Received bytes: ${receivedByte}`)
+            const totalBytes = item.getTotalBytes()
+            debounceEvent(`progressing${replyId}`, receivedByte, totalBytes)
+            // console.log(`Received bytes: ${receivedByte} / ${totalBytes}`)
           }
         } else if (state === 'interrupted') {
           ipcEvent.reply(`failed${replyId}`)
-          // console.log('Download is interrupted but can be resumed')
-          // check file name is correct
         }
       })
 
       item.once('done', (event1, state) => {
         if (state === 'completed') {
-          // console.log('Download successfully');
           ipcEvent.reply(`done${replyId}`)
         } else {
           ipcEvent.reply(`failed${replyId}`)
-          // console.log(`Download failed: ${state}`)
         }
+        delete downloadItems[replyId]
       })
 
       ipcEvent.reply(`start${replyId}`)
     })
 
     win.webContents.downloadURL(downUrl)
+  })
+
+  ipcMain.on('abort', (ipcEvent, replyId) => {
+    if (downloadItems[replyId]) {
+      downloadItems[replyId].cancel()
+      delete downloadItems[replyId]
+    }
   })
 }
 
@@ -71,15 +78,23 @@ function setupStore() {
   })
 }
 
+let initial = false
 export function unsetup() {
   ipcMain.removeHandler('trigger')
   ipcMain.removeHandler('store')
+  ipcMain.removeAllListeners('download')
+  ipcMain.removeAllListeners('abort')
+  initial = false
 }
 
 export function setup(win: BrowserWindow) {
-  unsetup()
-  _win = win
+  if (initial) {
+    unsetup()
+  }
+  // _win = win
   setupTrigger()
   setupDownload(win)
   setupStore()
+
+  initial = true
 }

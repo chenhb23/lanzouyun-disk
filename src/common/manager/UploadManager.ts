@@ -9,9 +9,11 @@ import {createUploadForm} from '../core/upload'
 import {createSpecificName, debounce, delay} from '../util'
 import config from '../../project.config'
 import {message} from '../../renderer/component/Message'
+import path from 'path'
 
 const fs = requireModule('fs-extra')
-const path = requireModule('path')
+
+console.log('fs', fs)
 
 interface AddTask {
   filePath: string // 作为 ID
@@ -55,6 +57,7 @@ export class UploadManager implements Manager<UploadTask> {
     makeAutoObservable(this)
   }
 
+  taskSignal: {[fileName: string]: AbortController} = {}
   tasks: UploadTask[] = []
 
   get queue() {
@@ -160,10 +163,13 @@ export class UploadManager implements Manager<UploadTask> {
           subTask.resolve = bytes
         })
 
+        const abort = new AbortController()
+        this.taskSignal[subTask.fileName] = abort
         request<Do1Res, any>({
           path: '/fileup.php',
           body: form,
           onData: updateResolve,
+          signal: abort.signal,
         })
           .then(value => {
             if (value.zt === 1) {
@@ -197,7 +203,10 @@ export class UploadManager implements Manager<UploadTask> {
 
   removeAll() {}
 
-  pause(...args) {}
+  pause(id: string) {
+    this.taskSignal[id]?.abort()
+    // todo: 改变 status
+  }
 
   pauseAll() {}
 

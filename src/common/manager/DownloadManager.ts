@@ -20,7 +20,7 @@ type AddTask = {
 export interface DownloadTask {
   readonly taskCount: number
   readonly resolve: number
-  readonly size: number
+  readonly size: number // 最后展示
 
   fileName: string // fileName 与 folderId 联合 id
   id: FolderId // id | fol_id

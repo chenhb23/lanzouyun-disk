@@ -34,6 +34,7 @@ export const baseHeaders = {
 interface RequestParams<T extends Record<string, unknown> | Fm> extends RequestOptions {
   body?: T
   onData?: (bytes: number) => void
+  signal?: AbortSignal
 }
 
 /**
@@ -69,8 +70,6 @@ function request<T, B>(params: RequestParams<B>): Promise<T> {
       }
     }
 
-    // console.log('options', options, headers)
-
     const req = http.request({...options, headers}, res => {
       let data = ''
       res.setEncoding('utf8')
@@ -82,6 +81,13 @@ function request<T, B>(params: RequestParams<B>): Promise<T> {
       })
       res.on('error', reject)
     })
+
+    if (params.signal) {
+      params.signal.onabort = () => {
+        req.abort()
+        reject('request 取消!')
+      }
+    }
 
     if (data) {
       req.write(data)
