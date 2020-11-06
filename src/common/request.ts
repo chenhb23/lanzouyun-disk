@@ -63,7 +63,6 @@ function request<T, B>(params: RequestParams<B>): Promise<T> {
     const body: Fm = params.body
     if (body) {
       if (body instanceof Form) {
-        console.log('form upload')
         Object.assign(headers, (body as Fm).getHeaders())
       } else {
         data = querystring.stringify(body)
@@ -76,8 +75,7 @@ function request<T, B>(params: RequestParams<B>): Promise<T> {
       res.on('data', chunk => (data += chunk))
       res.on('end', () => {
         const json = parseJson(data)
-        console.log(json)
-        resolve(json)
+        resolve(request.intercepter.response(json) || json)
       })
       res.on('error', reject)
     })
@@ -105,6 +103,12 @@ function request<T, B>(params: RequestParams<B>): Promise<T> {
       body.pipe(req)
     }
   })
+}
+
+request.intercepter = {
+  response<T extends LZRequest>(res: T): T {
+    return res
+  },
 }
 
 export default request

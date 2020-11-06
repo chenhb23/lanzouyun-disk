@@ -3,10 +3,10 @@ import {ScrollView} from '../component/ScrollView'
 import {Header} from '../component/Header'
 import {Button} from '../component/Button'
 import {Bar} from '../component/Bar'
-import {uploadManager} from '../../common/manager/UploadManager'
 import {Icon} from '../component/Icon'
 import {byteToSize} from '../../common/util'
 import {Table} from '../component/Table'
+import upload from '../store/Upload'
 
 export default function Upload() {
   return (
@@ -25,12 +25,13 @@ export default function Upload() {
       }
     >
       <Table header={['文件名', '大小', '操作']}>
-        {uploadManager.tasks.map(item => {
+        {upload.list.map(item => {
           return (
             <tr key={item.filePath}>
               <td>
                 <Icon iconName={'file'} />
                 <span>{item.fileName}</span>
+                {item.tasks.length > 1 && <span>{` | ${item.tasks.length} 个子任务`}</span>}
               </td>
               <td>{`${byteToSize(item.resolve)} / ${byteToSize(item.size)}`}</td>
               <td>{/*todo:操作*/}</td>

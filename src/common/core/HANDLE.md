@@ -1,3 +1,5 @@
+# TODO
+
 ## ls
 
 ```shell script
@@ -18,11 +20,11 @@ ls https://wws.lanzous.com/izTawhyzvxa --pwd 1234
 ```shell script
 # download by file_id
 # 通过 file_id 先解析出 url
-download file_id
+download https://wws.lanzous.com/izTawhyzvxa
 
 # url, pwd?
 # download by url
-download https://wws.lanzous.com/izTawhyzvxa --pwd 1234
+download https://wws.lanzous.com/izTawhyzvxa --pwd 1234 --dir /Users/home/Download
 ```
 
 ```shell script

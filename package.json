@@ -5,6 +5,7 @@
   "main": "build/electron.js",
   "homepage": "./",
   "dependencies": {
+    "cheerio": "^1.0.0-rc.3",
     "electron-is-dev": "^1.2.0",
     "electron-store": "^6.0.1",
     "form-data": "^3.0.0",

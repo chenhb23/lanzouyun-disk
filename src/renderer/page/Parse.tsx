@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import {ScrollView} from '../component/ScrollView'
 import {Header} from '../component/Header'
 import {Button} from '../component/Button'
@@ -6,20 +6,18 @@ import {lsShareFolder} from '../../common/core/ls'
 import {Input} from '../component/Input'
 import {Bar} from '../component/Bar'
 import {Table} from '../component/Table'
-import {downloadManager} from '../../common/manager/DownloadManager'
 import {Icon} from '../component/Icon'
-import {byteToSize} from '../../common/util'
-import {TabPane} from '../component/Tabs'
 import {useRequest} from '../utils/useRequest'
-import {parseTargetUrl} from '../../common/core/download'
+import {parseUrl} from '../../common/core/download'
+import download from '../store/Download'
 
 export default function Parse() {
   const [list, setList] = useState<ShareFile[]>([])
 
   const {loading, request} = useRequest()
   const [urlForm, setUrlForm] = useState({
-    url: 'https://wws.lanzous.com/b01topa9e',
-    pwd: '',
+    url: 'https://wws.lanzous.com/ieuzii1fjdg',
+    pwd: '2s8f',
   })
 
   return (
@@ -49,16 +47,25 @@ export default function Parse() {
               style={{minWidth: 100}}
               onClick={() => {
                 request(lsShareFolder(urlForm), 'lsShareFolder').then(value => {
-                  setList(value)
-                  // const origin = new URL(urlForm.url).origin
-                  // parseTargetUrl({
-                  //   is_newd: origin,
-                  //   f_id: value[0].id,
-                  // }).then(console.log)
+                  console.log(value)
+                  setList(value.list)
                 })
               }}
             >
-              解析
+              解析文件夹
+            </Button>
+            <Button
+              type={'primary'}
+              loading={loading['lsShareFolder']}
+              style={{minWidth: 100}}
+              onClick={() => {
+                request(lsShareFolder(urlForm), 'lsShareFolder').then(value => {
+                  console.log(value)
+                  setList(value.list)
+                })
+              }}
+            >
+              解析文件
             </Button>
             <Button
               disabled={!list.length}
@@ -88,11 +95,16 @@ export default function Parse() {
                 <Icon
                   iconName={'download'}
                   onClick={() => {
-                    downloadManager.addTask({
-                      id: item.id,
-                      fileName: item.name_all,
-                      isFile: true,
+                    const {is_newd} = parseUrl(urlForm.url)
+                    download.addShareFileTask({
+                      url: `${is_newd}/${item.id}`,
                     })
+                    // item
+                    // downloadManager.addTask({
+                    //   id: item.id,
+                    //   fileName: item.name_all,
+                    //   isFile: true,
+                    // })
                   }}
                 />
               </td>

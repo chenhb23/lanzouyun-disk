@@ -3,10 +3,10 @@ import {ScrollView} from '../component/ScrollView'
 import {Header} from '../component/Header'
 import {Button} from '../component/Button'
 import {Bar} from '../component/Bar'
-import {downloadManager} from '../../common/manager/DownloadManager'
 import {Icon} from '../component/Icon'
 import {byteToSize} from '../../common/util'
 import {Table} from '../component/Table'
+import download from '../store/Download'
 
 export default function Download() {
   return (
@@ -25,12 +25,12 @@ export default function Download() {
       }
     >
       <Table header={['文件名', '大小', '操作']}>
-        {downloadManager.tasks.map(item => {
+        {download.list.map(item => {
           return (
-            <tr key={item.id}>
+            <tr key={item.url}>
               <td>
                 <Icon iconName={'file'} />
-                <span>{item.fileName}</span>
+                <span>{item.name}</span>
               </td>
               <td>{`${byteToSize(item.resolve)} / ${byteToSize(item.size)}`}</td>
               <td>{/*todo:操作*/}</td>

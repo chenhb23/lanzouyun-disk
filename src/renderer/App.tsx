@@ -1,8 +1,6 @@
 import React, {useState} from 'react'
 import './App.css'
 import {observer} from 'mobx-react'
-import {uploadManager} from '../common/manager/UploadManager'
-import {downloadManager} from '../common/manager/DownloadManager'
 import {Menu, MenuItem, MenuProvider} from './component/Menu'
 import {TabPane, Tabs} from './component/Tabs'
 import Upload from './page/Upload'
@@ -11,6 +9,17 @@ import Download from './page/Download'
 import Complete from './page/Complete'
 import Parse from './page/Parse'
 import SplitMerge from './page/SplitMerge'
+import download from './store/Download'
+import upload from './store/Upload'
+import request from '../common/request'
+import {message} from './component/Message'
+
+request.intercepter.response = res => {
+  if (res.zt != 1) {
+    message.info(res.text)
+  }
+  return res
+}
 
 const App = observer(() => {
   const [menu, setMenu] = useState('')
@@ -24,7 +33,7 @@ const App = observer(() => {
     <div className='App'>
       <main className='main'>
         <aside className='aside'>
-          <MenuProvider defaultKey={'5'} onChange={key => setMenu(key)}>
+          <MenuProvider defaultKey={'1'} onChange={key => setMenu(key)}>
             <Menu>
               <MenuItem id={'1'} icon={'file'}>
                 全部文件
@@ -32,13 +41,13 @@ const App = observer(() => {
             </Menu>
             <Menu title={'传输列表'}>
               <MenuItem id={'2'} icon={'upload'}>
-                正在上传 {taskLength(uploadManager.tasks)}
+                正在上传 {taskLength(upload.list)}
               </MenuItem>
               <MenuItem id={'3'} icon={'download'}>
-                正在下载 {taskLength(downloadManager.tasks)}
+                正在下载 {taskLength(download.list)}
               </MenuItem>
               <MenuItem id={'4'} icon={'finish'}>
-                已完成 {taskLength(downloadManager.finishTasks)}
+                已完成 {taskLength(download.finishList)}
               </MenuItem>
             </Menu>
             <Menu title={'实用工具'}>

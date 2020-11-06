@@ -42,9 +42,9 @@ export function byteToSize(byte: number) {
   }
 
   if (byte < sizeToByte('1k')) return `0`
-  if (byte < sizeToByte('1m')) return `${formatSize(byte, sizeToByte('1k'))}KB`
-  if (byte < sizeToByte('1g')) return `${formatSize(byte, sizeToByte('1m'))}MB`
-  if (byte < sizeToByte('1t')) return `${formatSize(byte, sizeToByte('1g'))}GB`
+  if (byte < sizeToByte('1m')) return `${formatSize(byte, sizeToByte('1k'))} k`
+  if (byte < sizeToByte('1g')) return `${formatSize(byte, sizeToByte('1m'))} M`
+  if (byte < sizeToByte('1t')) return `${formatSize(byte, sizeToByte('1g'))} G`
 }
 
 /**

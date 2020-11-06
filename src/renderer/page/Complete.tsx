@@ -2,11 +2,11 @@ import React from 'react'
 import {ScrollView} from '../component/ScrollView'
 import {Header} from '../component/Header'
 import {Button} from '../component/Button'
-import {downloadManager} from '../../common/manager/DownloadManager'
 import {Bar} from '../component/Bar'
 import {Icon} from '../component/Icon'
 import {byteToSize} from '../../common/util'
 import {Table} from '../component/Table'
+import download from '../store/Download'
 
 export default function Complete() {
   return (
@@ -16,7 +16,7 @@ export default function Complete() {
           <Header>
             <Button
               onClick={() => {
-                downloadManager.removeAllFinish()
+                download.removeAllFinish()
               }}
             >
               清除全部记录
@@ -29,12 +29,12 @@ export default function Complete() {
       }
     >
       <Table header={['文件名', '大小', '操作']}>
-        {downloadManager.finishTasks.map(item => {
+        {download.finishList.map(item => {
           return (
-            <tr key={item.id}>
+            <tr key={item.url}>
               <td>
                 <Icon iconName={'file'} />
-                <span>{item.fileName}</span>
+                <span>{item.name}</span>
               </td>
               <td>{`${byteToSize(item.size)}`}</td>
               <td>{/*todo:操作*/}</td>

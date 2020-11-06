@@ -7,7 +7,7 @@ export default {
   api: {
     task: '/doupload.php',
   },
-  splitSize: '69m', // 69m ok, 建议70以下
+  splitSize: '50m', // 69m ok, 建议70以下
   signSuffix: '.lzy.zip',
   homeTempDir: '.lanzouyun',
   supportList: [

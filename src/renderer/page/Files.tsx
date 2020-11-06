@@ -1,14 +1,11 @@
 import React, {useEffect, useMemo, useState} from 'react'
 import {Header} from '../component/Header'
 import {Button} from '../component/Button'
-import {uploadManager} from '../../common/manager/UploadManager'
 import {message} from '../component/Message'
 import {Crumbs} from '../component/Crumbs'
 import {Table} from '../component/Table'
 import {Icon} from '../component/Icon'
-import {getFileDetail} from '../../common/core/download'
-import {isFile} from '../../common/util'
-import {downloadManager} from '../../common/manager/DownloadManager'
+import {isFile, isSpecificFile, sizeToByte} from '../../common/util'
 import {rm} from '../../common/core/rm'
 import {ls} from '../../common/core/ls'
 import {Bar} from '../component/Bar'
@@ -18,6 +15,9 @@ import {ScrollView} from '../component/ScrollView'
 import {Input, Textarea} from '../component/Input'
 import {Modal} from '../component/Modal'
 import {mkdir} from '../../common/core/mkdir'
+import download from '../store/Download'
+import upload from '../store/Upload'
+import {fileDetail} from '../../common/core/detail'
 const electron = requireModule('electron')
 
 interface FolderForm {
@@ -38,8 +38,18 @@ export default function Files() {
   }
 
   useEffect(() => {
-    // listFile(-1)
+    listFile(-1)
   }, [])
+
+  useEffect(() => {
+    const log = () => {
+      listFile(currentFolder)
+    }
+    upload.on('finish', log)
+    return () => {
+      upload.removeListener('finish', log)
+    }
+  }, [currentFolder])
 
   function cancel() {
     setVisible(false)
@@ -61,13 +71,21 @@ export default function Files() {
       }}
       onDrop={event => {
         const file = event.dataTransfer.files[0]
-        uploadManager.addTask({
+        upload.addTask({
+          folderId: currentFolder,
+          size: file.size,
+          name: file.name,
+          type: file.type,
+          path: file.path,
+          lastModifiedDate: file.lastModified,
+        })
+        /*uploadManager.addTask({
           fileName: file.name,
           filePath: file.path,
           folderId: currentFolder,
           size: file.size,
           type: file.type,
-        })
+        })*/
       }}
       HeaderComponent={
         <>
@@ -77,12 +95,13 @@ export default function Files() {
               file
               onChange={files => {
                 const file = files[0]
-                uploadManager.addTask({
-                  fileName: file.name,
-                  filePath: file.path,
+                upload.addTask({
                   folderId: currentFolder,
                   size: file.size,
+                  name: file.name,
                   type: file.type,
+                  path: file.path,
+                  lastModifiedDate: file.lastModified,
                 })
               }}
             >
@@ -148,7 +167,7 @@ export default function Files() {
                     <Icon
                       iconName={'share'}
                       onClick={async () => {
-                        const info = await getFileDetail(item.id)
+                        const info = await fileDetail(item.id)
                         const shareUrl = `${info.is_newd}/${info.f_id}`
                         // todo: 分享文件夹
                         electron.clipboard.writeText(shareUrl)
@@ -159,13 +178,27 @@ export default function Files() {
                   {isFile(item.name) && (
                     <Icon
                       iconName={'download'}
-                      onClick={() =>
-                        downloadManager.addTask({
-                          id,
-                          fileName,
-                          isFile: 'id' in item,
-                        })
-                      }
+                      onClick={() => {
+                        if ('id' in item) {
+                          download.addFileTask({
+                            name: item.name,
+                            size: sizeToByte(item.size),
+                            file_id: `${item.id}`,
+                          })
+                        } else {
+                          download.addFolderTask({
+                            folder_id: item.fol_id,
+                            merge: isFile(item.name),
+                            name: item.name,
+                          })
+                        }
+
+                        // downloadManager.addTask({
+                        //   id,
+                        //   fileName,
+                        //   isFile: 'id' in item,
+                        // })
+                      }}
                     />
                   )}
                   <Icon

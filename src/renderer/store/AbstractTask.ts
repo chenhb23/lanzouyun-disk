@@ -1,16 +1,20 @@
-export enum TaskStatus {
-  pause,
+export enum InitStatus {
+  notInit,
   pending,
   finish,
-  fail, // 文件夹被删除可导致任务失败
 }
 
-export default interface Manager<Task> {
+export enum TaskStatus {
+  ready,
+  pending,
+  finish,
+  fail,
+}
+
+export default interface Task<Info> {
   readonly queue: number
 
-  tasks: Task[]
-
-  addTask(...args)
+  list: Info[]
 
   start(...args)
 

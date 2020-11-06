@@ -1,13 +1,8 @@
+import cheerio from 'cheerio'
 import request, {baseHeaders} from '../request'
 import {isFile} from '../util'
 import requireModule from '../requireModule'
 const querystring = requireModule('querystring')
-
-interface LsOptions {
-  all?: boolean // 查询全部，递归查询（速度较慢）
-  // pageSize?: number // todo
-  // sort?: string // todo: 排序
-}
 
 /**
  * 列出文件夹下的所有文件 + 目录
@@ -15,7 +10,7 @@ interface LsOptions {
  * ls // folder_id
  * ls https://xxxx/xxxx --pwd 123 // url, pwd
  */
-export async function ls(folder_id = -1, {all = true} = {} as LsOptions) {
+export async function ls(folder_id = -1) {
   const [res1, res2] = await Promise.all([lsDir(folder_id), lsFile(folder_id)])
 
   const sortFile = a => (isFile(a.name) ? 1 : -1)
@@ -44,14 +39,15 @@ export async function lsFile(folder_id: FolderId) {
 }
 
 /**
- * 列出该文件夹下的id
- * @param folder_id
+ * 列出该文件夹下的所有文件夹
  */
-export async function lsDir(folder_id) {
+export async function lsDir(folder_id: FolderId) {
   return request<Do47Res, Do47>({
     body: {task: 47, folder_id},
   })
 }
+
+export async function lsShareFile(options: {url: string; pwd?: string}) {}
 
 /**
  * 解析分享文件夹
@@ -61,8 +57,11 @@ export async function lsShareFolder(options: {url: string; pwd?: string}) {
   const is_newd = new URL(options.url).origin
   const html = await fetch(options.url).then(value => value.text())
 
-  const {url, in7f8l, ...body} = new Matcher(html)
-    .matchVar('in7f8l')
+  const $ = cheerio.load(html)
+  const title = $('title').text()
+  // console.log("$('title').text()", $('title').text())
+
+  const {url, ...body} = new Matcher(html)
     .matchObject('url')
     .matchDataVar('t')
     .matchDataVar('k')
@@ -74,7 +73,6 @@ export async function lsShareFolder(options: {url: string; pwd?: string}) {
     .matchData('ls')
     .done()
 
-  // const pageSize = 40
   let pg = 1,
     len = 0
   const shareFiles: ShareFile[] = []
@@ -90,18 +88,13 @@ export async function lsShareFolder(options: {url: string; pwd?: string}) {
     shareFiles.push(...(text || []))
   } while (len)
 
-  return shareFiles
+  return {
+    name: title,
+    list: shareFiles,
+  }
 }
 
-// info: "sucess"
-// text: (41) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
-// zt: 1
-
-// info: "请刷新，重试"
-// text: 0
-// zt: 4
-
-class Matcher {
+export class Matcher {
   out: Record<string, any> = {}
   constructor(public html: string) {}
 
@@ -134,6 +127,32 @@ class Matcher {
 
   matchObject(key: string) {
     const result = this.html.match(new RegExp(`${key} : '(.+?)',`))
+    if (result) {
+      this.out[key] = result[1]
+    }
+    return this
+  }
+
+  // 文件，带密码
+  matchPwd(key: string) {
+    // type : 'post',
+    // url : '/ajaxm.php',
+    // data : 'action=downprocess&sign=BmABPw4_aDz4IAQA_aV2dRbVozAjVQPwExBTUHNVI2AzQAJgAjXDxXMglpAWcGZgI2Uz4CNlc_bAjYBMA_c_c&p='+pwd,
+    // dataType : 'json',
+    const result = this.html.match(new RegExp(`${key} ?: ?'(.*?)'`))
+    if (result) {
+      this.out[key] = result[1]
+    }
+    return this
+  }
+
+  matchIframe(key = 'iframe') {
+    // <iframe class="ifr2" name="1604572455" src="/fn?A2VTOQ5gD2kHYQVjVjdUbABqBDEFfAN1UmhabQVvADEDN1s5XDZXMQlrB2QBYA_c_c" frameborder="0" scrolling="no"></iframe>
+    return this.match(key, '<iframe.*src="(\\/fn\\?\\w{5,})" ')
+  }
+
+  private match(key: string, pattern: string) {
+    const result = this.html.match(new RegExp(pattern))
     if (result) {
       this.out[key] = result[1]
     }

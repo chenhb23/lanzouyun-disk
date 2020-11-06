@@ -63,7 +63,15 @@ interface FileUploadRes {
   size: string
   time: string
 }
-
+interface FolderShareInfo {
+  des: string // ''
+  is_newd: string // 'https://wws.lanzous.com'
+  name: string // 'e8fa618362844fec927d67ed7ea27db7.png'
+  new_url: string // 'https://wws.lanzous.com/b01tp16xg'
+  onof: Bool // '1'
+  pwd: string // '5wex'
+  taoc: string // ''
+}
 ///////////////////////////////////////////////////////////////////
 // 列举文件夹
 interface Do47 {
@@ -156,6 +164,17 @@ interface Do3Res {
 }
 
 ///////////////////////////////////////////////////////////////////
+interface Do18 {
+  task: 18
+  folder_id: FolderId
+}
+interface Do18Res {
+  info: FolderShareInfo
+  text: null
+  zt: 1
+}
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
 interface ShareFileReq {
   lx: 2
   fid: 2521232
@@ -183,6 +202,20 @@ interface ShareFileRes {
   info: 'success'
   text: ShareFile[]
   zt: 1
+}
+
+// 文件，带密码
+interface DownloadUrlRes {
+  dom: string // 域名
+  inf: number
+  url: string // file/ 的后缀
+  zt: number
+}
+
+interface LZRequest<I = any, T = any> {
+  info: I
+  text: T
+  zt: number
 }
 ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////
