@@ -7,7 +7,8 @@ function write(filePath: PathLike, target: WriteStream) {
   return new Promise((resolve, reject) => {
     const rs = fs.createReadStream(filePath)
     rs.pipe(target, {end: false}).on('error', reject)
-    rs.on('end', resolve).on('error', reject)
+    rs.on('end', resolve)
+    rs.on('error', reject)
   })
 }
 

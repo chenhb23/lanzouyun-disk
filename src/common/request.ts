@@ -5,7 +5,6 @@ import store from '../main/store'
 
 const querystring = requireModule('querystring')
 const http = requireModule('https')
-const path = requireModule('path')
 const Form = requireModule('form-data')
 const fs = requireModule('fs-extra')
 
@@ -118,13 +117,13 @@ export default request
 interface DownloadFile {
   url: string
   resolvePath: string
-  onProgress?: (receive: number, total: number) => void
+  onProgress?: (receive: number, total?: number) => void
   signal?: AbortSignal
 }
 
 /**
  * nodejs 下载文件
- * @param options
+ * @deprecated 会有重定向问题，暂不使用
  */
 export function downloadFile(options: DownloadFile) {
   return new Promise((resolve, reject) => {
@@ -132,7 +131,7 @@ export function downloadFile(options: DownloadFile) {
     let receivedBytes = 0
 
     const req = http
-      .get(options.url, res => {
+      .get(options.url, baseHeaders, res => {
         const out = fs.createWriteStream(options.resolvePath, {
           // flags: 'w',
         })
@@ -141,10 +140,14 @@ export function downloadFile(options: DownloadFile) {
           receivedBytes += chunk.length
           options.onProgress?.(receivedBytes, totalBytes)
         })
-        res.on('end', resolve)
+        res.on('end', () => {
+          console.log('download end:', receivedBytes, totalBytes)
+          resolve()
+        })
         res.on('error', reject)
       })
       .on('response', response => {
+        console.log('response', response)
         totalBytes = +response.headers['content-length']
       })
 
@@ -156,19 +159,3 @@ export function downloadFile(options: DownloadFile) {
     }
   })
 }
-
-// const abort = new AbortController()
-// downloadFile({
-//   url: 'https://avocadocondo-static.oss-cn-shanghai.aliyuncs.com/app/app-base-armeabi-v7a-release.apk',
-//   resolvePath: '/Users/chb/Desktop/tempDownload/apple-app-site-association',
-//   onProgress: (receive, total) => {
-//     console.log(receive, total)
-//   },
-//   signal: abort.signal,
-// }).then(() => {
-//   console.log('finish')
-// })
-
-// setTimeout(() => {
-//   abort.abort()
-// }, 2000)

@@ -83,7 +83,7 @@ export function isFile(name: string) {
   return /\.[0-9a-zA-Z]+$/.test(name)
 }
 
-export const debounce = (fn, {time = 250} = {}) => {
+export const debounce = (fn, {time = 200} = {}) => {
   let isEnable = true
   return (...args) => {
     if (isEnable) {

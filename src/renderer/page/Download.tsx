@@ -10,8 +10,6 @@ import {Table} from '../component/Table'
 import download from '../store/Download'
 
 const Download = observer(() => {
-  console.log(download.list.map(item => item.tasks).map(item => item.reduce((total, item) => total + item.resolve, 0)))
-
   return (
     <ScrollView
       HeaderComponent={

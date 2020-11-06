@@ -3,7 +3,7 @@ import {autorun, makeObservable, toJS} from 'mobx'
 import {resolve} from 'path'
 import Task, {makeSizeStatus, TaskStatus} from './AbstractTask'
 import {downloadPageInfo, fileDownUrl, parseUrl, pwdFileDownUrl, sendDownloadTask} from '../../common/core/download'
-import {delay, isSpecificFile, mkTempDirSync, restoreFileName, sizeToByte} from '../../common/util'
+import {debounce, delay, isSpecificFile, mkTempDirSync, restoreFileName, sizeToByte} from '../../common/util'
 import {lsFile, lsShareFolder} from '../../common/core/ls'
 import requireModule from '../../common/requireModule'
 import merge from '../../common/merge'
@@ -90,7 +90,7 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
       await merge(files, resolveTarget)
       await delay(200)
       // 删除临时文件夹
-      fs.removeSync(tempDir)
+      // fs.removeSync(tempDir)
     } else if (isSpecificFile(info.name)) {
       fs.renameSync(resolveTarget, restoreFileName(resolveTarget))
     }
@@ -113,9 +113,6 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
   checkTask() {
     const url = this.list.find(item => item.status === TaskStatus.ready)?.url
     // const url = this.list.find(item => item.tasks.some(task => task.status === TaskStatus.ready))?.url
-    // todo: some
-    console.log(toJS(this.list))
-    console.log(url)
     if (url) {
       console.log('url', url)
       this.start(url)
@@ -152,9 +149,11 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
     if (info && this.canStart(info)) {
       const task = info.tasks.find(item => [TaskStatus.ready, TaskStatus.fail].includes(item.status))
       if (task) {
+        task.status = TaskStatus.pending
+
         const {url: downloadUrl} = task.pwd ? await pwdFileDownUrl(task.url, task.pwd) : await fileDownUrl(task.url)
 
-        task.status = TaskStatus.pending
+        const abort = new AbortController()
 
         const replyId = task.url
         const ipcMessage: IpcDownloadMsg = {
@@ -185,7 +184,6 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
             removeListener()
           })
 
-        const abort = new AbortController()
         this.taskSignal[task.url] = abort
         abort.signal.onabort = () => {
           electron.ipcRenderer.send('abort', replyId)
@@ -227,7 +225,6 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
     }
 
     makeSizeStatus(info)
-    console.log(info)
     this.list.push(info)
   }
 
@@ -271,9 +268,10 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
   async addFolderTask(options: {folder_id: FolderId; name: string; merge?: boolean}) {
     let folderDir = this.getFileDir()
     const [detail, files] = await Promise.all([folderDetail(options.folder_id), lsFile(options.folder_id)])
+    console.log('detail', detail)
     const info: DownloadInfo = {
       folderPath: folderDir,
-      url: detail.is_newd,
+      url: detail.new_url,
       pwd: detail.onof === '1' ? detail.pwd : '',
       merge: options.merge,
       name: options.name,
@@ -283,6 +281,7 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
     if (options.merge) {
       folderDir = mkTempDirSync()
     }
+    console.log('folderDirfolderDir', folderDir)
 
     const fileInfos = await Promise.all(files.map(file => fileDetail(file.id)))
     info.tasks.push(
@@ -298,6 +297,7 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
     )
 
     makeSizeStatus(info)
+    console.log('addFolderTask', info)
     this.list.push(info)
   }
 
