@@ -1,19 +1,20 @@
-import {app, BrowserWindow, session} from 'electron'
+import {app, BrowserWindow, session, Menu} from 'electron'
 import * as path from 'path'
 import * as querystring from 'querystring'
 import isDev from 'electron-is-dev'
 import store from './main/store'
-import {setup} from './main/handle'
+import {loadLogin, setup} from './main/handle'
 import config from './project.config'
 
-// const isDev = true
-
-const loadURL = 'http://localhost:3000'
-// const loadURL = `file://${path.join(__dirname, 'index.html')}`
+const loadURL = isDev ? 'http://localhost:3000' : `file://${path.join(__dirname, 'index.html')}`
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow: BrowserWindow
+
+if (!isDev) {
+  Menu.setApplicationMenu(null)
+}
 
 function createWindow() {
   // Create the browser window.
@@ -35,9 +36,11 @@ function createWindow() {
   setup(mainWindow)
 
   const cookie = store.get('cookie')
+  // const cookie = false
+  // mainWindow.webContents.session.clearStorageData()
 
   if (!cookie) {
-    mainWindow.loadURL(config.lanzouUrl + config.page.login)
+    loadLogin(mainWindow)
   } else {
     mainWindow.loadURL(loadURL)
     // mainWindow.webContents.openDevTools()
@@ -58,13 +61,16 @@ function createWindow() {
 
   session.defaultSession.webRequest.onResponseStarted({urls: [config.lanzouUrl + config.api.task]}, details => {
     if (details.responseHeaders['Set-Cookie']?.length) {
-      const cookieStr = details.responseHeaders['Set-Cookie'].join('; ')
+      const cookieStr = details.responseHeaders['Set-Cookie']?.join('; ')
       const cookieObj = querystring.parse(cookieStr, '; ')
       if (cookieObj.domaim) {
+        // 按照域名设置 cookie
         setCookies({domain: cookieObj.domaim})
         return
       }
     }
+
+    // 按url
     setCookies({url: config.lanzouUrl})
 
     if (details.referrer) store.set('referrer', details.referrer)

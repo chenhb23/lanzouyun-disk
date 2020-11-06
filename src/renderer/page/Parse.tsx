@@ -7,7 +7,7 @@ import {Input} from '../component/Input'
 import {Bar} from '../component/Bar'
 import {Table} from '../component/Table'
 import {Icon} from '../component/Icon'
-import {useRequest} from '../utils/useRequest'
+import {useRequest} from '../hook/useRequest'
 import {parseUrl} from '../../common/core/download'
 import download from '../store/Download'
 

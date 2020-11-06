@@ -2,6 +2,7 @@ import {BrowserWindow, DownloadItem, ipcMain} from 'electron'
 import path from 'path'
 import {debounce} from '../common/util'
 import store from './store'
+import config from '../project.config'
 
 // let _win: BrowserWindow
 
@@ -69,9 +70,15 @@ function setupDownload(win: BrowserWindow) {
   })
 }
 
-function setupStore() {
+function setupStore(win: BrowserWindow) {
   ipcMain.handle('store', (event, method, ...args) => {
     return store[method](...args)
+  })
+
+  // handle?
+  ipcMain.on('logout', () => {
+    win.webContents.session.clearStorageData()
+    loadLogin(win)
   })
 }
 
@@ -79,6 +86,7 @@ let initial = false
 export function unsetup() {
   ipcMain.removeHandler('trigger')
   ipcMain.removeHandler('store')
+  ipcMain.removeHandler('clean')
   ipcMain.removeAllListeners('download')
   ipcMain.removeAllListeners('abort')
   initial = false
@@ -91,7 +99,13 @@ export function setup(win: BrowserWindow) {
   // _win = win
   setupTrigger()
   setupDownload(win)
-  setupStore()
+  setupStore(win)
 
   initial = true
+}
+
+export function loadLogin(win: BrowserWindow) {
+  return win.loadURL(config.lanzouUrl + config.page.login).then(() => {
+    return win.webContents.insertCSS('*{visibility:hidden}.p1{visibility:visible}.p1 *{visibility:inherit}')
+  })
 }

@@ -9,6 +9,7 @@
   min-height: 27px;
   position: relative;
   white-space: nowrap;
+  -webkit-app-region: no-drag;
 }
 
 .Button:hover {

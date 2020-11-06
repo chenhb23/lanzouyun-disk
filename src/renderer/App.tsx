@@ -13,6 +13,9 @@ import download from './store/Download'
 import upload from './store/Upload'
 import request from '../common/request'
 import {message} from './component/Message'
+import {Button} from './component/Button'
+import requireModule from '../common/requireModule'
+const electron = requireModule('electron')
 
 request.intercepter.response = res => {
   if (![1, 2].includes(res.zt)) {
@@ -34,32 +37,45 @@ const App = observer(() => {
     <div className='App'>
       <main className='main'>
         <aside className='aside'>
-          <MenuProvider defaultKey={'1'} onChange={key => setMenu(key)}>
-            <Menu>
-              <MenuItem id={'1'} icon={'file'}>
-                全部文件
-              </MenuItem>
-            </Menu>
-            <Menu title={'传输列表'}>
-              <MenuItem id={'2'} icon={'upload'}>
-                正在上传 {taskLength(upload.list)}
-              </MenuItem>
-              <MenuItem id={'3'} icon={'download'}>
-                正在下载 {taskLength(download.list)}
-              </MenuItem>
-              <MenuItem id={'4'} icon={'finish'}>
-                已完成 {taskLength(download.finishList)}
-              </MenuItem>
-            </Menu>
-            <Menu title={'实用工具'}>
-              <MenuItem id={'5'} icon={'upload'}>
-                解析Url
-              </MenuItem>
-              <MenuItem id={'6'} icon={'download'}>
-                文件分割 / 合并
-              </MenuItem>
-            </Menu>
-          </MenuProvider>
+          <div>
+            <MenuProvider defaultKey={'1'} onChange={key => setMenu(key)}>
+              <Menu>
+                <MenuItem id={'1'} icon={'file'}>
+                  全部文件
+                </MenuItem>
+              </Menu>
+              <Menu title={'传输列表'}>
+                <MenuItem id={'2'} icon={'upload'}>
+                  正在上传 {taskLength(upload.list)}
+                </MenuItem>
+                <MenuItem id={'3'} icon={'download'}>
+                  正在下载 {taskLength(download.list)}
+                </MenuItem>
+                <MenuItem id={'4'} icon={'finish'}>
+                  已完成 {taskLength(download.finishList)}
+                </MenuItem>
+              </Menu>
+              <Menu title={'实用工具'}>
+                <MenuItem id={'5'} icon={'upload'}>
+                  解析Url
+                </MenuItem>
+                <MenuItem id={'6'} icon={'download'}>
+                  文件分割 / 合并
+                </MenuItem>
+              </Menu>
+            </MenuProvider>
+          </div>
+
+          <div className='logout'>
+            <Button
+              style={{width: '100%'}}
+              onClick={() => {
+                electron.ipcRenderer.send('logout')
+              }}
+            >
+              退出登录
+            </Button>
+          </div>
         </aside>
         <div className='content'>
           <Tabs activeKey={menu}>

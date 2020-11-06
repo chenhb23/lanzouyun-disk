@@ -134,7 +134,7 @@ class Upload extends EventEmitter implements Task<UploadInfo> {
         type: options.type,
         tasks: [],
       }
-      if (options.size <= sizeToByte(config.splitSize)) {
+      if (options.size <= sizeToByte(config.maxSize)) {
         let supportName = options.name
         if (config.supportList.every(ext => !info.filePath.endsWith(`.${ext}`))) {
           info.type = ''

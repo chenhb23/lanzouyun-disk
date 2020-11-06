@@ -50,6 +50,9 @@ h1, h2, h3, h4, h5 {
   background-color: #F6F6F6;
   width: 200px;
   padding-top: 68px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 .content {
   display: flex;
@@ -62,4 +65,8 @@ h1, h2, h3, h4, h5 {
   box-shadow: 2px 2px 30px 5px #e0e0e0;
   padding: 10px;
   border-radius: 5px;
+}
+
+.logout {
+  padding: 30px 24px;
 }
