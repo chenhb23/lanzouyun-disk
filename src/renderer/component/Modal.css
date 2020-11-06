@@ -2,12 +2,15 @@
   position: fixed;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(0.7);
   display: flex;
   justify-content: center;
   align-items: center;
+  transition: all 0.3s;
+  opacity: 0;
+}
 
-  /*right: 0;*/
-  /*bottom: 0;*/
-  /*background-color: rgba(0,0,0,0.4);*/
+.show {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
 }

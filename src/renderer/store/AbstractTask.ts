@@ -28,3 +28,24 @@ export default interface Task<Info> {
 
   removeAll()
 }
+
+export function makeSizeStatus<T extends {tasks: {size: number; resolve: number; status: TaskStatus}[]}>(info: T) {
+  Object.defineProperties(info, {
+    size: {
+      get() {
+        return this.tasks.reduce((total, item) => total + (item.size ?? 0), 0)
+      },
+    },
+    resolve: {
+      get() {
+        return this.tasks.reduce((total, item) => total + (item.resolve ?? 0), 0)
+      },
+    },
+    status: {
+      get() {
+        if (this.tasks.some(item => item.status === TaskStatus.pending)) return TaskStatus.pending
+        return TaskStatus.ready
+      },
+    },
+  })
+}

@@ -5,6 +5,8 @@
   padding-left: 12px;
   padding-right: 12px;
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .bar::after {
@@ -18,4 +20,5 @@
   left: 0;
   right: 0;
   transform: scaleY(0.5);
+  bottom: 0;
 }

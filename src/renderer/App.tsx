@@ -15,7 +15,8 @@ import request from '../common/request'
 import {message} from './component/Message'
 
 request.intercepter.response = res => {
-  if (res.zt != 1) {
+  if (![1, 2].includes(res.zt)) {
+    console.log(res)
     message.info(res.text)
   }
   return res

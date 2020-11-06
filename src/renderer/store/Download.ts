@@ -1,15 +1,8 @@
 import {EventEmitter} from 'events'
 import {autorun, makeObservable, toJS} from 'mobx'
 import {resolve} from 'path'
-import Task, {TaskStatus} from './AbstractTask'
-import {
-  downloadPageInfo,
-  fileDownUrl,
-  parseTargetUrl,
-  parseUrl,
-  pwdFileDownUrl,
-  sendDownloadTask,
-} from '../../common/core/download'
+import Task, {makeSizeStatus, TaskStatus} from './AbstractTask'
+import {downloadPageInfo, fileDownUrl, parseUrl, pwdFileDownUrl, sendDownloadTask} from '../../common/core/download'
 import {delay, isSpecificFile, mkTempDirSync, restoreFileName, sizeToByte} from '../../common/util'
 import {lsFile, lsShareFolder} from '../../common/core/ls'
 import requireModule from '../../common/requireModule'
@@ -18,13 +11,6 @@ import {fileDetail, folderDetail} from '../../common/core/detail'
 
 const electron = requireModule('electron')
 const fs = requireModule('fs-extra')
-
-interface AddTask {
-  url: string // 作为 id
-  name: string
-  pwd?: string
-  merge?: boolean
-}
 
 interface DownloadInfo {
   readonly size?: number
@@ -240,7 +226,7 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
       ],
     }
 
-    this.makeSizeStatus(info)
+    makeSizeStatus(info)
     console.log(info)
     this.list.push(info)
   }
@@ -274,7 +260,7 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
         },
       ],
     }
-    this.makeSizeStatus(task)
+    makeSizeStatus(task)
     this.list.push(task)
   }
 
@@ -311,7 +297,7 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
       }))
     )
 
-    this.makeSizeStatus(info)
+    makeSizeStatus(info)
     this.list.push(info)
   }
 
@@ -345,29 +331,8 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
       }))
     )
 
-    this.makeSizeStatus(info)
+    makeSizeStatus(info)
     this.list.push(info)
-  }
-
-  makeSizeStatus(info: DownloadInfo) {
-    Object.defineProperties(info, {
-      size: {
-        get() {
-          return this.tasks.reduce((total, item) => total + (item.size ?? 0), 0)
-        },
-      },
-      resolve: {
-        get() {
-          return this.tasks.reduce((total, item) => total + (item.resolve ?? 0), 0)
-        },
-      },
-      status: {
-        get() {
-          if (this.tasks.some(item => item.status === TaskStatus.pending)) return TaskStatus.pending
-          return TaskStatus.ready
-        },
-      },
-    })
   }
 }
 

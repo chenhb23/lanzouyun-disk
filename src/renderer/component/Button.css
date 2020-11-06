@@ -35,21 +35,8 @@
   border-color: rgb(76, 137, 247);
   color: #ffffff;
 }
-/*.Button.text {*/
-/*  border-color: transparent;*/
-/*  background-color: transparent;*/
-/*}*/
 
 .ButtonLabel {
   margin: -1px -10px;
   padding: 1px 10px;
-}
-
-.ButtonLoading {
-  animation: rotate 2s linear infinite;
-}
-
-@keyframes rotate {
-  from {transform: rotate(0deg)}
-  from {transform: rotate(359deg)}
 }

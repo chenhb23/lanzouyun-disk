@@ -5,7 +5,7 @@ import {message} from '../component/Message'
 import {Crumbs} from '../component/Crumbs'
 import {Table} from '../component/Table'
 import {Icon} from '../component/Icon'
-import {isFile, isSpecificFile, sizeToByte} from '../../common/util'
+import {isFile, sizeToByte} from '../../common/util'
 import {rm} from '../../common/core/rm'
 import {ls} from '../../common/core/ls'
 import {Bar} from '../component/Bar'
@@ -42,12 +42,10 @@ export default function Files() {
   }, [])
 
   useEffect(() => {
-    const log = () => {
-      listFile(currentFolder)
-    }
-    upload.on('finish', log)
+    const refresh = () => listFile(currentFolder)
+    upload.on('finish', refresh)
     return () => {
-      upload.removeListener('finish', log)
+      upload.removeListener('finish', refresh)
     }
   }, [currentFolder])
 
@@ -115,27 +113,13 @@ export default function Files() {
             >
               新建文件夹
             </Button>
-            {/*<Button
-              onClick={() => {
-                setTest(prevState => !prevState)
-                if (test) {
-                  const dis = message.success('adsf')
-                  setTimeout(() => {
-                    dis()
-                  }, 600)
-                } else {
-                  message.info('adsf')
-                }
-              }}
-            >
-              测试
-            </Button>*/}
           </Header>
           <Bar>
             <Crumbs
               crumbs={[{name: '全部文件', folderid: -1}, ...(list.info || [])]}
               onClick={folderid => listFile(folderid)}
             />
+            {!!(loading['ls'] || loading['download']) && <Icon iconName={'loading'} />}
           </Bar>
         </>
       }
@@ -146,7 +130,6 @@ export default function Files() {
           const time = 'id' in item ? item.time : ''
           const downs = 'id' in item ? item.downs : ''
           const id = 'id' in item ? item.id : item.fol_id
-          const fileName = 'id' in item ? item.name_all : item.name
 
           return (
             <tr key={id}>
@@ -180,24 +163,24 @@ export default function Files() {
                       iconName={'download'}
                       onClick={() => {
                         if ('id' in item) {
-                          download.addFileTask({
-                            name: item.name,
-                            size: sizeToByte(item.size),
-                            file_id: `${item.id}`,
-                          })
+                          request(
+                            download.addFileTask({
+                              name: item.name,
+                              size: sizeToByte(item.size),
+                              file_id: `${item.id}`,
+                            }),
+                            'download'
+                          )
                         } else {
-                          download.addFolderTask({
-                            folder_id: item.fol_id,
-                            merge: isFile(item.name),
-                            name: item.name,
-                          })
+                          request(
+                            download.addFolderTask({
+                              folder_id: item.fol_id,
+                              merge: isFile(item.name),
+                              name: item.name,
+                            }),
+                            'download'
+                          )
                         }
-
-                        // downloadManager.addTask({
-                        //   id,
-                        //   fileName,
-                        //   isFile: 'id' in item,
-                        // })
                       }}
                     />
                   )}
@@ -226,23 +209,26 @@ export default function Files() {
 
       <Modal visible={visible}>
         <div className='dialog'>
-          <h3>文件名</h3>
-          <Input
-            value={form.name}
-            onChange={event => setForm(prevState => ({...prevState, name: event.target.value}))}
-          />
-          <h3>文件描述</h3>
-          <Textarea
-            value={form.folderDesc}
-            placeholder={'可选项，建议160字数以内。'}
-            maxLength={160}
-            onChange={event => setForm(prevState => ({...prevState, folderDesc: event.target.value}))}
-          />
-          <div style={{textAlign: 'right', marginTop: 10}}>
-            <Button onClick={cancel}>取消</Button>
-            <Button loading={loading['mkdir']} type={'primary'} onClick={makeDir}>
-              保存
-            </Button>
+          <div style={{width: 400}}>
+            <h3>文件名</h3>
+            <Input
+              value={form.name}
+              placeholder={'不能包含特殊字符，如：空格，括号'}
+              onChange={event => setForm(prevState => ({...prevState, name: event.target.value}))}
+            />
+            <h3>文件描述</h3>
+            <Textarea
+              value={form.folderDesc}
+              placeholder={'可选项，建议160字数以内。'}
+              maxLength={160}
+              onChange={event => setForm(prevState => ({...prevState, folderDesc: event.target.value}))}
+            />
+            <div style={{textAlign: 'right', marginTop: 10}}>
+              <Button onClick={cancel}>取消</Button>
+              <Button loading={loading['mkdir']} type={'primary'} onClick={makeDir}>
+                保存
+              </Button>
+            </div>
           </div>
         </div>
       </Modal>

@@ -15,11 +15,7 @@ export const Button: React.FC<ButtonProps> = props => {
 
   return (
     <button className={`Button ${type} ${className}`} {...rest}>
-      {loading ? (
-        <Icon className='ButtonLoading' iconName={'loading'} />
-      ) : (
-        icon && (typeof icon === 'string' ? <Icon iconName={icon} /> : icon)
-      )}
+      {loading ? <Icon iconName={'loading'} /> : icon && (typeof icon === 'string' ? <Icon iconName={icon} /> : icon)}
       {file ? (
         <label className='ButtonLabel'>
           {rest.children}

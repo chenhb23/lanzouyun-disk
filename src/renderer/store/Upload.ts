@@ -1,7 +1,7 @@
 import {EventEmitter} from 'events'
 import {resolve} from 'path'
 import {autorun, makeObservable} from 'mobx'
-import Task, {TaskStatus} from './AbstractTask'
+import Task, {makeSizeStatus, TaskStatus} from './AbstractTask'
 import config from '../../project.config'
 import {createSpecificName, debounce, sizeToByte} from '../../common/util'
 import {isExistByName} from '../../common/core/isExist'
@@ -170,7 +170,7 @@ class Upload extends EventEmitter implements Task<UploadInfo> {
         )
       }
 
-      this.makeSizeStatus(info)
+      makeSizeStatus(info)
       this.list.push(info)
     } catch (e) {
       message.info(e)
@@ -230,12 +230,10 @@ class Upload extends EventEmitter implements Task<UploadInfo> {
           .then(value => {
             if (value.zt === 1) {
               task.status = TaskStatus.finish
-              // this.checkTaskFinish(id)
               this.emit('finish-task', info, task)
             } else {
               task.status = TaskStatus.fail
             }
-            // this.emit('finish-task', info, task)
           })
           .catch(reason => {
             console.log(reason)
@@ -252,27 +250,6 @@ class Upload extends EventEmitter implements Task<UploadInfo> {
   }
 
   startAll() {}
-
-  makeSizeStatus(info: UploadInfo) {
-    Object.defineProperties(info, {
-      size: {
-        get() {
-          return this.tasks.reduce((total, item) => total + (item.size ?? 0), 0)
-        },
-      },
-      resolve: {
-        get() {
-          return this.tasks.reduce((total, item) => total + (item.resolve ?? 0), 0)
-        },
-      },
-      status: {
-        get() {
-          if (this.tasks.some(item => item.status === TaskStatus.pending)) return TaskStatus.pending
-          return TaskStatus.ready
-        },
-      },
-    })
-  }
 }
 
 const upload = new Upload()

@@ -23,12 +23,9 @@ function setupDownload(win: BrowserWindow) {
   const downloadItems: {[replyId: string]: DownloadItem} = {}
   ipcMain.on('download', (ipcEvent, downloadMsg: IpcDownloadMsg) => {
     const {folderPath, replyId, downUrl} = downloadMsg
-    const debounceEvent = debounce(
-      (replyId, ...args) => {
-        ipcEvent.reply(replyId, ...args)
-      },
-      {time: 220}
-    )
+    const debounceEvent = debounce((replyId, ...args) => {
+      ipcEvent.reply(replyId, ...args)
+    })
 
     win?.webContents?.session?.once('will-download', (event, item) => {
       if (folderPath) item.setSavePath(path.resolve(folderPath, item.getFilename()))

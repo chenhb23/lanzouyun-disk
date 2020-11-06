@@ -5,3 +5,12 @@
   fill: currentColor;
   overflow: hidden;
 }
+
+.icon.loading {
+  animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+  from {transform: rotate(0deg)}
+  from {transform: rotate(359deg)}
+}

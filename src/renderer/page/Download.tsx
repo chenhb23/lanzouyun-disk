@@ -1,4 +1,5 @@
 import React from 'react'
+import {observer} from 'mobx-react'
 import {ScrollView} from '../component/ScrollView'
 import {Header} from '../component/Header'
 import {Button} from '../component/Button'
@@ -8,7 +9,9 @@ import {byteToSize} from '../../common/util'
 import {Table} from '../component/Table'
 import download from '../store/Download'
 
-export default function Download() {
+const Download = observer(() => {
+  console.log(download.list.map(item => item.tasks).map(item => item.reduce((total, item) => total + item.resolve, 0)))
+
   return (
     <ScrollView
       HeaderComponent={
@@ -33,7 +36,10 @@ export default function Download() {
                 <span>{item.name}</span>
               </td>
               <td>{`${byteToSize(item.resolve)} / ${byteToSize(item.size)}`}</td>
-              <td>{/*todo:操作*/}</td>
+              <td>
+                {/*todo:操作*/}
+                {item.tasks.reduce((total, item) => total + item.resolve, 0)}
+              </td>
               <td></td>
             </tr>
           )
@@ -41,4 +47,6 @@ export default function Download() {
       </Table>
     </ScrollView>
   )
-}
+})
+
+export default Download
