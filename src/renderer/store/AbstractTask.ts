@@ -6,6 +6,7 @@ export enum InitStatus {
 
 export enum TaskStatus {
   ready,
+  pause,
   pending,
   finish,
   fail,

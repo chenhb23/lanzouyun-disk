@@ -9,7 +9,6 @@ import {mkdir} from '../../common/core/mkdir'
 import split from '../../common/split'
 import requireModule from '../../common/requireModule'
 import request from '../../common/request'
-import {message} from '../component/Message'
 
 const fs = requireModule('fs-extra')
 
@@ -18,9 +17,9 @@ export interface UploadInfo {
   readonly resolve?: TaskStatus
   readonly status?: TaskStatus
 
-  filePath: string // 文件路径, 作为id
+  path: string // 文件路径, 作为id
   folderId: FolderId
-  fileName: string
+  name: string
   type: string
 
   tasks: UploadTask[]
@@ -31,8 +30,8 @@ export interface UploadTask {
   type: string
   status: TaskStatus
   resolve: number
-  fileName: string
-  filePath: string
+  name: string
+  path: string
   folderId: FolderId
   startByte?: number
   endByte?: number
@@ -41,12 +40,15 @@ export interface UploadTask {
 interface Upload {
   on(event: 'finish', listener: (info: UploadInfo) => void): this
   on(event: 'finish-task', listener: (info: UploadInfo, task: UploadTask) => void): this
+  on(event: 'error', listener: (msg: string) => void): this
 
   removeListener(event: 'finish', listener: (info: UploadInfo) => void): this
   removeListener(event: 'finish-task', listener: (info: UploadInfo, task: UploadTask) => void): this
+  removeListener(event: 'error', listener: (msg: string) => void): this
 
   emit(event: 'finish', info: UploadInfo)
   emit(event: 'finish-task', info: UploadInfo, task: UploadTask)
+  emit(event: 'error', msg: string)
 }
 
 const FormData = requireModule('form-data')
@@ -59,7 +61,7 @@ const FormData = requireModule('form-data')
 
 class Upload extends EventEmitter implements Task<UploadInfo> {
   handler: ReturnType<typeof autorun>
-  taskSignal: {[resolveFileName: string]: AbortController} = {}
+  taskSignal: {[resolvePathName: string]: AbortController} = {}
 
   list: UploadInfo[] = []
 
@@ -79,13 +81,14 @@ class Upload extends EventEmitter implements Task<UploadInfo> {
   private init = () => {
     this.startQueue()
     this.on('finish', info => {
-      this.remove(info.filePath)
+      this.remove(info.path)
     })
-    this.on('finish-task', info => {
+    this.on('finish-task', (info, task) => {
+      delete this.taskSignal[resolve(task.path, task.name)]
       if (info.tasks.every(item => item.status === TaskStatus.finish)) {
         this.emit('finish', info)
       } else {
-        this.start(info.filePath)
+        this.start(info.path)
       }
     })
   }
@@ -100,7 +103,7 @@ class Upload extends EventEmitter implements Task<UploadInfo> {
   }
 
   checkTask() {
-    const filePath = this.list.find(item => item.status === TaskStatus.ready)?.filePath
+    const filePath = this.list.find(item => item.status === TaskStatus.ready)?.path
     if (filePath) {
       this.start(filePath)
     }
@@ -128,21 +131,21 @@ class Upload extends EventEmitter implements Task<UploadInfo> {
   }) {
     try {
       const info: UploadInfo = {
-        fileName: options.name,
-        filePath: options.path,
+        name: options.name,
+        path: options.path,
         folderId: options.folderId,
         type: options.type,
         tasks: [],
       }
       if (options.size <= sizeToByte(config.maxSize)) {
         let supportName = options.name
-        if (config.supportList.every(ext => !info.filePath.endsWith(`.${ext}`))) {
+        if (config.supportList.every(ext => !info.path.endsWith(`.${ext}`))) {
           info.type = ''
           supportName = createSpecificName(supportName)
         }
         info.tasks.push({
-          fileName: supportName,
-          filePath: info.filePath,
+          name: supportName,
+          path: info.path,
           folderId: info.folderId,
           resolve: 0,
           size: options.size,
@@ -150,15 +153,15 @@ class Upload extends EventEmitter implements Task<UploadInfo> {
           type: info.type,
         })
       } else {
-        let subFolderId = await isExistByName(info.folderId, info.fileName).then(value => value?.fol_id)
+        let subFolderId = await isExistByName(info.folderId, info.name).then(value => value?.fol_id)
         if (!subFolderId) {
-          subFolderId = await mkdir(info.folderId, info.fileName)
+          subFolderId = await mkdir(info.folderId, info.name)
         }
-        const splitData = await split(info.filePath, {fileSize: options.size, skipSplit: true})
+        const splitData = await split(info.path, {fileSize: options.size, skipSplit: true})
         info.tasks.push(
-          ...splitData.splitFiles.map(file => ({
-            fileName: file.name,
-            filePath: info.filePath,
+          ...splitData.splitFiles.map<UploadTask>(file => ({
+            name: file.name,
+            path: info.path,
             folderId: subFolderId,
             resolve: 0,
             size: file.size,
@@ -173,74 +176,93 @@ class Upload extends EventEmitter implements Task<UploadInfo> {
       makeSizeStatus(info)
       this.list.push(info)
     } catch (e) {
-      message.info(e)
+      // message.info(e)
+      this.emit('error', e)
     }
   }
 
-  pause() {}
-
-  pauseAll() {}
-
-  remove(filePath: string) {
-    const info = this.list.find(item => item.filePath === filePath)
-    if (info) {
-      const path = resolve(info.filePath, info.fileName)
-      if (this.taskSignal[path]) {
-        this.taskSignal[path].abort()
-        delete this.taskSignal[path]
-      }
-    }
-    this.list = this.list.filter(item => item.filePath !== filePath)
+  pause(path: string) {
+    this.list
+      .find(item => item.path === path)
+      ?.tasks?.forEach(task => {
+        if ([TaskStatus.ready, TaskStatus.pending].includes(task.status)) {
+          task.status = TaskStatus.pause
+          this.abortTask(task)
+        }
+      })
   }
 
-  removeAll() {}
+  pauseAll() {
+    this.list.forEach(item => this.pause(item.path))
+  }
 
-  start(filePath: string) {
-    const info = this.list.find(item => item.filePath === filePath)
+  private abortTask(task: UploadTask) {
+    const path = resolve(task.path, task.name)
+    if (this.taskSignal[path]) {
+      this.taskSignal[path].abort()
+      delete this.taskSignal[path]
+    }
+  }
+
+  remove(path: string) {
+    this.list.find(item => item.path === path)?.tasks?.forEach(this.abortTask)
+    this.list = this.list.filter(item => item.path !== path)
+  }
+
+  removeAll() {
+    this.list.forEach(info => info.tasks.forEach(this.abortTask))
+    this.list = []
+  }
+
+  start(path: string) {
+    const info = this.list.find(item => item.path === path)
     if (info && this.canStart(info)) {
       const task = info.tasks.find(item => [TaskStatus.ready, TaskStatus.fail].includes(item.status))
       if (task) {
         task.status = TaskStatus.pending
+        try {
+          const fr = fs.createReadStream(
+            task.path,
+            task.endByte ? {start: task.startByte, end: task.endByte} : undefined
+          )
 
-        const fr = fs.createReadStream(
-          task.filePath,
-          task.endByte ? {start: task.startByte, end: task.endByte} : undefined
-        )
+          const form = createUploadForm({
+            fr,
+            size: task.size,
+            name: task.name,
+            folderId: task.folderId,
+            id: task.name,
+            type: task.type,
+          })
 
-        const form = createUploadForm({
-          fr,
-          size: task.size,
-          name: task.fileName,
-          folderId: task.folderId,
-          id: task.fileName,
-          type: task.type,
-        })
+          const updateResolve = debounce(bytes => {
+            task.resolve = bytes
+          })
 
-        const updateResolve = debounce(bytes => {
-          task.resolve = bytes
-        })
-
-        const abort = new AbortController()
-        request<Do1Res, any>({
-          path: '/fileup.php',
-          body: form,
-          onData: updateResolve,
-          signal: abort.signal,
-        })
-          .then(value => {
-            if (value.zt === 1) {
-              task.status = TaskStatus.finish
-              this.emit('finish-task', info, task)
-            } else {
+          const abort = new AbortController()
+          request<Do1Res, any>({
+            path: '/fileup.php',
+            body: form,
+            onData: updateResolve,
+            signal: abort.signal,
+          })
+            .then(value => {
+              if (value.zt === 1) {
+                task.status = TaskStatus.finish
+                this.emit('finish-task', info, task)
+              } else {
+                task.status = TaskStatus.fail
+              }
+            })
+            .catch(reason => {
               task.status = TaskStatus.fail
-            }
-          })
-          .catch(reason => {
-            console.log(reason)
-            task.status = TaskStatus.fail
-          })
+            })
 
-        this.taskSignal[resolve(task.filePath, task.fileName)] = abort
+          this.taskSignal[resolve(task.path, task.name)] = abort
+        } catch (e) {
+          task.status = TaskStatus.fail
+          this.emit('error', e)
+        }
       }
     }
   }
@@ -249,7 +271,17 @@ class Upload extends EventEmitter implements Task<UploadInfo> {
     return this.queue < 3
   }
 
-  startAll() {}
+  startAll() {
+    this.list.forEach(info => {
+      info.tasks.forEach(task => {
+        if (task.status === TaskStatus.pause) {
+          task.status = TaskStatus.ready
+        }
+      })
+
+      this.start(info.path)
+    })
+  }
 }
 
 const upload = new Upload()

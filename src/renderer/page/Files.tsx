@@ -3,7 +3,7 @@ import {Header} from '../component/Header'
 import {Button} from '../component/Button'
 import {message} from '../component/Message'
 import {Crumbs} from '../component/Crumbs'
-import {Table} from '../component/Table'
+import {Table, Tr} from '../component/Table'
 import {Icon} from '../component/Icon'
 import {isFile, sizeToByte} from '../../common/util'
 import {rm} from '../../common/core/rm'
@@ -63,6 +63,10 @@ export default function Files() {
 
   return (
     <ScrollView
+      onDragEnter={() => {
+        message.destroy()
+        message.success('放开上传')
+      }}
       onDragOver={event => {
         event.preventDefault()
         event.stopPropagation()
@@ -77,13 +81,6 @@ export default function Files() {
           path: file.path,
           lastModifiedDate: file.lastModified,
         })
-        /*uploadManager.addTask({
-          fileName: file.name,
-          filePath: file.path,
-          folderId: currentFolder,
-          size: file.size,
-          type: file.type,
-        })*/
       }}
       HeaderComponent={
         <>
@@ -132,7 +129,7 @@ export default function Files() {
           const id = 'id' in item ? item.id : item.fol_id
 
           return (
-            <tr key={id}>
+            <Tr key={id}>
               <td>
                 {'id' in item ? (
                   <>
@@ -202,7 +199,7 @@ export default function Files() {
               <td>{time}</td>
               <td>{downs}</td>
               <td />
-            </tr>
+            </Tr>
           )
         })}
       </Table>

@@ -35,10 +35,13 @@
   visibility: visible;
 }
 
-
-.selectable.Table th:first-child, .selectable.Table td:first-child {
-  padding-left: 30px;
+.Table tbody tr.active {
+  background-color: rgb(217, 216, 216);
 }
+
+/*.selectable.Table th:first-child, .selectable.Table td:first-child {*/
+/*  padding-left: 40px;*/
+/*}*/
 
 /*//////////////////////////////*/
 .split {

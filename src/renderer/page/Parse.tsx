@@ -10,9 +10,11 @@ import {Icon} from '../component/Icon'
 import {useRequest} from '../hook/useRequest'
 import {parseUrl} from '../../common/core/download'
 import download from '../store/Download'
+import {message} from '../component/Message'
 
 export default function Parse() {
   const [list, setList] = useState<ShareFile[]>([])
+  const [fileName, setFileName] = useState('')
 
   const {loading, request} = useRequest()
   const [urlForm, setUrlForm] = useState({
@@ -43,12 +45,16 @@ export default function Parse() {
 
             <Button
               type={'primary'}
-              loading={loading['lsShareFolder']}
+              loading={loading['lsFolder']}
               style={{minWidth: 100}}
               onClick={() => {
-                request(lsShareFolder(urlForm), 'lsShareFolder').then(value => {
-                  console.log(value)
-                  setList(value.list)
+                request(lsShareFolder(urlForm), 'lsFolder').then(value => {
+                  if (!value.list) {
+                    message.error(value.name)
+                  } else {
+                    setFileName(value.name)
+                    setList(value.list)
+                  }
                 })
               }}
             >
@@ -56,12 +62,16 @@ export default function Parse() {
             </Button>
             <Button
               type={'primary'}
-              loading={loading['lsShareFolder']}
+              loading={loading['lsFile']}
               style={{minWidth: 100}}
               onClick={() => {
-                request(lsShareFolder(urlForm), 'lsShareFolder').then(value => {
-                  console.log(value)
-                  setList(value.list)
+                request(lsShareFolder(urlForm), 'lsFile').then(value => {
+                  if (!value.list) {
+                    message.error(value.name)
+                  } else {
+                    setFileName(value.name)
+                    setList(value.list)
+                  }
                 })
               }}
             >
@@ -77,7 +87,12 @@ export default function Parse() {
             </Button>
           </Header>
           <Bar>
-            <span>文件列表</span>
+            <span>{fileName || '文件列表'}</span>
+
+            <label>
+              <input type='checkbox'></input>
+              自动合并
+            </label>
           </Bar>
         </>
       }

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useEffect} from 'react'
 import {observer} from 'mobx-react'
 import {ScrollView} from '../component/ScrollView'
 import {Header} from '../component/Header'
@@ -8,16 +8,23 @@ import {Icon} from '../component/Icon'
 import {byteToSize} from '../../common/util'
 import {Table} from '../component/Table'
 import download from '../store/Download'
+import {message} from '../component/Message'
 
 const Download = observer(() => {
+  useEffect(() => {
+    const showError = msg => message.error(msg)
+    download.on('error', showError)
+    return () => download.removeListener('error', showError)
+  }, [])
+
   return (
     <ScrollView
       HeaderComponent={
         <>
           <Header>
-            <Button>全部暂停</Button>
-            <Button>全部开始</Button>
-            <Button>全部删除</Button>
+            <Button onClick={() => download.pauseAll()}>全部暂停</Button>
+            <Button onClick={() => download.startAll()}>全部开始</Button>
+            <Button onClick={() => download.removeAll()}>全部删除</Button>
           </Header>
           <Bar>
             <span>正在下载</span>

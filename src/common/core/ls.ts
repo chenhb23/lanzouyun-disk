@@ -47,10 +47,15 @@ export async function lsDir(folder_id: FolderId) {
   })
 }
 
-export async function lsShareFile(options: {url: string; pwd?: string}) {}
+export async function lsShareFile(options: {url: string; pwd?: string}) {
+  // 带密码，不带密码
+  // 两种解析方式
+  // todo: 根据html区分哪种解析类型
+}
 
 /**
  * 解析分享文件夹
+ * 发送 ajax，有密码加上 pwd
  * @param options
  */
 export async function lsShareFolder(options: {url: string; pwd?: string}) {
@@ -72,6 +77,13 @@ export async function lsShareFolder(options: {url: string; pwd?: string}) {
     .matchData('up')
     .matchData('ls')
     .done()
+
+  if (!url) {
+    return {
+      name: $('.off').text(),
+      list: null,
+    }
+  }
 
   let pg = 1,
     len = 0

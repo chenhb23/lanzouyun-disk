@@ -7,8 +7,6 @@
   padding: 6px 16px;
   user-select: none;
   border-radius: 5px;
-  /*border-bottom-left-radius: 10px;*/
-  /*border-bottom-right-radius: 10px;*/
   min-width: 100px;
   text-align: center;
 
@@ -20,12 +18,11 @@
   transform: translateY(10px);
 }
 
-/*.Message.success {
-  background-color: rgb(76, 137, 247);
-  color: #ffffff;
-}*/
-
 .Message.info {
   background-color: rgb(236, 236, 236);
   color: rgb(69,69,69);
+}
+
+.Message.error {
+  background-color: rgb(226, 60, 57);
 }
