@@ -1,4 +1,3 @@
-import cheerio from 'cheerio'
 import {Matcher} from './ls'
 import {baseHeaders} from '../request'
 import requireModule from '../requireModule'
@@ -20,31 +19,6 @@ export function parseUrl(url: string) {
 }
 
 /**
- * 解析真实下载链接
- */
-export async function parseTargetUrl(url: string) {
-  const info = parseUrl(url)
-  // 以下操作不需要 cookie
-  const value = await fetch(url, {headers: baseHeaders}).then(value => value.text())
-  const [_, downloadFrame] = value.match(/<iframe.*src="(\/fn\?\w{5,}?)"/)
-
-  const value1 = await fetch(info.is_newd + downloadFrame).then(value1 => value1.text())
-  const [__, ajaxdata] = value1.match(/var ajaxdata = '(.*?)'/)
-
-  const value2 = await fetch(`${info.is_newd}/ajaxm.php`, {
-    method: 'post',
-    headers: baseHeaders,
-    body: querystring.stringify({
-      action: 'downprocess',
-      sign: ajaxdata,
-      ves: 1,
-    }),
-  }).then<DownloadUrlRes>(value2 => value2.json())
-
-  return `${value2.dom}/file/${value2.url}`
-}
-
-/**
  * 带密码的文件下载链接
  * script
  */
@@ -52,7 +26,7 @@ export async function pwdFileDownUrl(url: string, pwd: string) {
   const {is_newd} = parseUrl(url)
   const html = await fetch(url).then(value => value.text())
 
-  const body = new Matcher(html).matchPwd('url').matchPwd('data').done()
+  const body = new Matcher(html).matchPwdFile('url').matchPwdFile('data').done()
 
   if (!body.data) {
     throw new Error('文件密码页面解析出错')
@@ -110,28 +84,6 @@ export async function fileDownUrl(url: string) {
 }
 
 /**
- * 通过url获取下载页信息
- * 文件：加密: name(文件), size; 未加密: name, size
- * 文件夹：加密: name; 未加密: name
- */
-export async function downloadPageInfo(options: {url: string; pwd?: string}) {
-  const html = await fetch(options.url).then(value => value.text())
-  const $ = cheerio.load(html)
-  const name = $('title').text().replace(' - 蓝奏云', '')
-  return options.pwd
-    ? {
-        name,
-        size: $('.n_filesize').text().replace('大小：', ''),
-      }
-    : {
-        name,
-        size: $('table tr td')
-          .text()
-          .match(/文件大小：(.*)/)?.[1],
-      }
-}
-
-/**
  * 等待状态的返回
  */
 const waitStatus = (observableQueue, sign) => {
@@ -153,7 +105,7 @@ const waitStatus = (observableQueue, sign) => {
 const downloadTaskFactory = () => {
   const queue = observable([])
   return (ipcMessage: IpcDownloadMsg) =>
-    new Promise(async (resolve, reject) => {
+    new Promise(async resolve => {
       const sign = ipcMessage.replyId
       queue.push(sign)
       await waitStatus(queue, sign)

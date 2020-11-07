@@ -2,9 +2,9 @@ import {EventEmitter} from 'events'
 import {autorun, makeObservable} from 'mobx'
 import {resolve} from 'path'
 import Task, {makeGetterProps, TaskStatus} from './AbstractTask'
-import {downloadPageInfo, fileDownUrl, parseUrl, pwdFileDownUrl, sendDownloadTask} from '../../common/core/download'
+import {fileDownUrl, parseUrl, pwdFileDownUrl, sendDownloadTask} from '../../common/core/download'
 import {delay, isSpecificFile, mkTempDirSync, restoreFileName, sizeToByte} from '../../common/util'
-import {lsFile, lsShareFolder} from '../../common/core/ls'
+import {lsFile, lsShare, lsShareFolder} from '../../common/core/ls'
 import requireModule from '../../common/requireModule'
 import merge from '../../common/merge'
 import {fileDetail, folderDetail} from '../../common/core/detail'
@@ -285,7 +285,8 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
     // } else if (options.onof === '0' && options.pwd) {
     //   options.pwd = ''
     // }
-    const {name, size} = await downloadPageInfo(options)
+    // const {name, size} = await downloadPageInfo(options)
+    const {name, size} = await lsShare(options)
     const task: DownloadInfo = {
       path: folderDir,
       ...options,

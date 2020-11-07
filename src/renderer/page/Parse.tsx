@@ -1,19 +1,18 @@
-import React, {useEffect, useState} from 'react'
+import React, {useState} from 'react'
 import {ScrollView} from '../component/ScrollView'
 import {Header} from '../component/Header'
 import {Button} from '../component/Button'
-import {lsShareFolder} from '../../common/core/ls'
+import {lsShare, LsShareItem} from '../../common/core/ls'
 import {Input} from '../component/Input'
 import {Bar} from '../component/Bar'
 import {Table} from '../component/Table'
 import {Icon} from '../component/Icon'
 import {useRequest} from '../hook/useRequest'
-import {downloadPageInfo, parseUrl} from '../../common/core/download'
 import download from '../store/Download'
 import {message} from '../component/Message'
 
 export default function Parse() {
-  const [list, setList] = useState<{name: string; size: string; url: string; pwd?: string}[]>([])
+  const [list, setList] = useState<LsShareItem[]>([])
   const [fileName, setFileName] = useState('')
 
   const {loading, request} = useRequest()
@@ -44,30 +43,24 @@ export default function Parse() {
             />
 
             <Button
+              disabled={!urlForm.url}
               type={'primary'}
-              loading={loading['lsFolder']}
+              loading={loading['lsShare']}
               style={{minWidth: 100}}
               onClick={() => {
-                const {is_newd} = parseUrl(urlForm.url)
-                request(lsShareFolder(urlForm), 'lsFolder').then(value => {
-                  if (!value.list) {
-                    message.error(value.name)
-                  } else {
-                    setFileName(value.name)
-                    setList(
-                      value.list.map(item => ({
-                        name: item.name_all,
-                        size: item.size,
-                        url: `${is_newd}/${item.id}`,
-                      }))
-                    )
-                  }
-                })
+                request(lsShare(urlForm), 'lsShare')
+                  .then(value => {
+                    setFileName(`${value.name} ${value.size}`)
+                    setList(value.list)
+                  })
+                  .catch(e => {
+                    message.error(e)
+                  })
               }}
             >
-              解析文件夹
+              解析
             </Button>
-            <Button
+            {/*<Button
               type={'primary'}
               loading={loading['lsFile']}
               style={{minWidth: 100}}
@@ -83,7 +76,7 @@ export default function Parse() {
               }}
             >
               解析文件
-            </Button>
+            </Button>*/}
             <Button
               disabled={!list.length}
               onClick={() => {

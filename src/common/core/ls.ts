@@ -1,11 +1,13 @@
 import cheerio from 'cheerio'
 import request, {baseHeaders} from '../request'
-import {isFile} from '../util'
+import {byteToSize, isFile, sizeToByte} from '../util'
 import requireModule from '../requireModule'
+import {parseUrl} from './download'
 const querystring = requireModule('querystring')
 
 /**
  * 列出文件夹下的所有文件 + 目录
+ * cookie
  * @example
  * ls // folder_id
  * ls https://xxxx/xxxx --pwd 123 // url, pwd
@@ -22,15 +24,14 @@ export async function ls(folder_id = -1) {
 
 /**
  * 列出文件夹下所有文件
+ * cookie
  */
 export async function lsFile(folder_id: FolderId) {
   let pg = 1,
     len = 0
   const fileList: Do5Res['text'] = []
   do {
-    const {text} = await request<Do5Res, Do5>({
-      body: {task: 5, folder_id, pg: pg++},
-    })
+    const {text} = await request<Do5Res, Do5>({body: {task: 5, folder_id, pg: pg++}})
     len = text.length
     fileList.push(...text)
   } while (len)
@@ -40,31 +41,100 @@ export async function lsFile(folder_id: FolderId) {
 
 /**
  * 列出该文件夹下的所有文件夹
+ * cookie
  */
 export async function lsDir(folder_id: FolderId) {
-  return request<Do47Res, Do47>({
-    body: {task: 47, folder_id},
-  })
+  return request<Do47Res, Do47>({body: {task: 47, folder_id}})
 }
 
-// export async function lsShareFile(options: {url: string; pwd?: string}) {
-//   // 带密码，不带密码
-//   // 两种解析方式
-//   // todo: 根据html区分哪种解析类型
-// }
+export interface LsShareItem {
+  url: string
+  name: string
+  size: string
+  pwd?: string
+}
+export enum ShareType {
+  file, // https://wws.lanzous.com/ivvHsi3qyef
+  pwdFile, // https://wws.lanzous.com/i7wyli3mm9e, 8h40
+  folder, // https://wws.lanzous.com/b01tp3zkj
+  pwdFolder, // https://wws.lanzous.com/b01tp39pi, 34zf
+}
+/**
+ * 文件：
+ * * 无密码: iframe
+ * * 密码: #passwddiv
+ * 文件夹：同一种处理方式
+ * * 无密码: #filemore; title
+ * * 密码: #pwdload
+ */
+export async function lsShare(options: {
+  url: string
+  pwd?: string
+}): Promise<{
+  name: string
+  size: string
+  type: ShareType
+  list: LsShareItem[]
+}> {
+  // 根据html区分哪种解析类型
+  const {is_newd} = parseUrl(options.url)
+
+  const html = await fetch(options.url).then(value => value.text())
+  const $ = cheerio.load(html)
+
+  const isFile = $('iframe').length
+  const isPwdFile = $('#passwddiv').length
+  const isPwdFolder = $('#pwdload').length
+  const isFolder = $('#filemore').length && !isPwdFolder // 密码和无密码页面
+
+  if ((isPwdFile || isPwdFolder) && !options.pwd) {
+    throw new Error('密码不能为空')
+  }
+
+  const title = $('title').text()
+  if (isFile) {
+    const name = title.replace(' - 蓝奏云', '') // '(文件名) - 蓝奏云',
+    const size = $('table')
+      .text()
+      .match(/文件大小：(.*)/)?.[1]
+    return {name, size, type: ShareType.file, list: [{url: options.url, name, size}]}
+  } else if (isPwdFile) {
+    const body = new Matcher(html).matchPwdFile('url').matchPwdFile('data').done()
+    if (!body.url || !body.data) {
+      throw new Error('文件密码页面解析出错')
+    }
+    const {inf} = await fetch(`${is_newd}${body.url}`, {
+      method: 'post',
+      headers: baseHeaders,
+      body: body.data + options.pwd,
+    }).then<DownloadUrlRes>(value => value.json())
+    const name = inf // 文件名
+    const size = $('.n_filesize').text().replace('大小：', '')
+    return {name, size, type: ShareType.pwdFile, list: [{url: options.url, pwd: options.pwd, name, size}]}
+  } else if (isFolder || isPwdFolder) {
+    const value = await lsShareFolder({...options, html})
+    return {
+      name: title, // (文件夹名)
+      type: isFolder ? ShareType.folder : ShareType.pwdFolder,
+      size: byteToSize(value.list?.reduce((total, item) => total + sizeToByte(item.size), 0)),
+      list: value.list?.map(item => ({url: `${is_newd}/${item.id}`, name: item.name_all, size: item.size})),
+    }
+  } else {
+    throw new Error($('.off').text())
+  }
+}
 
 /**
  * 解析分享文件夹
  * 发送 ajax，有密码加上 pwd
  * @param options
  */
-export async function lsShareFolder(options: {url: string; pwd?: string}) {
+export async function lsShareFolder(options: {url: string; pwd?: string; html?: string}) {
   const is_newd = new URL(options.url).origin
-  const html = await fetch(options.url).then(value => value.text())
+  const html = options.html ?? (await fetch(options.url).then(value => value.text()))
 
   const $ = cheerio.load(html)
   const title = $('title').text()
-  // console.log("$('title').text()", $('title').text())
 
   const {url, ...body} = new Matcher(html)
     .matchObject('url')
@@ -79,10 +149,7 @@ export async function lsShareFolder(options: {url: string; pwd?: string}) {
     .done()
 
   if (!url) {
-    return {
-      name: $('.off').text(),
-      list: null,
-    }
+    return {name: $('.off').text(), list: null}
   }
 
   let pg = 1,
@@ -100,10 +167,7 @@ export async function lsShareFolder(options: {url: string; pwd?: string}) {
     shareFiles.push(...(text || []))
   } while (len)
 
-  return {
-    name: title,
-    list: shareFiles,
-  }
+  return {name: title, list: shareFiles}
 }
 
 export class Matcher {
@@ -146,7 +210,7 @@ export class Matcher {
   }
 
   // 文件，带密码
-  matchPwd(key: string) {
+  matchPwdFile(key: string) {
     // type : 'post',
     // url : '/ajaxm.php',
     // data : 'action=downprocess&sign=BmABPw4_aDz4IAQA_aV2dRbVozAjVQPwExBTUHNVI2AzQAJgAjXDxXMglpAWcGZgI2Uz4CNlc_bAjYBMA_c_c&p='+pwd,
@@ -159,8 +223,11 @@ export class Matcher {
   }
 
   matchIframe(key = 'iframe') {
-    // <iframe class="ifr2" name="1604572455" src="/fn?A2VTOQ5gD2kHYQVjVjdUbABqBDEFfAN1UmhabQVvADEDN1s5XDZXMQlrB2QBYA_c_c" frameborder="0" scrolling="no"></iframe>
-    return this.match(key, '<iframe.*src="(\\/fn\\?\\w{5,})" ')
+    const src = cheerio.load(this.html)('iframe').attr().src
+    if (src) {
+      this.out[key] = src
+    }
+    return this
   }
 
   private match(key: string, pattern: string) {

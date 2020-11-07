@@ -207,7 +207,7 @@ interface ShareFileRes {
 // 文件，带密码
 interface DownloadUrlRes {
   dom: string // 域名
-  inf: number
+  inf: string // 文件名
   url: string // file/ 的后缀
   zt: number
 }
