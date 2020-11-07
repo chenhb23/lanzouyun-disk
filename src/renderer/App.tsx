@@ -15,6 +15,10 @@ import request from '../common/request'
 import {message} from './component/Message'
 import {Button} from './component/Button'
 import requireModule from '../common/requireModule'
+import IpcEvent from '../common/IpcEvent'
+import {Icon} from './component/Icon'
+import {basename, dirname} from 'path'
+import store from '../main/store'
 const electron = requireModule('electron')
 
 request.intercepter.response = res => {
@@ -67,10 +71,26 @@ const App = observer(() => {
           </div>
 
           <div className='logout'>
+            <div
+              title={download.dir}
+              className='downFolder'
+              onClick={() => {
+                electron.ipcRenderer.invoke(IpcEvent.dialog).then((value: Electron.OpenDialogReturnValue) => {
+                  if (!value.canceled) {
+                    download.dir = value.filePaths[0]
+                    store.set('downloads', download.dir)
+                  }
+                })
+              }}
+            >
+              下载地址：
+              <Icon iconName={'folder'} />
+              {basename(download.dir)}
+            </div>
             <Button
               style={{width: '100%'}}
               onClick={() => {
-                electron.ipcRenderer.send('logout')
+                electron.ipcRenderer.send(IpcEvent.logout)
               }}
             >
               退出登录

@@ -12,6 +12,9 @@ export function sizeToByte(size: string | number) {
   if (typeof size === 'string') {
     const getUnit = unit =>
       ({
+        get b() {
+          return 1
+        },
         get k() {
           return 1024
         },
@@ -28,7 +31,7 @@ export function sizeToByte(size: string | number) {
     const [_, num, unit] = size
       .toLowerCase()
       .replace(' ', '')
-      .match(/^(\d+\.?\d*)([kmgt]?)$/)
+      .match(/^(\d+\.?\d*)([bkmgt]?)$/)
 
     return +num * getUnit(unit)
   }

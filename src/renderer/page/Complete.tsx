@@ -7,8 +7,12 @@ import {Icon} from '../component/Icon'
 import {byteToSize} from '../../common/util'
 import {Table} from '../component/Table'
 import download from '../store/Download'
+import IpcEvent from '../../common/IpcEvent'
+import requireModule from '../../common/requireModule'
+import {observer} from 'mobx-react'
+const electron = requireModule('electron')
 
-export default function Complete() {
+const Complete = observer(() => {
   return (
     <ScrollView
       HeaderComponent={
@@ -37,7 +41,16 @@ export default function Complete() {
                 <span>{item.name}</span>
               </td>
               <td>{`${byteToSize(item.size)}`}</td>
-              <td>{/*todo:操作*/}</td>
+              <td>
+                <Button
+                  onClick={() => {
+                    // todo: 精确到文件
+                    electron.ipcRenderer.invoke(IpcEvent.shell, 'showItemInFolder', item.path)
+                  }}
+                >
+                  打开
+                </Button>
+              </td>
               <td></td>
             </tr>
           )
@@ -45,4 +58,6 @@ export default function Complete() {
       </Table>
     </ScrollView>
   )
-}
+})
+
+export default Complete

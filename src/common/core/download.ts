@@ -3,6 +3,7 @@ import {Matcher} from './ls'
 import {baseHeaders} from '../request'
 import requireModule from '../requireModule'
 import {autorun, observable} from 'mobx'
+import IpcEvent from '../IpcEvent'
 
 const electron = requireModule('electron')
 const querystring = requireModule('querystring')
@@ -135,12 +136,15 @@ export async function downloadPageInfo(options: {url: string; pwd?: string}) {
  */
 const waitStatus = (observableQueue, sign) => {
   return new Promise(resolve => {
-    autorun(r => {
-      if (!observableQueue.length || observableQueue[0] === sign) {
-        r.dispose()
-        resolve()
+    autorun(
+      r => {
+        if (!observableQueue.length || observableQueue[0] === sign) {
+          r.dispose()
+          resolve()
+        }
       }
-    })
+      // ,{delay: 100}
+    )
   })
 }
 /**
@@ -154,9 +158,9 @@ const downloadTaskFactory = () => {
       queue.push(sign)
       await waitStatus(queue, sign)
 
-      electron.ipcRenderer.send('download', ipcMessage)
-      electron.ipcRenderer.once(`start${ipcMessage.replyId}`, () => {
-        console.log('==log== start:', ipcMessage.replyId)
+      electron.ipcRenderer.send(IpcEvent.download, ipcMessage)
+      electron.ipcRenderer.once(`${IpcEvent.start}${ipcMessage.replyId}`, () => {
+        console.log('download start:', ipcMessage.folderPath)
         queue.shift()
         resolve()
       })

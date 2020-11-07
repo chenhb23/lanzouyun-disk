@@ -1,13 +1,12 @@
-import {BrowserWindow, DownloadItem, ipcMain} from 'electron'
+import {BrowserWindow, DownloadItem, ipcMain, dialog, shell} from 'electron'
 import path from 'path'
 import {debounce} from '../common/util'
 import store from './store'
 import config from '../project.config'
-
-// let _win: BrowserWindow
+import IpcEvent from '../common/IpcEvent'
 
 function setupTrigger() {
-  ipcMain.handle('trigger', async (event, method: string, ...args) => {
+  ipcMain.handle(IpcEvent.trigger, async (event, method: string, ...args) => {
     const [prefix, mod] = method.replace(/(\.{1,2}\/)?([\w.]+)$/, '$1,$2').split(',')
     const [module, ...func] = mod.split('.')
     const nodeModule = prefix ? require(prefix + module).default : require(module)
@@ -22,7 +21,7 @@ function setupTrigger() {
 
 function setupDownload(win: BrowserWindow) {
   const downloadItems: {[replyId: string]: DownloadItem} = {}
-  ipcMain.on('download', (ipcEvent, downloadMsg: IpcDownloadMsg) => {
+  ipcMain.on(IpcEvent.download, (ipcEvent, downloadMsg: IpcDownloadMsg) => {
     const {folderPath, replyId, downUrl} = downloadMsg
     const debounceEvent = debounce((replyId, ...args) => {
       ipcEvent.reply(replyId, ...args)
@@ -62,7 +61,7 @@ function setupDownload(win: BrowserWindow) {
     win.webContents.downloadURL(downUrl)
   })
 
-  ipcMain.on('abort', (ipcEvent, replyId) => {
+  ipcMain.on(IpcEvent.abort, (ipcEvent, replyId) => {
     if (downloadItems[replyId]) {
       downloadItems[replyId].cancel()
       delete downloadItems[replyId]
@@ -71,24 +70,38 @@ function setupDownload(win: BrowserWindow) {
 }
 
 function setupStore(win: BrowserWindow) {
-  ipcMain.handle('store', (event, method, ...args) => {
-    return store[method](...args)
+  ipcMain.handle(IpcEvent.store, async (event, method, ...args) => {
+    return store[method]?.(...args)
   })
 
   // handle?
-  ipcMain.on('logout', () => {
+  ipcMain.on(IpcEvent.logout, () => {
     win.webContents.session.clearStorageData()
     loadLogin(win)
   })
 }
 
+function setupDialog(win: BrowserWindow) {
+  ipcMain.handle(IpcEvent.dialog, (event, p = 'openDirectory') => {
+    return dialog.showOpenDialog(win, {
+      title: '选择文件夹',
+      properties: [p],
+    })
+  })
+
+  ipcMain.handle(IpcEvent.shell, (event, method, ...args) => {
+    return shell[method]?.(...args)
+  })
+}
+
 let initial = false
 export function unsetup() {
-  ipcMain.removeHandler('trigger')
-  ipcMain.removeHandler('store')
-  ipcMain.removeHandler('clean')
-  ipcMain.removeAllListeners('download')
-  ipcMain.removeAllListeners('abort')
+  ipcMain.removeHandler(IpcEvent.trigger)
+  ipcMain.removeHandler(IpcEvent.store)
+  ipcMain.removeHandler(IpcEvent.dialog)
+  ipcMain.removeAllListeners(IpcEvent.download)
+  ipcMain.removeAllListeners(IpcEvent.abort)
+  ipcMain.removeAllListeners(IpcEvent.logout)
   initial = false
 }
 
@@ -96,10 +109,10 @@ export function setup(win: BrowserWindow) {
   if (initial) {
     unsetup()
   }
-  // _win = win
   setupTrigger()
   setupDownload(win)
   setupStore(win)
+  setupDialog(win)
 
   initial = true
 }

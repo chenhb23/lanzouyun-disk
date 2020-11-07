@@ -8,18 +8,18 @@ import {Bar} from '../component/Bar'
 import {Table} from '../component/Table'
 import {Icon} from '../component/Icon'
 import {useRequest} from '../hook/useRequest'
-import {parseUrl} from '../../common/core/download'
+import {downloadPageInfo, parseUrl} from '../../common/core/download'
 import download from '../store/Download'
 import {message} from '../component/Message'
 
 export default function Parse() {
-  const [list, setList] = useState<ShareFile[]>([])
+  const [list, setList] = useState<{name: string; size: string; url: string; pwd?: string}[]>([])
   const [fileName, setFileName] = useState('')
 
   const {loading, request} = useRequest()
   const [urlForm, setUrlForm] = useState({
-    url: 'https://wws.lanzous.com/ieuzii1fjdg',
-    pwd: '2s8f',
+    url: '',
+    pwd: '',
   })
 
   return (
@@ -48,12 +48,19 @@ export default function Parse() {
               loading={loading['lsFolder']}
               style={{minWidth: 100}}
               onClick={() => {
+                const {is_newd} = parseUrl(urlForm.url)
                 request(lsShareFolder(urlForm), 'lsFolder').then(value => {
                   if (!value.list) {
                     message.error(value.name)
                   } else {
                     setFileName(value.name)
-                    setList(value.list)
+                    setList(
+                      value.list.map(item => ({
+                        name: item.name_all,
+                        size: item.size,
+                        url: `${is_newd}/${item.id}`,
+                      }))
+                    )
                   }
                 })
               }}
@@ -65,13 +72,13 @@ export default function Parse() {
               loading={loading['lsFile']}
               style={{minWidth: 100}}
               onClick={() => {
-                request(lsShareFolder(urlForm), 'lsFile').then(value => {
-                  if (!value.list) {
-                    message.error(value.name)
-                  } else {
-                    setFileName(value.name)
-                    setList(value.list)
-                  }
+                request(downloadPageInfo(urlForm), 'lsFile').then(value => {
+                  setList([
+                    {
+                      ...value,
+                      ...urlForm,
+                    },
+                  ])
                 })
               }}
             >
@@ -100,19 +107,19 @@ export default function Parse() {
       <Table header={['文件名', '大小', '操作']}>
         {list.map(item => {
           return (
-            <tr key={item.id}>
+            <tr key={item.name}>
               <td>
                 <Icon iconName={'file'} />
-                <span>{item.name_all}</span>
+                <span>{item.name}</span>
               </td>
               <td>{item.size}</td>
               <td>
                 <Icon
                   iconName={'download'}
                   onClick={() => {
-                    const {is_newd} = parseUrl(urlForm.url)
                     download.addShareFileTask({
-                      url: `${is_newd}/${item.id}`,
+                      url: item.url,
+                      pwd: item.pwd,
                     })
                     // item
                     // downloadManager.addTask({

@@ -36,6 +36,9 @@ function createWindow() {
   setup(mainWindow)
 
   const cookie = store.get('cookie')
+  if (!store.get('downloads')) {
+    store.set('downloads', app.getPath('downloads'))
+  }
   // const cookie = false
   // mainWindow.webContents.session.clearStorageData()
 

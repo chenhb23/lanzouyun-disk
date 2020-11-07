@@ -1,13 +1,15 @@
 import {EventEmitter} from 'events'
 import {autorun, makeObservable} from 'mobx'
 import {resolve} from 'path'
-import Task, {makeSizeStatus, TaskStatus} from './AbstractTask'
+import Task, {makeGetterProps, TaskStatus} from './AbstractTask'
 import {downloadPageInfo, fileDownUrl, parseUrl, pwdFileDownUrl, sendDownloadTask} from '../../common/core/download'
 import {delay, isSpecificFile, mkTempDirSync, restoreFileName, sizeToByte} from '../../common/util'
 import {lsFile, lsShareFolder} from '../../common/core/ls'
 import requireModule from '../../common/requireModule'
 import merge from '../../common/merge'
 import {fileDetail, folderDetail} from '../../common/core/detail'
+import IpcEvent from '../../common/IpcEvent'
+import store from '../../main/store'
 
 const electron = requireModule('electron')
 const fs = requireModule('fs-extra')
@@ -54,6 +56,7 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
   taskSignal: {[taskUrl: string]: AbortController} = {}
   list: DownloadInfo[] = []
   finishList: DownloadInfo[] = []
+  dir = ''
 
   get queue() {
     return this.getList(item => item.status === TaskStatus.pending).length
@@ -64,12 +67,16 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
     makeObservable(this, {
       list: true,
       finishList: true,
+      dir: true,
     })
 
     process.nextTick(this.init)
   }
 
   private init = () => {
+    store.get('downloads').then(value => {
+      this.dir = value
+    })
     this.startQueue()
     this.on('finish', info => {
       delay(200).then(() => this.onTaskFinish(info))
@@ -118,7 +125,6 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
     const url = this.list.find(item => item.status === TaskStatus.ready)?.url
     // const url = this.list.find(item => item.tasks.some(task => task.status === TaskStatus.ready))?.url
     if (url) {
-      console.log('url', url)
       this.start(url)
     }
   }
@@ -191,28 +197,28 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
           await sendDownloadTask(ipcMessage)
           const removeListener = () => {
             electron.ipcRenderer
-              .removeAllListeners(`progressing${replyId}`)
-              .removeAllListeners(`done${replyId}`)
-              .removeAllListeners(`failed${replyId}`)
+              .removeAllListeners(`${IpcEvent.progressing}${replyId}`)
+              .removeAllListeners(`${IpcEvent.done}${replyId}`)
+              .removeAllListeners(`${IpcEvent.failed}${replyId}`)
           }
 
           electron.ipcRenderer
-            .on(`progressing${replyId}`, (event, receivedByte) => {
+            .on(`${IpcEvent.progressing}${replyId}`, (event, receivedByte) => {
               task.resolve = receivedByte
             })
-            .once(`done${replyId}`, () => {
+            .once(`${IpcEvent.done}${replyId}`, () => {
               task.status = TaskStatus.finish
               this.emit('finish-task', info, task)
               removeListener()
             })
-            .once(`failed${replyId}`, () => {
+            .once(`${IpcEvent.failed}${replyId}`, () => {
               task.status = TaskStatus.fail
               removeListener()
             })
 
           this.taskSignal[task.url] = abort
           abort.signal.onabort = () => {
-            electron.ipcRenderer.send('abort', replyId)
+            electron.ipcRenderer.send(IpcEvent.abort, replyId)
             console.log('下载任务取消：', task.name)
             removeListener()
           }
@@ -237,8 +243,7 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
   }
 
   getFileDir() {
-    // todo: 获取用户的下载目录
-    return '/Users/chb/Desktop/tempDownload'
+    return this.dir
   }
 
   /**
@@ -247,7 +252,6 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
   async addFileTask(options: {name: string; size: number; file_id: string}) {
     const folderDir = this.getFileDir()
     const {f_id, is_newd, pwd, onof} = await fileDetail(options.file_id)
-    console.log({f_id, is_newd, pwd, onof})
     const url = `${is_newd}/${f_id}`
     const info: DownloadInfo = {
       url,
@@ -266,7 +270,7 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
       ],
     }
 
-    makeSizeStatus(info)
+    makeGetterProps(info)
     this.list.push(info)
   }
 
@@ -284,7 +288,6 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
     const {name, size} = await downloadPageInfo(options)
     const task: DownloadInfo = {
       path: folderDir,
-      // status: InitStatus.notInit,
       ...options,
       name,
       tasks: [
@@ -299,7 +302,7 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
         },
       ],
     }
-    makeSizeStatus(task)
+    makeGetterProps(task)
     this.list.push(task)
   }
 
@@ -310,7 +313,6 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
   async addFolderTask(options: {folder_id: FolderId; name: string; merge?: boolean}) {
     let folderDir = this.getFileDir()
     const [detail, files] = await Promise.all([folderDetail(options.folder_id), lsFile(options.folder_id)])
-    console.log('detail', detail)
     const info: DownloadInfo = {
       path: folderDir,
       url: detail.new_url,
@@ -337,7 +339,7 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
       }))
     )
 
-    makeSizeStatus(info)
+    makeGetterProps(info)
     this.list.push(info)
   }
 
@@ -371,7 +373,7 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
       }))
     )
 
-    makeSizeStatus(info)
+    makeGetterProps(info)
     this.list.push(info)
   }
 }

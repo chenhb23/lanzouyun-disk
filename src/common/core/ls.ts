@@ -47,11 +47,11 @@ export async function lsDir(folder_id: FolderId) {
   })
 }
 
-export async function lsShareFile(options: {url: string; pwd?: string}) {
-  // 带密码，不带密码
-  // 两种解析方式
-  // todo: 根据html区分哪种解析类型
-}
+// export async function lsShareFile(options: {url: string; pwd?: string}) {
+//   // 带密码，不带密码
+//   // 两种解析方式
+//   // todo: 根据html区分哪种解析类型
+// }
 
 /**
  * 解析分享文件夹

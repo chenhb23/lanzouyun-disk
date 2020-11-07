@@ -1,7 +1,7 @@
 import {EventEmitter} from 'events'
 import {resolve} from 'path'
 import {autorun, makeObservable} from 'mobx'
-import Task, {makeSizeStatus, TaskStatus} from './AbstractTask'
+import Task, {makeGetterProps, TaskStatus} from './AbstractTask'
 import config from '../../project.config'
 import {createSpecificName, debounce, sizeToByte} from '../../common/util'
 import {isExistByName} from '../../common/core/isExist'
@@ -126,7 +126,7 @@ class Upload extends EventEmitter implements Task<UploadInfo> {
     size: number
     name: string
     type: string
-    path: string
+    path: string // 全路径
     lastModifiedDate: number
   }) {
     try {
@@ -173,7 +173,7 @@ class Upload extends EventEmitter implements Task<UploadInfo> {
         )
       }
 
-      makeSizeStatus(info)
+      makeGetterProps(info)
       this.list.push(info)
     } catch (e) {
       // message.info(e)

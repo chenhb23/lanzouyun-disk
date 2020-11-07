@@ -30,7 +30,7 @@ export default interface Task<Info> {
   removeAll()
 }
 
-export function makeSizeStatus<T extends {tasks: {size: number; resolve: number; status: TaskStatus}[]}>(info: T) {
+export function makeGetterProps<T extends {tasks: {size: number; resolve: number; status: TaskStatus}[]}>(info: T) {
   Object.defineProperties(info, {
     size: {
       get() {
