@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {useState} from 'react'
 import {ScrollView} from '../component/ScrollView'
 import {Header} from '../component/Header'
 import {Button} from '../component/Button'
@@ -13,12 +13,6 @@ import {message} from '../component/Message'
 
 const Upload = observer(() => {
   const [showItem, setShowItem] = useState<UploadInfo>(null)
-
-  useEffect(() => {
-    const showError = msg => message.error(msg)
-    upload.on('error', showError)
-    return () => upload.removeListener('error', showError)
-  }, [])
 
   return (
     <ScrollView

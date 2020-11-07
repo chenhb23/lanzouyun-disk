@@ -33,9 +33,9 @@ const Complete = observer(() => {
       }
     >
       <Table header={['文件名', '大小', '操作']}>
-        {download.finishList.map(item => {
+        {download.finishList.map((item, i) => {
           return (
-            <tr key={item.url}>
+            <tr key={`${item.url}${i}`}>
               <td>
                 <Icon iconName={'file'} />
                 <span>{item.name}</span>

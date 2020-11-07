@@ -10,6 +10,7 @@ import merge from '../../common/merge'
 import {fileDetail, folderDetail} from '../../common/core/detail'
 import IpcEvent from '../../common/IpcEvent'
 import store from '../../main/store'
+import {message} from '../component/Message'
 
 const electron = requireModule('electron')
 const fs = requireModule('fs-extra')
@@ -40,15 +41,15 @@ interface DownloadTask {
 export interface Download {
   on(event: 'finish', listener: (info: DownloadInfo) => void): this
   on(event: 'finish-task', listener: (info: DownloadInfo, task: DownloadTask) => void): this
-  on(event: 'error', listener: (msg: string) => void): this
+  // on(event: 'error', listener: (msg: string) => void): this
 
   removeListener(event: 'finish', listener: (info: DownloadInfo) => void): this
   removeListener(event: 'finish-task', listener: (info: DownloadInfo, task: DownloadTask) => void): this
-  removeListener(event: 'error', listener: (msg: string) => void): this
+  // removeListener(event: 'error', listener: (msg: string) => void): this
 
   emit(event: 'finish', info: DownloadInfo)
   emit(event: 'finish-task', info: DownloadInfo, task: DownloadTask)
-  emit(event: 'error', msg: string)
+  // emit(event: 'error', msg: string)
 }
 
 export class Download extends EventEmitter implements Task<DownloadInfo> {
@@ -224,7 +225,8 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
           }
         } catch (e) {
           task.status = TaskStatus.fail
-          this.emit('error', e)
+          // this.emit('error', e)
+          message.error(e)
         }
       }
     }

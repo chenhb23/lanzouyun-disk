@@ -14,6 +14,7 @@ import {message} from '../component/Message'
 export default function Parse() {
   const [list, setList] = useState<LsShareItem[]>([])
   const [fileName, setFileName] = useState('')
+  const [merge, setMerge] = useState(false)
 
   const {loading, request} = useRequest()
   const [urlForm, setUrlForm] = useState({
@@ -43,14 +44,15 @@ export default function Parse() {
             />
 
             <Button
-              disabled={!urlForm.url}
               type={'primary'}
               loading={loading['lsShare']}
               style={{minWidth: 100}}
               onClick={() => {
+                if (!urlForm.url) return message.info('请输入url')
+
                 request(lsShare(urlForm), 'lsShare')
                   .then(value => {
-                    setFileName(`${value.name} ${value.size}`)
+                    setFileName(`${value.name} （${value.size}）`)
                     setList(value.list)
                   })
                   .catch(e => {
@@ -60,27 +62,17 @@ export default function Parse() {
             >
               解析
             </Button>
-            {/*<Button
-              type={'primary'}
-              loading={loading['lsFile']}
-              style={{minWidth: 100}}
-              onClick={() => {
-                request(downloadPageInfo(urlForm), 'lsFile').then(value => {
-                  setList([
-                    {
-                      ...value,
-                      ...urlForm,
-                    },
-                  ])
-                })
-              }}
-            >
-              解析文件
-            </Button>*/}
             <Button
               disabled={!list.length}
+              loading={loading['addShareFolderTask']}
               onClick={() => {
-                console.log('aaaaaaaaa')
+                request(
+                  download.addShareFolderTask({
+                    ...urlForm,
+                    merge,
+                  }),
+                  'addShareFolderTask'
+                ).then(() => message.success('下载任务添加成功'))
               }}
             >
               下载全部
@@ -88,9 +80,8 @@ export default function Parse() {
           </Header>
           <Bar>
             <span>{fileName || '文件列表'}</span>
-
             <label>
-              <input type='checkbox'></input>
+              <input checked={merge} type='checkbox' onChange={event => setMerge(event.target.checked)} />
               自动合并
             </label>
           </Bar>
@@ -114,12 +105,6 @@ export default function Parse() {
                       url: item.url,
                       pwd: item.pwd,
                     })
-                    // item
-                    // downloadManager.addTask({
-                    //   id: item.id,
-                    //   fileName: item.name_all,
-                    //   isFile: true,
-                    // })
                   }}
                 />
               </td>

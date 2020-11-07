@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react'
+import React from 'react'
 import {observer} from 'mobx-react'
 import {ScrollView} from '../component/ScrollView'
 import {Header} from '../component/Header'
@@ -8,15 +8,8 @@ import {Icon} from '../component/Icon'
 import {byteToSize} from '../../common/util'
 import {Table} from '../component/Table'
 import download from '../store/Download'
-import {message} from '../component/Message'
 
 const Download = observer(() => {
-  useEffect(() => {
-    const showError = msg => message.error(msg)
-    download.on('error', showError)
-    return () => download.removeListener('error', showError)
-  }, [])
-
   return (
     <ScrollView
       HeaderComponent={

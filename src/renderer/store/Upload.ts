@@ -9,6 +9,7 @@ import {mkdir} from '../../common/core/mkdir'
 import split from '../../common/split'
 import requireModule from '../../common/requireModule'
 import request from '../../common/request'
+import {message} from '../component/Message'
 
 const fs = requireModule('fs-extra')
 
@@ -40,15 +41,15 @@ export interface UploadTask {
 interface Upload {
   on(event: 'finish', listener: (info: UploadInfo) => void): this
   on(event: 'finish-task', listener: (info: UploadInfo, task: UploadTask) => void): this
-  on(event: 'error', listener: (msg: string) => void): this
+  // on(event: 'error', listener: (msg: string) => void): this
 
   removeListener(event: 'finish', listener: (info: UploadInfo) => void): this
   removeListener(event: 'finish-task', listener: (info: UploadInfo, task: UploadTask) => void): this
-  removeListener(event: 'error', listener: (msg: string) => void): this
+  // removeListener(event: 'error', listener: (msg: string) => void): this
 
   emit(event: 'finish', info: UploadInfo)
   emit(event: 'finish-task', info: UploadInfo, task: UploadTask)
-  emit(event: 'error', msg: string)
+  // emit(event: 'error', msg: string)
 }
 
 const FormData = requireModule('form-data')
@@ -103,7 +104,9 @@ class Upload extends EventEmitter implements Task<UploadInfo> {
   }
 
   checkTask() {
-    const filePath = this.list.find(item => item.status === TaskStatus.ready)?.path
+    const filePath = this.list.find(item =>
+      item.tasks.some(task => [TaskStatus.ready, TaskStatus.fail].includes(task.status))
+    )?.path
     if (filePath) {
       this.start(filePath)
     }
@@ -176,8 +179,8 @@ class Upload extends EventEmitter implements Task<UploadInfo> {
       makeGetterProps(info)
       this.list.push(info)
     } catch (e) {
-      // message.info(e)
-      this.emit('error', e)
+      // this.emit('error', e)
+      message.error(e)
     }
   }
 
@@ -196,10 +199,12 @@ class Upload extends EventEmitter implements Task<UploadInfo> {
     this.list.forEach(item => this.pause(item.path))
   }
 
-  private abortTask(task: UploadTask) {
+  private abortTask = (task: UploadTask) => {
     const path = resolve(task.path, task.name)
     if (this.taskSignal[path]) {
-      this.taskSignal[path].abort()
+      if (!this.taskSignal[path].signal?.aborted) {
+        this.taskSignal[path].abort()
+      }
       delete this.taskSignal[path]
     }
   }
@@ -261,7 +266,8 @@ class Upload extends EventEmitter implements Task<UploadInfo> {
           this.taskSignal[resolve(task.path, task.name)] = abort
         } catch (e) {
           task.status = TaskStatus.fail
-          this.emit('error', e)
+          // this.emit('error', e)
+          message.error(e)
         }
       }
     }

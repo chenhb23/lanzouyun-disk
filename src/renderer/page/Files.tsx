@@ -6,7 +6,7 @@ import {Crumbs} from '../component/Crumbs'
 import {Table, Tr} from '../component/Table'
 import {Icon} from '../component/Icon'
 import {isFile, sizeToByte} from '../../common/util'
-import {rm} from '../../common/core/rm'
+import {rm, rmFile, rmFolder} from '../../common/core/rm'
 import {ls} from '../../common/core/ls'
 import {Bar} from '../component/Bar'
 import {useRequest} from '../hook/useRequest'
@@ -17,7 +17,7 @@ import {Modal} from '../component/Modal'
 import {mkdir} from '../../common/core/mkdir'
 import download from '../store/Download'
 import upload from '../store/Upload'
-import {fileDetail} from '../../common/core/detail'
+import {fileDetail, folderDetail} from '../../common/core/detail'
 const electron = requireModule('electron')
 
 interface FolderForm {
@@ -135,6 +135,93 @@ export default function Files() {
                   <>
                     <Icon iconName={'file'} />
                     <span>{item.name_all}</span>
+                    <div className='handle'>
+                      <Icon
+                        iconName={'share'}
+                        onClick={async () => {
+                          const info = await fileDetail(item.id)
+                          const shareUrl = `${info.is_newd}/${info.f_id}${
+                            info.onof === '1' ? `\n密码: ${info.pwd}` : ''
+                          }`
+                          electron.clipboard.writeText(shareUrl)
+                          message.success(`分享链接已复制：\n${shareUrl}`)
+                        }}
+                      />
+                      <Icon
+                        iconName={'download'}
+                        onClick={() => {
+                          request(
+                            download.addFileTask({
+                              name: item.name,
+                              size: sizeToByte(item.size),
+                              file_id: `${item.id}`,
+                            }),
+                            'download'
+                          )
+                        }}
+                      />
+                      <Icon
+                        iconName={'delete'}
+                        onClick={async () => {
+                          const {zt, info} = await rmFile(id)
+                          if (zt !== 1) return message.error(info)
+                          message.success('已删除')
+                          listFile(currentFolder)
+                        }}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Icon iconName='folder' />
+                    <span onClick={() => listFile(item.fol_id)}>{item.name}</span>
+                    <div className='handle'>
+                      <Icon
+                        iconName={'share'}
+                        onClick={async () => {
+                          const info = await folderDetail(item.fol_id)
+                          const shareUrl = `${info.new_url}${info.onof === '1' ? `\n密码: ${info.pwd}` : ''}`
+                          electron.clipboard.writeText(shareUrl)
+                          message.success(`分享链接已复制：\n${shareUrl}`)
+                        }}
+                      />
+                      <Icon
+                        iconName={'download'}
+                        onClick={() => {
+                          request(
+                            download.addFolderTask({
+                              folder_id: item.fol_id,
+                              merge: isFile(item.name),
+                              name: item.name,
+                            }),
+                            'download'
+                          )
+                        }}
+                      />
+                      <Icon
+                        iconName={'delete'}
+                        onClick={async () => {
+                          const {zt, info} = await rmFolder(item.fol_id)
+                          if (zt !== 1) return message.error(info)
+                          message.success('已删除')
+                          listFile(currentFolder)
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
+              </td>
+              <td>{size}</td>
+              <td>{time}</td>
+              <td>{downs}</td>
+              <td />
+            </Tr>
+            /*<Tr key={id}>
+              <td>
+                {'id' in item ? (
+                  <>
+                    <Icon iconName={'file'} />
+                    <span>{item.name_all}</span>
                   </>
                 ) : (
                   <>
@@ -199,7 +286,7 @@ export default function Files() {
               <td>{time}</td>
               <td>{downs}</td>
               <td />
-            </Tr>
+            </Tr>*/
           )
         })}
       </Table>
