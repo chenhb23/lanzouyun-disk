@@ -15,8 +15,7 @@ import {ScrollView} from '../component/ScrollView'
 import {Input, Textarea} from '../component/Input'
 import {Modal} from '../component/Modal'
 import {mkdir} from '../../common/core/mkdir'
-import download from '../store/Download'
-import upload from '../store/Upload'
+import {download, upload} from '../store'
 import {fileDetail, folderDetail} from '../../common/core/detail'
 const electron = requireModule('electron')
 
@@ -136,10 +135,12 @@ export default function Files() {
                     <Icon iconName={'file'} />
                     <span>{item.name_all}</span>
                     <div className='handle'>
-                      <Icon
-                        iconName={'share'}
+                      <Button
+                        icon={'share'}
+                        type={'icon'}
+                        loading={loading['fileDetail']}
                         onClick={async () => {
-                          const info = await fileDetail(item.id)
+                          const info = await request(fileDetail(item.id), 'fileDetail')
                           const shareUrl = `${info.is_newd}/${info.f_id}${
                             info.onof === '1' ? `\n密码: ${info.pwd}` : ''
                           }`
@@ -147,9 +148,11 @@ export default function Files() {
                           message.success(`分享链接已复制：\n${shareUrl}`)
                         }}
                       />
-                      <Icon
-                        iconName={'download'}
-                        onClick={() => {
+                      <Button
+                        icon={'download'}
+                        type={'icon'}
+                        loading={loading['download']}
+                        onClick={async () => {
                           request(
                             download.addFileTask({
                               name: item.name,
@@ -160,10 +163,12 @@ export default function Files() {
                           )
                         }}
                       />
-                      <Icon
-                        iconName={'delete'}
+                      <Button
+                        icon={'delete'}
+                        type={'icon'}
+                        loading={loading['rmFile']}
                         onClick={async () => {
-                          const {zt, info} = await rmFile(id)
+                          const {zt, info} = await request(rmFile(id), 'rmFile')
                           if (zt !== 1) return message.error(info)
                           message.success('已删除')
                           listFile(currentFolder)
@@ -176,32 +181,38 @@ export default function Files() {
                     <Icon iconName='folder' />
                     <span onClick={() => listFile(item.fol_id)}>{item.name}</span>
                     <div className='handle'>
-                      <Icon
-                        iconName={'share'}
+                      <Button
+                        icon={'share'}
+                        type={'icon'}
+                        loading={loading['folderDetail']}
                         onClick={async () => {
-                          const info = await folderDetail(item.fol_id)
+                          const info = await request(folderDetail(item.fol_id), 'folderDetail')
                           const shareUrl = `${info.new_url}${info.onof === '1' ? `\n密码: ${info.pwd}` : ''}`
                           electron.clipboard.writeText(shareUrl)
                           message.success(`分享链接已复制：\n${shareUrl}`)
                         }}
                       />
-                      <Icon
-                        iconName={'download'}
-                        onClick={() => {
+                      <Button
+                        icon={'download'}
+                        type={'icon'}
+                        loading={loading['addFolderTask']}
+                        onClick={async () => {
                           request(
                             download.addFolderTask({
                               folder_id: item.fol_id,
                               merge: isFile(item.name),
                               name: item.name,
                             }),
-                            'download'
+                            'addFolderTask'
                           )
                         }}
                       />
-                      <Icon
-                        iconName={'delete'}
+                      <Button
+                        icon={'delete'}
+                        type={'icon'}
+                        loading={loading['rmFolder']}
                         onClick={async () => {
-                          const {zt, info} = await rmFolder(item.fol_id)
+                          const {zt, info} = await request(rmFolder(item.fol_id), 'rmFolder')
                           if (zt !== 1) return message.error(info)
                           message.success('已删除')
                           listFile(currentFolder)

@@ -30,6 +30,8 @@ export default interface Task<Info> {
   removeAll()
 }
 
+export type TaskBase = {tasks: {size: number; resolve: number; status: TaskStatus}[]}
+
 export function makeGetterProps<T extends {tasks: {size: number; resolve: number; status: TaskStatus}[]}>(info: T) {
   Object.defineProperties(info, {
     size: {
@@ -50,3 +52,14 @@ export function makeGetterProps<T extends {tasks: {size: number; resolve: number
     },
   })
 }
+
+// export function getInfoSize(info: TaskBase) {
+//   return info.tasks.reduce((total, item) => total + (item.size ?? 0), 0)
+// }
+// export function getInfoResolve(info: TaskBase) {
+//   return info.tasks.reduce((total, item) => total + (item.resolve ?? 0), 0)
+// }
+// export function getInfoStatus(info: TaskBase) {
+//   if (info.tasks.some(item => item.status === TaskStatus.pending)) return TaskStatus.pending
+//   return TaskStatus.ready
+// }

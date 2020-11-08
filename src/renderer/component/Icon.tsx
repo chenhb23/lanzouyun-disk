@@ -36,4 +36,7 @@ export type IconName =
   | 'img'
   | 'delete'
   | 'loading'
+  | 'pause'
+  | 'start'
+  | 'open-folder'
   | string

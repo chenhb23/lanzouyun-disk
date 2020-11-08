@@ -112,7 +112,6 @@ const downloadTaskFactory = () => {
 
       electron.ipcRenderer.send(IpcEvent.download, ipcMessage)
       electron.ipcRenderer.once(`${IpcEvent.start}${ipcMessage.replyId}`, () => {
-        console.log('download start:', ipcMessage.folderPath)
         queue.shift()
         resolve()
       })

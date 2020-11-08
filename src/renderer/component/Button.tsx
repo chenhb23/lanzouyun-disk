@@ -3,7 +3,7 @@ import './Button.css'
 import {Icon, IconName} from './Icon'
 
 export type ButtonProps = {
-  type?: 'primary' | 'default'
+  type?: 'primary' | 'default' | 'icon'
   icon?: IconName | React.ReactNode
   file?: boolean
   onChange?: (files: FileList) => void

@@ -11,6 +11,7 @@ import {fileDetail, folderDetail} from '../../common/core/detail'
 import IpcEvent from '../../common/IpcEvent'
 import store from '../../main/store'
 import {message} from '../component/Message'
+import {persist} from 'mobx-persist'
 
 const electron = requireModule('electron')
 const fs = requireModule('fs-extra')
@@ -55,9 +56,9 @@ export interface Download {
 export class Download extends EventEmitter implements Task<DownloadInfo> {
   handler: ReturnType<typeof autorun>
   taskSignal: {[taskUrl: string]: AbortController} = {}
-  list: DownloadInfo[] = []
-  finishList: DownloadInfo[] = []
-  dir = ''
+  @persist('list') list: DownloadInfo[] = []
+  @persist('list') finishList: DownloadInfo[] = []
+  @persist dir = ''
 
   get queue() {
     return this.getList(item => item.status === TaskStatus.pending).length
@@ -75,9 +76,10 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
   }
 
   private init = () => {
-    store.get('downloads').then(value => {
-      this.dir = value
-    })
+    if (!this.dir) {
+      store.get('downloads').then(value => (this.dir = value))
+    }
+
     this.startQueue()
     this.on('finish', info => {
       delay(200).then(() => this.onTaskFinish(info))
@@ -124,7 +126,6 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
 
   checkTask() {
     const url = this.list.find(item => item.status === TaskStatus.ready)?.url
-    // const url = this.list.find(item => item.tasks.some(task => task.status === TaskStatus.ready))?.url
     if (url) {
       this.start(url)
     }
@@ -177,10 +178,17 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
     this.finishList = []
   }
 
-  async start(url: string) {
+  async start(url: string, resetAll = false) {
     const info = this.list.find(item => item.url === url)
     if (info && this.canStart(info)) {
-      const task = info.tasks.find(item => [TaskStatus.ready, TaskStatus.fail].includes(item.status))
+      if (resetAll) {
+        info.tasks.forEach(task => {
+          if ([TaskStatus.pause, TaskStatus.fail].includes(task.status)) {
+            task.status = TaskStatus.ready
+          }
+        })
+      }
+      const task = info.tasks.find(task => TaskStatus.ready === task.status)
       if (task) {
         task.status = TaskStatus.pending
         try {
@@ -220,12 +228,10 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
           this.taskSignal[task.url] = abort
           abort.signal.onabort = () => {
             electron.ipcRenderer.send(IpcEvent.abort, replyId)
-            console.log('下载任务取消：', task.name)
             removeListener()
           }
         } catch (e) {
           task.status = TaskStatus.fail
-          // this.emit('error', e)
           message.error(e)
         }
       }
@@ -252,61 +258,63 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
    * 新增列表文件任务
    */
   async addFileTask(options: {name: string; size: number; file_id: string}) {
-    const folderDir = this.getFileDir()
-    const {f_id, is_newd, pwd, onof} = await fileDetail(options.file_id)
-    const url = `${is_newd}/${f_id}`
-    const info: DownloadInfo = {
-      url,
-      path: folderDir,
-      ...options,
-      tasks: [
-        {
-          url,
-          name: options.name,
-          resolve: 0,
-          status: TaskStatus.ready,
-          pwd: onof == '1' ? pwd : '',
-          path: folderDir,
-          size: options.size,
-        },
-      ],
-    }
+    try {
+      const folderDir = this.getFileDir()
+      const {f_id, is_newd, pwd, onof} = await fileDetail(options.file_id)
+      const url = `${is_newd}/${f_id}`
+      const info: DownloadInfo = {
+        url,
+        path: folderDir,
+        ...options,
+        tasks: [
+          {
+            url,
+            name: options.name,
+            resolve: 0,
+            status: TaskStatus.ready,
+            pwd: onof == '1' ? pwd : '',
+            path: folderDir,
+            size: options.size,
+          },
+        ],
+      }
 
-    makeGetterProps(info)
-    this.list.push(info)
+      makeGetterProps(info)
+      this.list.push(info)
+    } catch (e) {
+      message.error(e)
+    }
   }
 
   /**
    * 新增分享文件任务
    */
   async addShareFileTask(options: {url: string; pwd?: string}) {
-    const {url} = options
-    const folderDir = this.getFileDir()
-    // if (options.onof === '1' && !options.pwd) {
-    //   throw new Error('onof = 1 的情况下密码不能为空！')
-    // } else if (options.onof === '0' && options.pwd) {
-    //   options.pwd = ''
-    // }
-    // const {name, size} = await downloadPageInfo(options)
-    const {name, size} = await lsShare(options)
-    const task: DownloadInfo = {
-      path: folderDir,
-      ...options,
-      name,
-      tasks: [
-        {
-          url,
-          name,
-          resolve: 0,
-          status: TaskStatus.ready,
-          pwd: options.pwd,
-          path: folderDir,
-          size: sizeToByte(size),
-        },
-      ],
+    try {
+      const {url} = options
+      const folderDir = this.getFileDir()
+      const {name, size} = await lsShare(options)
+      const task: DownloadInfo = {
+        path: folderDir,
+        ...options,
+        name,
+        tasks: [
+          {
+            url,
+            name,
+            resolve: 0,
+            status: TaskStatus.ready,
+            pwd: options.pwd,
+            path: folderDir,
+            size: sizeToByte(size),
+          },
+        ],
+      }
+      makeGetterProps(task)
+      this.list.push(task)
+    } catch (e) {
+      message.error(e)
     }
-    makeGetterProps(task)
-    this.list.push(task)
   }
 
   /**
@@ -314,36 +322,40 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
    * @param options
    */
   async addFolderTask(options: {folder_id: FolderId; name: string; merge?: boolean}) {
-    let folderDir = this.getFileDir()
-    const [detail, files] = await Promise.all([folderDetail(options.folder_id), lsFile(options.folder_id)])
-    const info: DownloadInfo = {
-      path: folderDir,
-      url: detail.new_url,
-      pwd: detail.onof === '1' ? detail.pwd : '',
-      merge: options.merge,
-      name: options.name,
-      // ...options,
-      tasks: [],
-    }
-    if (options.merge) {
-      folderDir = mkTempDirSync()
-    }
-
-    const fileInfos = await Promise.all(files.map(file => fileDetail(file.id)))
-    info.tasks.push(
-      ...fileInfos.map((info, index) => ({
-        url: `${info.is_newd}/${info.f_id}`,
-        name: files[index]?.name_all,
-        resolve: 0,
-        status: TaskStatus.ready,
-        pwd: info.onof === '1' ? info.pwd : '',
+    try {
+      let folderDir = this.getFileDir()
+      const [detail, files] = await Promise.all([folderDetail(options.folder_id), lsFile(options.folder_id)])
+      const info: DownloadInfo = {
         path: folderDir,
-        size: sizeToByte(files[index]?.size),
-      }))
-    )
+        url: detail.new_url,
+        pwd: detail.onof === '1' ? detail.pwd : '',
+        merge: options.merge,
+        name: options.name,
+        // ...options,
+        tasks: [],
+      }
+      if (options.merge) {
+        folderDir = mkTempDirSync()
+      }
 
-    makeGetterProps(info)
-    this.list.push(info)
+      const fileInfos = await Promise.all(files.map(file => fileDetail(file.id)))
+      info.tasks.push(
+        ...fileInfos.map((info, index) => ({
+          url: `${info.is_newd}/${info.f_id}`,
+          name: files[index]?.name_all,
+          resolve: 0,
+          status: TaskStatus.ready,
+          pwd: info.onof === '1' ? info.pwd : '',
+          path: folderDir,
+          size: sizeToByte(files[index]?.size),
+        }))
+      )
+
+      makeGetterProps(info)
+      this.list.push(info)
+    } catch (e) {
+      message.error(e)
+    }
   }
 
   /**
@@ -351,36 +363,36 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
    * merge: 自动合并下载文件
    */
   async addShareFolderTask(options: {url: string; pwd?: string; merge?: boolean}) {
-    const {is_newd} = parseUrl(options.url)
-    let folderDir = this.getFileDir()
-    const info: DownloadInfo = {
-      path: folderDir,
-      name: '',
-      tasks: [],
-      ...options,
-    }
-    const {name, list} = await lsShareFolder(options)
-    if (options.merge) {
-      folderDir = mkTempDirSync()
-    }
-    info.name = name
-    info.tasks.push(
-      ...list.map<DownloadTask>(item => ({
-        url: `${is_newd}/${item.id}`,
-        name: item.name_all,
-        resolve: 0,
-        status: TaskStatus.ready,
-        pwd: '',
+    try {
+      const {is_newd} = parseUrl(options.url)
+      let folderDir = this.getFileDir()
+      const info: DownloadInfo = {
         path: folderDir,
-        size: sizeToByte(item.size),
-      }))
-    )
+        name: '',
+        tasks: [],
+        ...options,
+      }
+      const {name, list} = await lsShareFolder(options)
+      if (options.merge) {
+        folderDir = mkTempDirSync()
+      }
+      info.name = name
+      info.tasks.push(
+        ...list.map<DownloadTask>(item => ({
+          url: `${is_newd}/${item.id}`,
+          name: item.name_all,
+          resolve: 0,
+          status: TaskStatus.ready,
+          pwd: '',
+          path: folderDir,
+          size: sizeToByte(item.size),
+        }))
+      )
 
-    makeGetterProps(info)
-    this.list.push(info)
+      makeGetterProps(info)
+      this.list.push(info)
+    } catch (e) {
+      message.error(e)
+    }
   }
 }
-
-const download = new Download()
-
-export default download

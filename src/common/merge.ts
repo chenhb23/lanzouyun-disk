@@ -15,7 +15,6 @@ function write(filePath: PathLike, target: WriteStream) {
 async function merge(files: PathLike[], target: PathLike) {
   const ws = fs.createWriteStream(target, {flags: 'w'})
   for (const file of files) {
-    console.log('write file: ', file)
     await write(file, ws)
   }
   return true

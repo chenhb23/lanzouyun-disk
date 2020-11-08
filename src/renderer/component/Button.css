@@ -9,6 +9,7 @@
   min-height: 27px;
   position: relative;
   white-space: nowrap;
+  cursor: pointer;
   -webkit-app-region: no-drag;
 }
 
@@ -35,6 +36,14 @@
   background-color: rgb(76, 137, 247);
   border-color: rgb(76, 137, 247);
   color: #ffffff;
+}
+
+.Button.icon {
+  min-width: 25px;
+  background-color: transparent;
+  border-color: transparent;
+  margin-left: 0;
+  padding: 1px 5px;
 }
 
 .ButtonLabel {

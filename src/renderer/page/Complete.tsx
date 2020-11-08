@@ -6,7 +6,7 @@ import {Bar} from '../component/Bar'
 import {Icon} from '../component/Icon'
 import {byteToSize} from '../../common/util'
 import {Table} from '../component/Table'
-import download from '../store/Download'
+import {download} from '../store'
 import IpcEvent from '../../common/IpcEvent'
 import requireModule from '../../common/requireModule'
 import {observer} from 'mobx-react'
@@ -43,13 +43,13 @@ const Complete = observer(() => {
               <td>{`${byteToSize(item.size)}`}</td>
               <td>
                 <Button
+                  icon={'open-folder'}
+                  type={'icon'}
                   onClick={() => {
                     // todo: 精确到文件
                     electron.ipcRenderer.invoke(IpcEvent.shell, 'showItemInFolder', item.path)
                   }}
-                >
-                  打开
-                </Button>
+                />
               </td>
               <td></td>
             </tr>

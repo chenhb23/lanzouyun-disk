@@ -8,7 +8,7 @@ import {Bar} from '../component/Bar'
 import {Table} from '../component/Table'
 import {Icon} from '../component/Icon'
 import {useRequest} from '../hook/useRequest'
-import download from '../store/Download'
+import {download} from '../store'
 import {message} from '../component/Message'
 
 export default function Parse() {

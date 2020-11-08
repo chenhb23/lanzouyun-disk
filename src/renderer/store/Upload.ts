@@ -1,6 +1,6 @@
 import {EventEmitter} from 'events'
 import {resolve} from 'path'
-import {autorun, makeObservable} from 'mobx'
+import {autorun, makeObservable, toJS} from 'mobx'
 import Task, {makeGetterProps, TaskStatus} from './AbstractTask'
 import config from '../../project.config'
 import {createSpecificName, debounce, sizeToByte} from '../../common/util'
@@ -10,6 +10,7 @@ import split from '../../common/split'
 import requireModule from '../../common/requireModule'
 import request from '../../common/request'
 import {message} from '../component/Message'
+import {persist} from 'mobx-persist'
 
 const fs = requireModule('fs-extra')
 
@@ -38,7 +39,7 @@ export interface UploadTask {
   endByte?: number
 }
 
-interface Upload {
+export interface Upload {
   on(event: 'finish', listener: (info: UploadInfo) => void): this
   on(event: 'finish-task', listener: (info: UploadInfo, task: UploadTask) => void): this
   // on(event: 'error', listener: (msg: string) => void): this
@@ -60,11 +61,11 @@ const FormData = requireModule('form-data')
  * 上传速度： todo
  * */
 
-class Upload extends EventEmitter implements Task<UploadInfo> {
+export class Upload extends EventEmitter implements Task<UploadInfo> {
   handler: ReturnType<typeof autorun>
   taskSignal: {[resolvePathName: string]: AbortController} = {}
 
-  list: UploadInfo[] = []
+  @persist('list') list: UploadInfo[] = []
 
   get queue() {
     return this.getList(item => item.status === TaskStatus.pending).length
@@ -179,7 +180,6 @@ class Upload extends EventEmitter implements Task<UploadInfo> {
       makeGetterProps(info)
       this.list.push(info)
     } catch (e) {
-      // this.emit('error', e)
       message.error(e)
     }
   }
@@ -219,10 +219,18 @@ class Upload extends EventEmitter implements Task<UploadInfo> {
     this.list = []
   }
 
-  start(path: string) {
+  start(path: string, resetAll = false) {
     const info = this.list.find(item => item.path === path)
     if (info && this.canStart(info)) {
-      const task = info.tasks.find(item => [TaskStatus.ready, TaskStatus.fail].includes(item.status))
+      if (resetAll) {
+        info.tasks.forEach(task => {
+          if ([TaskStatus.pause, TaskStatus.fail].includes(task.status)) {
+            task.status = TaskStatus.ready
+          }
+        })
+      }
+
+      const task = info.tasks.find(item => TaskStatus.ready === item.status)
       if (task) {
         task.status = TaskStatus.pending
         try {
@@ -289,10 +297,6 @@ class Upload extends EventEmitter implements Task<UploadInfo> {
     })
   }
 }
-
-const upload = new Upload()
-
-export default upload
 
 interface FormOptions {
   fr: ReturnType<typeof fs.createReadStream>

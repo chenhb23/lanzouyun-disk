@@ -7,9 +7,13 @@ import {Bar} from '../component/Bar'
 import {Icon} from '../component/Icon'
 import {byteToSize} from '../../common/util'
 import {Table} from '../component/Table'
-import download from '../store/Download'
+import {download} from '../store'
+import {TaskStatus} from '../store/AbstractTask'
+import {useRequest} from '../hook/useRequest'
 
 const Download = observer(() => {
+  const {loading, request} = useRequest()
+
   return (
     <ScrollView
       HeaderComponent={
@@ -35,10 +39,22 @@ const Download = observer(() => {
               </td>
               <td>{`${byteToSize(item.resolve)} / ${byteToSize(item.size)}`}</td>
               <td>
-                {/*todo:操作*/}
-                {item.tasks.reduce((total, item) => total + item.resolve, 0)}
+                <Button
+                  icon={item.status === TaskStatus.pending ? 'pause' : 'start'}
+                  type={'icon'}
+                  loading={loading['start']}
+                  onClick={() => {
+                    if (item.status === TaskStatus.pending) {
+                      download.pause(item.url)
+                    } else {
+                      request(download.start(item.url, true), 'start')
+                    }
+                  }}
+                />
+
+                <Button icon={'delete'} type={'icon'} onClick={() => download.remove(item.url)} />
               </td>
-              <td></td>
+              <td />
             </tr>
           )
         })}

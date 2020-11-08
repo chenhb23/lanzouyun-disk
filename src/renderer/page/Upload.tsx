@@ -6,10 +6,11 @@ import {Bar} from '../component/Bar'
 import {Icon} from '../component/Icon'
 import {byteToSize} from '../../common/util'
 import {Table} from '../component/Table'
-import upload, {UploadInfo} from '../store/Upload'
+import {UploadInfo} from '../store/Upload'
+import {upload} from '../store'
 import {Modal} from '../component/Modal'
 import {observer} from 'mobx-react'
-import {message} from '../component/Message'
+import {TaskStatus} from '../store/AbstractTask'
 
 const Upload = observer(() => {
   const [showItem, setShowItem] = useState<UploadInfo>(null)
@@ -43,8 +44,21 @@ const Upload = observer(() => {
                 {item.tasks.length > 1 && <span>{` | ${item.tasks.length} 个子任务`}</span>}
               </td>
               <td>{`${byteToSize(item.resolve)} / ${byteToSize(item.size)}`}</td>
-              <td>{/*todo:操作*/}</td>
-              <td></td>
+              <td>
+                <Button
+                  icon={item.status === TaskStatus.pending ? 'pause' : 'start'}
+                  type={'icon'}
+                  onClick={() => {
+                    if (item.status === TaskStatus.pending) {
+                      upload.pause(item.path)
+                    } else {
+                      upload.start(item.path, true)
+                    }
+                  }}
+                />
+                <Button icon={'delete'} type={'icon'} onClick={() => upload.remove(item.path)} />
+              </td>
+              <td />
             </tr>
           )
         })}

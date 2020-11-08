@@ -1,0 +1,149 @@
+{
+  "id": "2174252",
+  "name": "网盘",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "5948351",
+      "name": "打开",
+      "font_class": "open-folder",
+      "unicode": "e641",
+      "unicode_decimal": 58945
+    },
+    {
+      "icon_id": "2224957",
+      "name": "pause",
+      "font_class": "pause",
+      "unicode": "e6d6",
+      "unicode_decimal": 59094
+    },
+    {
+      "icon_id": "4596310",
+      "name": "start  start  开始   s",
+      "font_class": "start",
+      "unicode": "e638",
+      "unicode_decimal": 58936
+    },
+    {
+      "icon_id": "17687750",
+      "name": "loading",
+      "font_class": "loading",
+      "unicode": "e764",
+      "unicode_decimal": 59236
+    },
+    {
+      "icon_id": "9091801",
+      "name": "删 除",
+      "font_class": "delete",
+      "unicode": "e62e",
+      "unicode_decimal": 58926
+    },
+    {
+      "icon_id": "5799910",
+      "name": "file",
+      "font_class": "file",
+      "unicode": "e655",
+      "unicode_decimal": 58965
+    },
+    {
+      "icon_id": "15558409",
+      "name": "缺省",
+      "font_class": "empty",
+      "unicode": "e670",
+      "unicode_decimal": 58992
+    },
+    {
+      "icon_id": "109779",
+      "name": "right",
+      "font_class": "right",
+      "unicode": "e642",
+      "unicode_decimal": 58946
+    },
+    {
+      "icon_id": "731122",
+      "name": "更多",
+      "font_class": "more",
+      "unicode": "e605",
+      "unicode_decimal": 58885
+    },
+    {
+      "icon_id": "1979162",
+      "name": "文件夹未共享",
+      "font_class": "folder",
+      "unicode": "e65e",
+      "unicode_decimal": 58974
+    },
+    {
+      "icon_id": "4186001",
+      "name": "刷新",
+      "font_class": "refresh",
+      "unicode": "e626",
+      "unicode_decimal": 58918
+    },
+    {
+      "icon_id": "6888890",
+      "name": "上传",
+      "font_class": "upload",
+      "unicode": "e661",
+      "unicode_decimal": 58977
+    },
+    {
+      "icon_id": "7226336",
+      "name": "压缩包",
+      "font_class": "package",
+      "unicode": "e61a",
+      "unicode_decimal": 58906
+    },
+    {
+      "icon_id": "9148583",
+      "name": "分享",
+      "font_class": "share",
+      "unicode": "e60f",
+      "unicode_decimal": 58895
+    },
+    {
+      "icon_id": "9466909",
+      "name": "完成",
+      "font_class": "finish",
+      "unicode": "e625",
+      "unicode_decimal": 58917
+    },
+    {
+      "icon_id": "10043546",
+      "name": "下载",
+      "font_class": "download",
+      "unicode": "e612",
+      "unicode_decimal": 58898
+    },
+    {
+      "icon_id": "13303952",
+      "name": "pdf",
+      "font_class": "pdf",
+      "unicode": "e687",
+      "unicode_decimal": 59015
+    },
+    {
+      "icon_id": "13410123",
+      "name": "云盘 - 新建文件夹",
+      "font_class": "new-folder",
+      "unicode": "e615",
+      "unicode_decimal": 58901
+    },
+    {
+      "icon_id": "13412242",
+      "name": "文件类型 - 视频文件",
+      "font_class": "video",
+      "unicode": "e61b",
+      "unicode_decimal": 58907
+    },
+    {
+      "icon_id": "17124318",
+      "name": "图片",
+      "font_class": "img",
+      "unicode": "e637",
+      "unicode_decimal": 58935
+    }
+  ]
+}
