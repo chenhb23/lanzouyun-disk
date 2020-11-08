@@ -7,6 +7,8 @@ export default {
   api: {
     task: '/doupload.php',
   },
+  // splitSize: '50k', // 大于 maxSize 按 splitSize 分割
+  // maxSize: '50k',
   splitSize: '50m', // 大于 maxSize 按 splitSize 分割
   maxSize: '99.5m',
   signSuffix: '.lzy.zip',

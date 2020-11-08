@@ -42,12 +42,12 @@ const Download = observer(() => {
                 <Button
                   icon={item.status === TaskStatus.pending ? 'pause' : 'start'}
                   type={'icon'}
-                  loading={loading['start']}
+                  loading={loading['download.pause'] || loading['download.start']}
                   onClick={() => {
                     if (item.status === TaskStatus.pending) {
-                      download.pause(item.url)
+                      request(download.pause(item.url), 'download.pause')
                     } else {
-                      request(download.start(item.url, true), 'start')
+                      request(download.start(item.url, true), 'download.start')
                     }
                   }}
                 />

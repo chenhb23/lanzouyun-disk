@@ -15,6 +15,7 @@ enum IpcEvent {
   start = 'start',
   done = 'done',
   failed = 'failed',
+  cancelled = 'cancelled',
 }
 
 export default IpcEvent

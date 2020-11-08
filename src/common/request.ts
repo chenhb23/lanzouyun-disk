@@ -83,8 +83,8 @@ function request<T, B>(params: RequestParams<B>): Promise<T> {
 
     if (params.signal) {
       params.signal.onabort = () => {
+        req.once('abort', () => reject('request 取消!'))
         req.abort()
-        reject('request 取消!')
       }
     }
 

@@ -1,6 +1,6 @@
 import {EventEmitter} from 'events'
 import {autorun, makeObservable} from 'mobx'
-import {resolve} from 'path'
+import path from 'path'
 import Task, {makeGetterProps, TaskStatus} from './AbstractTask'
 import {fileDownUrl, parseUrl, pwdFileDownUrl, sendDownloadTask} from '../../common/core/download'
 import {delay, isSpecificFile, mkTempDirSync, restoreFileName, sizeToByte} from '../../common/util'
@@ -97,10 +97,10 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
   }
 
   async onTaskFinish(info: DownloadInfo) {
-    const resolveTarget = resolve(info.path, info.name)
+    const resolveTarget = path.resolve(info.path, info.name)
     if (info.merge) {
       const tempDir = info.tasks[0].path
-      const files = fs.readdirSync(tempDir).map(name => resolve(tempDir, name))
+      const files = fs.readdirSync(tempDir).map(name => path.resolve(tempDir, name))
       await merge(files, resolveTarget)
       await delay(200)
       // 删除临时文件夹
@@ -143,21 +143,29 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
   }
 
   abortTask = (task: DownloadTask) => {
-    if (this.taskSignal[task.url]) {
-      this.taskSignal[task.url].abort()
-      delete this.taskSignal[task.url]
-    }
+    return new Promise(resolve => {
+      if (this.taskSignal[task.url]) {
+        this.taskSignal[task.url].abort()
+        delete this.taskSignal[task.url]
+        electron.ipcRenderer.once(`${IpcEvent.cancelled}${task.url}`, () => resolve())
+      } else {
+        resolve()
+      }
+    })
   }
 
-  pause(url: string) {
-    this.list
-      .find(item => item.url === url)
-      ?.tasks?.forEach(task => {
-        if ([TaskStatus.ready, TaskStatus.pending].includes(task.status)) {
-          task.status = TaskStatus.pause
-          this.abortTask(task)
-        }
-      })
+  async pause(url: string) {
+    await Promise.all(
+      this.list
+        .find(item => item.url === url)
+        ?.tasks?.map(task => {
+          if ([TaskStatus.ready, TaskStatus.pending].includes(task.status)) {
+            task.status = TaskStatus.pause
+            return this.abortTask(task)
+          }
+          return Promise.resolve()
+        }) ?? []
+    )
   }
 
   pauseAll() {

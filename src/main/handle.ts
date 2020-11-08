@@ -38,24 +38,27 @@ function setupDownload(win: BrowserWindow) {
           } else {
             const receivedByte = item.getReceivedBytes()
             const totalBytes = item.getTotalBytes()
-            debounceEvent(`progressing${replyId}`, receivedByte, totalBytes)
-            // console.log(`Received bytes: ${receivedByte} / ${totalBytes}`)
+            debounceEvent(`${IpcEvent.progressing}${replyId}`, receivedByte, totalBytes)
           }
         } else if (state === 'interrupted') {
-          ipcEvent.reply(`failed${replyId}`)
+          ipcEvent.reply(`${IpcEvent.failed}${replyId}`)
         }
       })
 
       item.once('done', (event1, state) => {
         if (state === 'completed') {
-          ipcEvent.reply(`done${replyId}`)
+          ipcEvent.reply(`${IpcEvent.done}${replyId}`)
         } else {
-          ipcEvent.reply(`failed${replyId}`)
+          if (state === 'cancelled') {
+            ipcEvent.reply(`${IpcEvent.cancelled}${replyId}`)
+          } else {
+            ipcEvent.reply(`${IpcEvent.failed}${replyId}`)
+          }
         }
         delete downloadItems[replyId]
       })
 
-      ipcEvent.reply(`start${replyId}`)
+      ipcEvent.reply(`${IpcEvent.start}${replyId}`)
     })
 
     win.webContents.downloadURL(downUrl)
