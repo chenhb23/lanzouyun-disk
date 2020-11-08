@@ -1,9 +1,9 @@
 import {EventEmitter} from 'events'
-import {autorun, makeObservable} from 'mobx'
+import {autorun, makeObservable, toJS} from 'mobx'
 import path from 'path'
 import Task, {makeGetterProps, TaskStatus} from './AbstractTask'
 import {fileDownUrl, parseUrl, pwdFileDownUrl, sendDownloadTask} from '../../common/core/download'
-import {delay, isSpecificFile, mkTempDirSync, restoreFileName, sizeToByte} from '../../common/util'
+import {debounce, delay, isSpecificFile, mkTempDirSync, restoreFileName, sizeToByte} from '../../common/util'
 import {lsFile, lsShare, lsShareFolder} from '../../common/core/ls'
 import requireModule from '../../common/requireModule'
 import merge from '../../common/merge'
@@ -12,6 +12,7 @@ import IpcEvent from '../../common/IpcEvent'
 import store from '../../main/store'
 import {message} from '../component/Message'
 import {persist} from 'mobx-persist'
+import {downloadFile} from '../../common/request'
 
 const electron = requireModule('electron')
 const fs = requireModule('fs-extra')
@@ -202,8 +203,30 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
         try {
           const {url: downloadUrl} = task.pwd ? await pwdFileDownUrl(task.url, task.pwd) : await fileDownUrl(task.url)
 
-          const abort = new AbortController()
+          // const onProgress = debounce(receivedByte => {
+          //   task.resolve = receivedByte
+          // })
+          // console.log('path.resolve(task.path, task.name)', path.resolve(task.path, task.name))
+          // console.log(downloadUrl)
+          // const abort = new AbortController()
+          // downloadFile({
+          //   url: downloadUrl,
+          //   resolvePath: path.resolve(task.path, task.name),
+          //   onProgress,
+          //   signal: abort.signal,
+          // })
+          //   .then(() => {
+          //     task.status = TaskStatus.finish
+          //     this.emit('finish-task', info, task)
+          //   })
+          //   .catch(msg => {
+          //     message.error(msg)
+          //     task.status = TaskStatus.fail
+          //   })
+          //
+          // this.taskSignal[task.url] = abort
 
+          const abort = new AbortController()
           const replyId = task.url
           const ipcMessage: IpcDownloadMsg = {
             replyId: task.url,
@@ -228,7 +251,8 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
               this.emit('finish-task', info, task)
               removeListener()
             })
-            .once(`${IpcEvent.failed}${replyId}`, () => {
+            .once(`${IpcEvent.failed}${replyId}`, (e, msg) => {
+              message.error(msg)
               task.status = TaskStatus.fail
               removeListener()
             })

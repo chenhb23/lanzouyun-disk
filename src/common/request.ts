@@ -123,15 +123,22 @@ interface DownloadFile {
 
 /**
  * nodejs 下载文件
- * @deprecated 会有重定向问题，暂不使用
  */
 export function downloadFile(options: DownloadFile) {
-  return new Promise((resolve, reject) => {
+  const redirectUrl = (url: string) =>
+    fetch(url, {headers: baseHeaders}).then(value => {
+      if (value.redirected) return value.url
+      return url
+    })
+
+  return new Promise(async (resolve, reject) => {
     let totalBytes = 0
     let receivedBytes = 0
 
+    const url = await redirectUrl(options.url)
+
     const req = http
-      .get(options.url, baseHeaders, res => {
+      .get(url, res => {
         const out = fs.createWriteStream(options.resolvePath, {
           // flags: 'w',
         })
@@ -159,3 +166,16 @@ export function downloadFile(options: DownloadFile) {
     }
   })
 }
+
+// fileDownUrl('https://wws.lanzous.com/iMAoLi6o0oh').then(value => {
+//   console.log(value.url)
+//   downloadFile({
+//     // url:
+//     //   'https://dev76.baidupan.com/110815bb/2020/11/08/62c6e412302815ea7b6f5279b8575e33.dmg?st=2bSt-wwQxD-uR6ZL8XLF2w&e=1604822629&b=UlddDQJRUApUTl9vUmRSPwA2DDUAXgQwBHlbZwIrBDYJdQhsVTgDYQ_c_c&fi=32271757&pid=218-81-35-224&up=',
+//     url: value.url,
+//     resolvePath: '/Users/chb/Desktop/tempDownload/aa',
+//     onProgress: (receive, total) => {
+//       console.log('receive, total', receive, total)
+//     },
+//   })
+// })

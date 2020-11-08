@@ -28,6 +28,7 @@ function createWindow() {
     webPreferences: {
       preload: path.resolve(__dirname, 'main/preload.js'),
       webSecurity: false, // 不使用网页安全性，跨域
+      allowRunningInsecureContent: true,
       nodeIntegration: true, // 开启后可在渲染线程 require()
       nodeIntegrationInSubFrames: true,
       nodeIntegrationInWorker: true,
@@ -48,6 +49,7 @@ function createWindow() {
     mainWindow.loadURL(loadURL)
     // mainWindow.webContents.openDevTools()
   }
+  mainWindow.webContents.openDevTools()
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {

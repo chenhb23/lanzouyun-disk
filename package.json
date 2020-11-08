@@ -1,6 +1,6 @@
 {
-  "name": "lanzouyun-electron",
-  "version": "0.1.0",
+  "name": "lanzouyun-pan",
+  "version": "1.0.0",
   "private": true,
   "main": "build/electron.js",
   "homepage": "./",

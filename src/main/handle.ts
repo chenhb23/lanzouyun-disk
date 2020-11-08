@@ -41,7 +41,7 @@ function setupDownload(win: BrowserWindow) {
             debounceEvent(`${IpcEvent.progressing}${replyId}`, receivedByte, totalBytes)
           }
         } else if (state === 'interrupted') {
-          ipcEvent.reply(`${IpcEvent.failed}${replyId}`)
+          ipcEvent.reply(`${IpcEvent.failed}${replyId}`, 'interrupted')
         }
       })
 
@@ -52,7 +52,7 @@ function setupDownload(win: BrowserWindow) {
           if (state === 'cancelled') {
             ipcEvent.reply(`${IpcEvent.cancelled}${replyId}`)
           } else {
-            ipcEvent.reply(`${IpcEvent.failed}${replyId}`)
+            ipcEvent.reply(`${IpcEvent.failed}${replyId}`, 'done')
           }
         }
         delete downloadItems[replyId]
