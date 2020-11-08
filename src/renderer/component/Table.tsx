@@ -9,7 +9,7 @@ export interface TableProps {
 }
 
 export const Table: React.FC<TableProps> = props => {
-  const [widthList, setWidthList] = useState(props.header?.map((item, i) => (i === 0 ? 460 : 160)))
+  const [widthList, setWidthList] = useState(props.header?.map((item, i) => (i === 0 ? 490 : 150)))
   const [distanceList, setDistanceList] = useState(props.header?.map(() => 0))
 
   const setDistance = (dist, index) => {
@@ -72,7 +72,7 @@ export const Tr: React.FC<TrProps> = ({className = '', ...props}) => {
 
   return (
     <tr className={`${className} ${active ? 'active' : ''}`} {...props}>
-      {!!selectable && (
+      {selectable && (
         <td>
           <input onChange={event => setActive(event.target.checked)} type='checkbox' />
         </td>
@@ -108,7 +108,7 @@ export const Split: React.FC<SplitProps> = props => {
         document.removeEventListener('mouseup', onMouseup)
       }
     }
-  }, [isFocus])
+  }, [isFocus, props])
 
   return (
     <div

@@ -6,7 +6,7 @@ import {Crumbs} from '../component/Crumbs'
 import {Table, Tr} from '../component/Table'
 import {Icon} from '../component/Icon'
 import {isFile, sizeToByte} from '../../common/util'
-import {rm, rmFile, rmFolder} from '../../common/core/rm'
+import {rmFile, rmFolder} from '../../common/core/rm'
 import {ls} from '../../common/core/ls'
 import {Bar} from '../component/Bar'
 import {useRequest} from '../hook/useRequest'
@@ -37,16 +37,12 @@ export default function Files() {
     request(ls(folder_id), 'ls').then(value => setList(value))
   }
 
-  useEffect(() => {
-    listFile(-1)
-  }, [])
+  useEffect(() => listFile(-1), [])
 
   useEffect(() => {
     const refresh = () => listFile(currentFolder)
     upload.on('finish', refresh)
-    return () => {
-      upload.removeListener('finish', refresh)
-    }
+    return () => upload.removeListener('finish', refresh)
   }, [currentFolder])
 
   function cancel() {
@@ -65,21 +61,24 @@ export default function Files() {
     <ScrollView
       onDragEnter={() => {
         message.destroy()
-        message.success('放开上传')
+        message.info('放开上传')
       }}
       onDragOver={event => {
         event.preventDefault()
         event.stopPropagation()
       }}
       onDrop={event => {
-        const file = event.dataTransfer.files[0]
-        upload.addTask({
-          folderId: currentFolder,
-          size: file.size,
-          name: file.name,
-          type: file.type,
-          path: file.path,
-          lastModifiedDate: file.lastModified,
+        message.destroy()
+        message.success('上传中...')
+        Array.prototype.map.call(event.dataTransfer.files, (file: File) => {
+          upload.addTask({
+            folderId: currentFolder,
+            size: file.size,
+            name: file.name,
+            type: file.type,
+            path: file.path,
+            lastModifiedDate: file.lastModified,
+          })
         })
       }}
       HeaderComponent={
@@ -89,14 +88,15 @@ export default function Files() {
               icon={'upload'}
               file
               onChange={files => {
-                const file = files[0]
-                upload.addTask({
-                  folderId: currentFolder,
-                  size: file.size,
-                  name: file.name,
-                  type: file.type,
-                  path: file.path,
-                  lastModifiedDate: file.lastModified,
+                Array.prototype.map.call(files, (file: File) => {
+                  upload.addTask({
+                    folderId: currentFolder,
+                    size: file.size,
+                    name: file.name,
+                    type: file.type,
+                    path: file.path,
+                    lastModifiedDate: file.lastModified,
+                  })
                 })
               }}
             >
@@ -116,7 +116,7 @@ export default function Files() {
               crumbs={[{name: '全部文件', folderid: -1}, ...(list.info || [])]}
               onClick={folderid => listFile(folderid)}
             />
-            {!!(loading['ls'] || loading['download']) && <Icon iconName={'loading'} />}
+            {(loading['ls'] || loading['download']) && <Icon iconName={'loading'} />}
           </Bar>
         </>
       }
@@ -130,7 +130,7 @@ export default function Files() {
 
           return (
             <Tr key={id}>
-              <td>
+              <td className='table-file'>
                 {'id' in item ? (
                   <>
                     <Icon iconName={'file'} />

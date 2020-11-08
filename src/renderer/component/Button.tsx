@@ -21,6 +21,7 @@ export const Button: React.FC<ButtonProps> = props => {
           {rest.children}
           <input
             value=''
+            multiple
             style={{display: 'none'}}
             type='file'
             onChange={event => {
