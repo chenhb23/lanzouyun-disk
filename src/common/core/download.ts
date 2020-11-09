@@ -69,7 +69,10 @@ export async function fileDownUrl(url: string) {
   }
   const value = await fetch(`${is_newd}/ajaxm.php`, {
     method: 'post',
-    headers: baseHeaders,
+    headers: {
+      ...baseHeaders,
+      'custom-referer': is_newd + iframe,
+    },
     body: querystring.stringify({
       action: 'downprocess',
       sign: ajaxdata,

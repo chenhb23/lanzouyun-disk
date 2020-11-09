@@ -142,6 +142,7 @@ export function unsetup() {
   ipcMain.removeHandler(IpcEvent.trigger)
   ipcMain.removeHandler(IpcEvent.store)
   ipcMain.removeHandler(IpcEvent.dialog)
+  ipcMain.removeHandler(IpcEvent.shell)
   ipcMain.removeAllListeners(IpcEvent.download)
   ipcMain.removeAllListeners(IpcEvent.abort)
   ipcMain.removeAllListeners(IpcEvent.logout)
@@ -156,7 +157,7 @@ export function setup(win: BrowserWindow) {
   setupDownload(win)
   setupStore(win)
   setupDialog(win)
-  setupParse()
+  // setupParse()
 
   initial = true
 }

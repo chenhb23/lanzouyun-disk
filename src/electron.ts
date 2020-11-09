@@ -28,12 +28,11 @@ function createWindow() {
     webPreferences: {
       preload: path.resolve(__dirname, 'main/preload.js'),
       webSecurity: false, // 不使用网页安全性，跨域
-      allowRunningInsecureContent: true,
       nodeIntegration: true, // 开启后可在渲染线程 require()
-      nodeIntegrationInSubFrames: true,
-      nodeIntegrationInWorker: true,
     },
   })
+
+  // todo: [.RendererMainThread-0x7fa53a02c800]GL ERROR :GL_INVALID_OPERATION : glGetIntegerv: incomplete framebuffer
   setup(mainWindow)
 
   const cookie = store.get('cookie')
@@ -49,7 +48,7 @@ function createWindow() {
     mainWindow.loadURL(loadURL)
     // mainWindow.webContents.openDevTools()
   }
-  mainWindow.webContents.openDevTools()
+  // mainWindow.webContents.openDevTools()
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
@@ -63,6 +62,17 @@ function createWindow() {
       mainWindow.loadURL(loadURL)
     })
   }
+
+  session.defaultSession.webRequest.onBeforeSendHeaders({urls: ['http://*/*', 'https://*/*']}, (details, callback) => {
+    // 解决下载链接请求头部的校验问题
+    if (details.requestHeaders['custom-referer']) {
+      details.requestHeaders['Referer'] = details.requestHeaders['custom-referer']
+      delete details.requestHeaders['custom-referer']
+      callback({requestHeaders: details.requestHeaders})
+    } else {
+      callback({})
+    }
+  })
 
   session.defaultSession.webRequest.onResponseStarted({urls: [config.lanzouUrl + config.api.task]}, details => {
     if (details.responseHeaders['Set-Cookie']?.length) {
