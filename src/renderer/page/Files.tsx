@@ -120,7 +120,7 @@ export default function Files() {
         </>
       }
     >
-      <Table header={['文件名', '大小', '时间', '下载']}>
+      <Table header={[`文件名${list.text?.length ? ` (共${list.text?.length}项)` : ''}`, '大小', '时间', '下载']}>
         {list.text?.map(item => {
           const size = 'id' in item ? item.size : '-'
           const time = 'id' in item ? item.time : ''
@@ -227,77 +227,6 @@ export default function Files() {
               <td>{downs}</td>
               <td />
             </Tr>
-            /*<Tr key={id}>
-              <td>
-                {'id' in item ? (
-                  <>
-                    <Icon iconName={'file'} />
-                    <span>{item.name_all}</span>
-                  </>
-                ) : (
-                  <>
-                    <Icon iconName='folder' />
-                    <span onClick={() => listFile(item.fol_id)}>{item.name}</span>
-                  </>
-                )}
-                <div className='handle'>
-                  {'id' in item && (
-                    <Icon
-                      iconName={'share'}
-                      onClick={async () => {
-                        const info = await fileDetail(item.id)
-                        const shareUrl = `${info.is_newd}/${info.f_id}`
-                        // todo: 分享文件夹
-                        electron.clipboard.writeText(shareUrl)
-                        message.success(`分享链接已复制：\n${shareUrl}`)
-                      }}
-                    />
-                  )}
-                  {isFile(item.name) && (
-                    <Icon
-                      iconName={'download'}
-                      onClick={() => {
-                        if ('id' in item) {
-                          request(
-                            download.addFileTask({
-                              name: item.name,
-                              size: sizeToByte(item.size),
-                              file_id: `${item.id}`,
-                            }),
-                            'download'
-                          )
-                        } else {
-                          request(
-                            download.addFolderTask({
-                              folder_id: item.fol_id,
-                              merge: isFile(item.name),
-                              name: item.name,
-                            }),
-                            'download'
-                          )
-                        }
-                      }}
-                    />
-                  )}
-                  <Icon
-                    iconName={'delete'}
-                    onClick={async () => {
-                      const {zt, info} = await rm(id, 'id' in item)
-                      if (zt === 1) {
-                        message.success('已删除')
-                        listFile(currentFolder)
-                      } else {
-                        message.info(info)
-                      }
-                    }}
-                  />
-                </div>
-              </td>
-              <td>{size}</td>
-              <td>{time}</td>
-              <td>{downs}</td>
-              <td />
-            </Tr>*/
           )
         })}
       </Table>
