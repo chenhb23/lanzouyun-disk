@@ -31,18 +31,11 @@ export async function pwdFileDownUrl(url: string, pwd: string) {
   if (!body.data) {
     throw new Error('文件密码页面解析出错')
   }
-  const search = new URLSearchParams(body.data)
-  const action = search.get('action')
-  const sign = search.get('sign')
 
   const value = await fetch(`${is_newd}${body.url}`, {
     method: 'post',
-    headers: baseHeaders,
-    body: querystring.stringify({
-      action,
-      sign,
-      p: pwd,
-    }),
+    headers: {...baseHeaders, 'custom-referer': url},
+    body: body.data + pwd,
   }).then<DownloadUrlRes>(value => value.json())
 
   return {

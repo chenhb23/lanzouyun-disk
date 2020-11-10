@@ -78,13 +78,15 @@
     "web-vitals": "^0.2.4"
   },
   "build": {
-    "appId": "org.chen.lanzou",
+    "productName": "蓝奏云盘",
+    "copyright": "更多内容到 https://github.com/chenhb23/lanzouyun-pan",
+    "appId": "org.chenhb23.lanzou",
     "asar": true,
     "files": [
       "build"
     ],
     "mac": {
-      "category": "org.chen.lanzou.tool"
+      "category": "org.chenhb23.lanzou.client"
     }
   }
 }

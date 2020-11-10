@@ -2,7 +2,7 @@ import React, {useState} from 'react'
 import {ScrollView} from '../component/ScrollView'
 import {Header} from '../component/Header'
 import {Button} from '../component/Button'
-import {lsShare, LsShareItem} from '../../common/core/ls'
+import {lsShare, LsShareObject, ShareType} from '../../common/core/ls'
 import {Input} from '../component/Input'
 import {Bar} from '../component/Bar'
 import {Table} from '../component/Table'
@@ -12,8 +12,8 @@ import {download} from '../store'
 import {message} from '../component/Message'
 
 export default function Parse() {
-  const [list, setList] = useState<LsShareItem[]>([])
-  const [fileName, setFileName] = useState('')
+  const [shareFiles, setShareFiles] = useState({} as LsShareObject)
+
   const [merge, setMerge] = useState(false)
 
   const {loading, request} = useRequest()
@@ -51,10 +51,7 @@ export default function Parse() {
                 if (!urlForm.url) return message.info('请输入url')
 
                 request(lsShare(urlForm), 'lsShare')
-                  .then(value => {
-                    setFileName(`${value.name} （${value.size}）`)
-                    setList(value.list)
-                  })
+                  .then(value => setShareFiles(value))
                   .catch(e => {
                     message.error(e)
                   })
@@ -63,23 +60,29 @@ export default function Parse() {
               解析
             </Button>
             <Button
-              disabled={!list.length}
-              loading={loading['addShareFolderTask']}
+              disabled={!shareFiles.list?.length}
+              loading={loading['addShareTask']}
               onClick={() => {
-                request(
-                  download.addShareFolderTask({
-                    ...urlForm,
-                    merge,
-                  }),
-                  'addShareFolderTask'
-                ).then(() => message.success('下载任务添加成功'))
+                if ([ShareType.folder, ShareType.pwdFolder].includes(shareFiles.type)) {
+                  request(
+                    download.addShareFolderTask({
+                      ...urlForm,
+                      merge,
+                    }),
+                    'addShareTask'
+                  ).then(() => message.success('下载任务添加成功'))
+                } else {
+                  request(download.addShareFileTask(urlForm), 'addShareTask').then(() =>
+                    message.success('下载任务添加成功')
+                  )
+                }
               }}
             >
               下载全部
             </Button>
           </Header>
           <Bar>
-            <span>{fileName || '文件列表'}</span>
+            <span>{shareFiles.name ? `${shareFiles.name}（${shareFiles.size}）` : '文件列表'}</span>
             <label>
               <input checked={merge} type='checkbox' onChange={event => setMerge(event.target.checked)} />
               自动合并
@@ -89,7 +92,7 @@ export default function Parse() {
       }
     >
       <Table header={['文件名', '大小', '操作']}>
-        {list.map(item => {
+        {shareFiles.list?.map(item => {
           return (
             <tr key={item.name}>
               <td>

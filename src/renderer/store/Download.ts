@@ -1,9 +1,9 @@
 import {EventEmitter} from 'events'
-import {autorun, makeObservable, toJS} from 'mobx'
+import {autorun, makeObservable} from 'mobx'
 import path from 'path'
 import Task, {makeGetterProps, TaskStatus} from './AbstractTask'
 import {fileDownUrl, parseUrl, pwdFileDownUrl, sendDownloadTask} from '../../common/core/download'
-import {debounce, delay, isSpecificFile, mkTempDirSync, restoreFileName, sizeToByte} from '../../common/util'
+import {delay, isSpecificFile, mkTempDirSync, restoreFileName, sizeToByte} from '../../common/util'
 import {lsFile, lsShare, lsShareFolder} from '../../common/core/ls'
 import requireModule from '../../common/requireModule'
 import merge from '../../common/merge'
@@ -12,7 +12,6 @@ import IpcEvent from '../../common/IpcEvent'
 import store from '../../main/store'
 import {message} from '../component/Message'
 import {persist} from 'mobx-persist'
-import {downloadFile} from '../../common/request'
 
 const electron = requireModule('electron')
 const fs = requireModule('fs-extra')

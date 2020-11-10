@@ -12,9 +12,9 @@ const loadURL = isDev ? 'http://localhost:3000' : `file://${path.join(__dirname,
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow: BrowserWindow
 
-if (!isDev) {
-  Menu.setApplicationMenu(null)
-}
+// if (!isDev) {
+//   Menu.setApplicationMenu(null)
+// }
 
 function createWindow() {
   // Create the browser window.

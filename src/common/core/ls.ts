@@ -47,6 +47,13 @@ export async function lsDir(folder_id: FolderId) {
   return request<Do47Res, Do47>({body: {task: 47, folder_id}})
 }
 
+export interface LsShareObject {
+  name: string
+  size: string
+  type: ShareType
+  list: LsShareItem[]
+}
+
 export interface LsShareItem {
   url: string
   name: string
@@ -67,15 +74,7 @@ export enum ShareType {
  * * 无密码: #filemore; title
  * * 密码: #pwdload
  */
-export async function lsShare(options: {
-  url: string
-  pwd?: string
-}): Promise<{
-  name: string
-  size: string
-  type: ShareType
-  list: LsShareItem[]
-}> {
+export async function lsShare(options: {url: string; pwd?: string}): Promise<LsShareObject> {
   // 根据html区分哪种解析类型
   const {is_newd} = parseUrl(options.url)
 
@@ -105,7 +104,7 @@ export async function lsShare(options: {
     }
     const {inf} = await fetch(`${is_newd}${body.url}`, {
       method: 'post',
-      headers: baseHeaders,
+      headers: {...baseHeaders, 'custom-referer': options.url},
       body: body.data + options.pwd,
     }).then<DownloadUrlRes>(value => value.json())
     const name = inf // 文件名
@@ -159,7 +158,7 @@ export async function lsShareFolder(options: {url: string; pwd?: string; html?: 
   do {
     const {text} = await fetch(`${is_newd}${url}`, {
       method: 'post',
-      headers: baseHeaders,
+      headers: {...baseHeaders, 'custom-referer': options.url},
       body: querystring.stringify({...body, pg: pg++, pwd: options.pwd}),
     }).then<ShareFileRes>(value => value.json())
     len = Array.isArray(text) ? text.length : text
