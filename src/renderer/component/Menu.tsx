@@ -1,6 +1,6 @@
 import React, {createContext, useContext, useEffect, useMemo, useState} from 'react'
 import './Menu.css'
-import {Icon} from './Icon'
+import {Icon, IconName} from './Icon'
 
 export const MenuContext = createContext({
   key: '',
@@ -23,7 +23,7 @@ export const Menu: React.FC<MenuProps> = props => {
 
 export interface MenuItemProps {
   id: string
-  icon?: string
+  icon?: IconName
   active?: boolean
   onClick?: () => void
 }

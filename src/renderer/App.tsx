@@ -16,7 +16,7 @@ import {Button} from './component/Button'
 import requireModule from '../common/requireModule'
 import IpcEvent from '../common/IpcEvent'
 import {Icon} from './component/Icon'
-import {basename, dirname} from 'path'
+import {basename} from 'path'
 import store from '../main/store'
 const electron = requireModule('electron')
 
@@ -62,7 +62,7 @@ const App = observer(() => {
                 <MenuItem id={'5'} icon={'upload'}>
                   解析Url
                 </MenuItem>
-                <MenuItem id={'6'} icon={'download'}>
+                <MenuItem id={'6'} icon={'split'}>
                   文件分割 / 合并
                 </MenuItem>
               </Menu>

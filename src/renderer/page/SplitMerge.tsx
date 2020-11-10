@@ -1,7 +1,5 @@
 import React from 'react'
 import {ScrollView} from '../component/ScrollView'
-import {Header} from '../component/Header'
-import {Button} from '../component/Button'
 import {Icon} from '../component/Icon'
 
 export default function SplitMerge() {

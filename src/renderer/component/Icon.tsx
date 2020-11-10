@@ -8,7 +8,12 @@ export type IconProps = {
 
 export const Icon: React.FC<IconProps> = ({iconName, className = '', gutter, ...props}) => {
   return (
-    <svg className={`icon ${iconName} ${className}`} style={{marginRight: gutter}} aria-hidden='true' {...props}>
+    <svg
+      className={`icon ${iconName === 'loading' ? iconName : ''} ${className}`}
+      style={{marginRight: gutter}}
+      aria-hidden='true'
+      {...props}
+    >
       <use href={`#icon-${iconName}`} />
     </svg>
   )
@@ -39,4 +44,5 @@ export type IconName =
   | 'pause'
   | 'start'
   | 'open-folder'
-  | string
+  | 'split'
+// | string
