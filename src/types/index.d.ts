@@ -131,7 +131,7 @@ interface Do2Res {
 // 文件上传
 interface Do1Res {
   info: string
-  text: FileUploadRes | null
+  text: FileUploadRes[] | null
   zt:
     | 0 // 无法识别文件内容，请联系客服处理
     | 1 // 成功

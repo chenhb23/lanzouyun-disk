@@ -17,7 +17,7 @@ export default {
     'doc',
     'docx',
     'zip',
-    'rar',
+    'rar', // octet-stream
     'apk',
     'ipa',
     'txt',
