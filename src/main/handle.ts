@@ -1,9 +1,10 @@
-import {BrowserWindow, DownloadItem, ipcMain, dialog, shell} from 'electron'
+import {BrowserWindow, dialog, DownloadItem, ipcMain, shell} from 'electron'
 import path from 'path'
 import {debounce, delay} from '../common/util'
 import store from './store'
 import config from '../project.config'
 import IpcEvent from '../common/IpcEvent'
+import * as querystring from 'querystring'
 
 function setupTrigger() {
   ipcMain.handle(IpcEvent.trigger, async (event, method: string, ...args) => {
@@ -79,7 +80,11 @@ function setupStore(win: BrowserWindow) {
 
   // handle?
   ipcMain.on(IpcEvent.logout, () => {
-    win.webContents.session.clearStorageData()
+    const parseCookie = querystring.parse(store.get('cookie'), '; ')
+    Object.keys(parseCookie).forEach(key => {
+      win.webContents.session.cookies.remove(config.lanzouUrl, key)
+    })
+    store.delete('cookie')
     loadLogin(win)
   })
 }

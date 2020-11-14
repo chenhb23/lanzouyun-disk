@@ -1,23 +1,15 @@
-import {app, BrowserWindow, session, Menu} from 'electron'
-import * as path from 'path'
+import {app, BrowserWindow, session} from 'electron'
+import path from 'path'
 import * as querystring from 'querystring'
-import isDev from 'electron-is-dev'
 import store from './main/store'
 import {loadLogin, setup} from './main/handle'
 import config from './project.config'
+import isDev from 'electron-is-dev'
 
 const loadURL = isDev ? 'http://localhost:3000' : `file://${path.join(__dirname, 'index.html')}`
-
-// Keep a global reference of the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
 let mainWindow: BrowserWindow
 
-// if (!isDev) {
-//   Menu.setApplicationMenu(null)
-// }
-
 function createWindow() {
-  // Create the browser window.
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 800,
@@ -32,23 +24,7 @@ function createWindow() {
     },
   })
 
-  // todo: [.RendererMainThread-0x7fa53a02c800]GL ERROR :GL_INVALID_OPERATION : glGetIntegerv: incomplete framebuffer
   setup(mainWindow)
-
-  const cookie = store.get('cookie')
-  if (!store.get('downloads')) {
-    store.set('downloads', app.getPath('downloads'))
-  }
-  // const cookie = false
-  // mainWindow.webContents.session.clearStorageData()
-
-  if (!cookie) {
-    loadLogin(mainWindow)
-  } else {
-    mainWindow.loadURL(loadURL)
-    // mainWindow.webContents.openDevTools()
-  }
-  // mainWindow.webContents.openDevTools()
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
@@ -59,20 +35,9 @@ function createWindow() {
     session.defaultSession.cookies.get(filter).then(value => {
       const cookie = value.map(item => `${item.name}=${item.value}`).join('; ')
       store.set('cookie', cookie)
-      mainWindow.loadURL(loadURL)
+      loadMain(mainWindow)
     })
   }
-
-  session.defaultSession.webRequest.onBeforeSendHeaders({urls: ['http://*/*', 'https://*/*']}, (details, callback) => {
-    // 解决下载链接请求头部的校验问题
-    if (details.requestHeaders['custom-referer']) {
-      details.requestHeaders['Referer'] = details.requestHeaders['custom-referer']
-      delete details.requestHeaders['custom-referer']
-      callback({requestHeaders: details.requestHeaders})
-    } else {
-      callback({})
-    }
-  })
 
   session.defaultSession.webRequest.onResponseStarted({urls: [config.lanzouUrl + config.api.task]}, details => {
     if (details.responseHeaders['Set-Cookie']?.length) {
@@ -90,6 +55,23 @@ function createWindow() {
 
     if (details.referrer) store.set('referrer', details.referrer)
   })
+
+  const cookie = store.get('cookie')
+  if (!store.get('downloads')) {
+    store.set('downloads', app.getPath('downloads'))
+  }
+  // const cookie = false
+  // mainWindow.webContents.session.clearStorageData()
+
+  if (cookie) {
+    const parseCookie = querystring.parse(cookie, '; ')
+    if (parseCookie?.phpdisk_info) {
+      loadMain(mainWindow)
+      return
+    }
+  }
+
+  loadLogin(mainWindow)
 }
 
 app.on('ready', createWindow)
@@ -105,3 +87,15 @@ app.on('activate', function () {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+
+function loadMain(win: BrowserWindow) {
+  session.defaultSession.webRequest.onBeforeSendHeaders({urls: ['http://*/*', 'https://*/*']}, (details, callback) => {
+    // 解决下载链接请求头部的校验问题
+    if (details.requestHeaders['custom-referer']) {
+      details.requestHeaders['Referer'] = details.requestHeaders['custom-referer']
+      delete details.requestHeaders['custom-referer']
+    }
+    callback({requestHeaders: details.requestHeaders})
+  })
+  win.loadURL(loadURL)
+}
