@@ -1,6 +1,6 @@
 import cheerio from 'cheerio'
 import request, {baseHeaders} from '../request'
-import {byteToSize, isFile, sizeToByte} from '../util'
+import {byteToSize, delay, isFile, sizeToByte} from '../util'
 import requireModule from '../requireModule'
 import {parseUrl} from './download'
 const querystring = requireModule('querystring')
@@ -151,20 +151,24 @@ export async function lsShareFolder(options: {url: string; pwd?: string; html?: 
     return {name: $('.off').text(), list: null}
   }
 
-  let pg = 1,
-    len = 0
+  let pg = 1
+  // let zt
   const shareFiles: ShareFile[] = []
 
-  do {
-    const {text} = await fetch(`${is_newd}${url}`, {
+  while (true) {
+    const {text, zt} = await fetch(`${is_newd}${url}`, {
       method: 'post',
       headers: {...baseHeaders, 'custom-referer': options.url},
       body: querystring.stringify({...body, pg: pg++, pwd: options.pwd}),
     }).then<ShareFileRes>(value => value.json())
-    len = Array.isArray(text) ? text.length : text
 
-    shareFiles.push(...(text || []))
-  } while (len)
+    if (zt == 1 && Array.isArray(text)) {
+      shareFiles.push(...(text || []))
+      await delay(2000)
+    } else {
+      break
+    }
+  }
 
   return {name: title, list: shareFiles}
 }
