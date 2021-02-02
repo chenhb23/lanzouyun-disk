@@ -53,7 +53,7 @@ function setupDownload(win: BrowserWindow) {
           if (state === 'cancelled') {
             ipcEvent.reply(`${IpcEvent.cancelled}${replyId}`)
           } else {
-            ipcEvent.reply(`${IpcEvent.failed}${replyId}`, 'done')
+            ipcEvent.reply(`${IpcEvent.failed}${replyId}`, 'unknown')
           }
         }
         delete downloadItems[replyId]

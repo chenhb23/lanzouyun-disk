@@ -148,20 +148,17 @@ export function downloadFile(options: DownloadFile) {
           options.onProgress?.(receivedBytes, totalBytes)
         })
         res.on('end', () => {
-          console.log('download end:', receivedBytes, totalBytes)
           resolve()
         })
         res.on('error', reject)
       })
       .on('response', response => {
-        console.log('response', response)
         totalBytes = +response.headers['content-length']
       })
 
     if (options.signal) {
       options.signal.onabort = () => {
         req.abort()
-        console.log('取消 downloadFile！')
       }
     }
   })

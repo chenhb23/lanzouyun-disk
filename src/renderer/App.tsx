@@ -22,7 +22,6 @@ const electron = requireModule('electron')
 
 request.intercepter.response = res => {
   if (![1, 2].includes(res.zt)) {
-    console.log(res)
     message.info(res.text)
   }
   return res

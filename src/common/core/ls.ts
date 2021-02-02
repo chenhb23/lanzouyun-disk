@@ -181,6 +181,7 @@ export class Matcher {
     return this
   }
 
+  // 获取对象属性的变量值
   matchDataVar(key: string) {
     const varName = this.html.match(new RegExp(`'${key}':'?(\\w+)'?,`))
     if (varName) {
@@ -192,6 +193,7 @@ export class Matcher {
     return this
   }
 
+  // 获取对象属性的值
   matchData(key: string) {
     const result = this.html.match(new RegExp(`'${key}':'?(\\w+)'?,`))
     if (result) {
@@ -225,6 +227,14 @@ export class Matcher {
     const src = cheerio.load(this.html)('iframe').attr().src
     if (src) {
       this.out[key] = src
+    }
+    return this
+  }
+
+  matchSign() {
+    const result = this.html.match(new RegExp(`'sign':'(.*?)'`))
+    if (result) {
+      this.out.sign = result[1]
     }
     return this
   }

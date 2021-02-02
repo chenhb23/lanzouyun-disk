@@ -1,4 +1,4 @@
-## 界面速预
+## 界面速览
 
 ![](./docs/media/new-folder.png)
 

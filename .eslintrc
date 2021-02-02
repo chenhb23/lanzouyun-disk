@@ -1,8 +1,8 @@
-module.exports = {
+{
   "env": {
     "browser": true,
     "es6": true,
-    "node": true,
+    "node": true
   },
   "extends": [
     "eslint:recommended",
@@ -15,7 +15,7 @@ module.exports = {
     "ecmaFeatures": {
       "jsx": true
     },
-    "ecmaVersion": 12,
+    "ecmaVersion": 2015,
     "sourceType": "module"
   },
   "plugins": [
@@ -24,13 +24,13 @@ module.exports = {
     "prettier"
   ],
   "rules": {
-    'prettier/prettier': 'error',
-    'no-async-promise-executor': 'off',
-    'react/prop-types': 'off',
-    '@typescript-eslint/explicit-module-boundary-types': 'off',
-    '@typescript-eslint/no-empty-interface': 'off',
-    '@typescript-eslint/no-empty-function': 'off',
-    '@typescript-eslint/no-var-requires': 'off',
-    '@typescript-eslint/ban-ts-comment': 'off',
+    "prettier/prettier": "error",
+    "no-async-promise-executor": "off",
+    "react/prop-types": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-empty-interface": "off",
+    "@typescript-eslint/no-empty-function": "off",
+    "@typescript-eslint/no-var-requires": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
   }
-};
+}
