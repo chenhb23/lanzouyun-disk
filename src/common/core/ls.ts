@@ -243,6 +243,14 @@ export class Matcher {
     return this
   }
 
+  matchPostdown() {
+    const result = this.html.match(new RegExp(`var postdown = '(.*?)';`))
+    if (result) {
+      this.out.postdown = result[1]
+    }
+    return this
+  }
+
   private match(key: string, pattern: string) {
     const result = this.html.match(new RegExp(pattern))
     if (result) {

@@ -56,7 +56,7 @@ export async function fileDownUrl(url: string) {
     throw new Error('文件页面解析出错')
   }
   const downHtml = await fetch(is_newd + iframe).then(value => value.text())
-  const {ajaxdata, sign} = new Matcher(downHtml).matchVar('ajaxdata').matchSign().done()
+  const {ajaxdata, sign, postdown} = new Matcher(downHtml).matchVar('ajaxdata').matchSign().matchPostdown().done()
   if (!ajaxdata) {
     throw new Error('ajaxdata 无法解析')
   }
@@ -69,9 +69,10 @@ export async function fileDownUrl(url: string) {
     body: querystring.stringify({
       action: 'downprocess',
       signs: ajaxdata,
-      sign,
+      sign: postdown,
       websign: '',
       ves: 1,
+      websignkey: 'rnu2',
     }),
   }).then<DownloadUrlRes>(value => value.json())
 
