@@ -236,17 +236,37 @@ export class Matcher {
   }
 
   matchSign() {
-    const result = this.html.match(new RegExp(`'sign':'(.*?)'`))
+    const result = this.html.match(new RegExp(`'sign':(.*?),`))
     if (result) {
-      this.out.sign = result[1]
+      const signKey = result[1]
+      const postdown = this.html.match(new RegExp(`var ${signKey} = '(.*?)';`))
+      if (postdown) {
+        this.out.sign = postdown[1]
+      }
     }
     return this
   }
 
-  matchPostdown() {
-    const result = this.html.match(new RegExp(`var postdown = '(.*?)';`))
+  // matchPdownload() {
+  //   const result = this.html.match(new RegExp(`var pdownload = '(.*?)';`))
+  //   if (result) {
+  //     this.out.pdownload = result[1]
+  //   }
+  //   return this
+  // }
+
+  matchWebsignkey() {
+    const result = this.html.match(new RegExp(`'websignkey':'(.*?)'`))
     if (result) {
-      this.out.postdown = result[1]
+      this.out.websignkey = result[1]
+    }
+    return this
+  }
+
+  matchVes() {
+    const result = this.html.match(new RegExp(`'ves':(.*?),`))
+    if (result) {
+      this.out.ves = result[1]
     }
     return this
   }
