@@ -97,10 +97,10 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
   }
 
   async onTaskFinish(info: DownloadInfo) {
-    const resolveTarget = path.resolve(info.path, info.name)
+    const resolveTarget = path.join(info.path, info.name)
     if (info.merge) {
       const tempDir = info.tasks[0].path
-      const files = fs.readdirSync(tempDir).map(name => path.resolve(tempDir, name))
+      const files = fs.readdirSync(tempDir).map(name => path.join(tempDir, name))
       await merge(files, resolveTarget)
       await delay(200)
       // 删除临时文件夹

@@ -17,13 +17,13 @@
     "react-dom": "^17.0.1"
   },
   "scripts": {
-    "react-start": "BROWSER=none react-scripts start",
+    "react-start": "cross-env BROWSER=none && react-scripts start",
     "react-build": "react-scripts build",
     "electron-start": "yarn tsc-electron-build && electron .",
     "electron-build": "yarn tsc-electron-build && electron-builder",
     "release": "yarn react-build && electron-builder --publish=always",
     "build": "yarn react-build && yarn electron-build",
-    "start": "concurrently \"BROWSER=none yarn react-start\" \"wait-on http://localhost:3000 && yarn electron-start\"",
+    "start": "concurrently \"cross-env BROWSER=none && yarn react-start\" \"wait-on http://localhost:3000 && yarn electron-start\"",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "tsc-build": "tsc --noEmit false --module commonjs",
@@ -63,6 +63,7 @@
     "@typescript-eslint/eslint-plugin": "^4.6.0",
     "@typescript-eslint/parser": "^4.6.0",
     "concurrently": "^5.3.0",
+    "cross-env": "^7.0.3",
     "electron": "^10.1.5",
     "electron-builder": "^22.9.1",
     "eslint-config-prettier": "^6.15.0",
