@@ -3,6 +3,8 @@ import request, {baseHeaders} from '../request'
 import {byteToSize, delay, isFile, sizeToByte} from '../util'
 import requireModule from '../requireModule'
 import {parseUrl} from './download'
+import {Matcher} from './matcher'
+
 const querystring = requireModule('querystring')
 
 /**
@@ -66,6 +68,7 @@ export enum ShareType {
   folder, // https://wws.lanzous.com/b01tp3zkj
   pwdFolder, // https://wws.lanzous.com/b01tp39pi, 34zf
 }
+
 /**
  * 文件：
  * * 无密码: iframe
@@ -74,11 +77,15 @@ export enum ShareType {
  * * 无密码: #filemore; title
  * * 密码: #pwdload
  */
-export async function lsShare(options: {url: string; pwd?: string}): Promise<LsShareObject> {
-  // 根据html区分哪种解析类型
-  const {is_newd} = parseUrl(options.url)
+export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<LsShareObject> {
+  const response = await fetch(url)
+  // 覆盖原url（防url重定向）
+  url = response.url
+  const html = await response.text()
 
-  const html = await fetch(options.url).then(value => value.text())
+  // 根据html区分哪种解析类型
+  const {is_newd} = parseUrl(url)
+
   const $ = cheerio.load(html)
 
   const isFile = $('iframe').length
@@ -86,7 +93,7 @@ export async function lsShare(options: {url: string; pwd?: string}): Promise<LsS
   const isPwdFolder = $('#pwdload').length
   const isFolder = $('#filemore').length && !isPwdFolder // 密码和无密码页面
 
-  if ((isPwdFile || isPwdFolder) && !options.pwd) {
+  if ((isPwdFile || isPwdFolder) && !pwd) {
     throw new Error('密码不能为空')
   }
 
@@ -96,7 +103,7 @@ export async function lsShare(options: {url: string; pwd?: string}): Promise<LsS
     const size = $('table')
       .text()
       .match(/文件大小：(.*)/)?.[1]
-    return {name, size, type: ShareType.file, list: [{url: options.url, name, size}]}
+    return {name, size, type: ShareType.file, list: [{url, name, size}]}
   } else if (isPwdFile) {
     const body = new Matcher(html).matchPwdFile('url').matchPwdFile('data').done()
     if (!body.url || !body.data) {
@@ -104,14 +111,14 @@ export async function lsShare(options: {url: string; pwd?: string}): Promise<LsS
     }
     const {inf} = await fetch(`${is_newd}${body.url}`, {
       method: 'post',
-      headers: {...baseHeaders, 'custom-referer': options.url},
-      body: body.data + options.pwd,
+      headers: {...baseHeaders, 'custom-referer': url},
+      body: body.data + pwd,
     }).then<DownloadUrlRes>(value => value.json())
     const name = inf // 文件名
     const size = $('.n_filesize').text().replace('大小：', '')
-    return {name, size, type: ShareType.pwdFile, list: [{url: options.url, pwd: options.pwd, name, size}]}
+    return {name, size, type: ShareType.pwdFile, list: [{url, pwd, name, size}]}
   } else if (isFolder || isPwdFolder) {
-    const value = await lsShareFolder({...options, html})
+    const value = await lsShareFolder({pwd, url, html})
     return {
       name: title, // (文件夹名)
       type: isFolder ? ShareType.folder : ShareType.pwdFolder,
@@ -128,9 +135,13 @@ export async function lsShare(options: {url: string; pwd?: string}): Promise<LsS
  * 发送 ajax，有密码加上 pwd
  * @param options
  */
-export async function lsShareFolder(options: {url: string; pwd?: string; html?: string}) {
-  const is_newd = new URL(options.url).origin
-  const html = options.html ?? (await fetch(options.url).then(value => value.text()))
+export async function lsShareFolder({url: paramsUrl, pwd, html}: {url: string; pwd?: string; html?: string}) {
+  if (!html) {
+    const response = await fetch(paramsUrl)
+    paramsUrl = response.url
+    html = await response.text()
+  }
+  const {is_newd} = parseUrl(paramsUrl)
 
   const $ = cheerio.load(html)
   const title = $('title').text()
@@ -158,8 +169,8 @@ export async function lsShareFolder(options: {url: string; pwd?: string; html?: 
   while (true) {
     const {text, zt} = await fetch(`${is_newd}${url}`, {
       method: 'post',
-      headers: {...baseHeaders, 'custom-referer': options.url},
-      body: querystring.stringify({...body, pg: pg++, pwd: options.pwd}),
+      headers: {...baseHeaders, 'custom-referer': paramsUrl},
+      body: querystring.stringify({...body, pg: pg++, pwd}),
     }).then<ShareFileRes>(value => value.json())
 
     if (zt == 1 && Array.isArray(text)) {
@@ -171,115 +182,4 @@ export async function lsShareFolder(options: {url: string; pwd?: string; html?: 
   }
 
   return {name: title, list: shareFiles}
-}
-
-export class Matcher {
-  out: Record<string, any> = {}
-  constructor(public html: string) {}
-
-  matchVar(key: string) {
-    const result = this.html.match(new RegExp(`var ${key} = '(.+?)';`))
-    if (result) {
-      this.out[key] = result[1]
-    }
-    return this
-  }
-
-  // 获取对象属性的变量值
-  matchDataVar(key: string) {
-    const varName = this.html.match(new RegExp(`'${key}':'?(\\w+)'?,`))
-    if (varName) {
-      const result = this.html.match(new RegExp(`var ${varName[1]} = '(.+?)';`))
-      if (result) {
-        this.out[key] = result[1]
-      }
-    }
-    return this
-  }
-
-  // 获取对象属性的值
-  matchData(key: string) {
-    const result = this.html.match(new RegExp(`'${key}':'?(\\w+)'?,`))
-    if (result) {
-      this.out[key] = result[1]
-    }
-    return this
-  }
-
-  matchObject(key: string) {
-    const result = this.html.match(new RegExp(`${key} : '(.+?)',`))
-    if (result) {
-      this.out[key] = result[1]
-    }
-    return this
-  }
-
-  // 文件，带密码
-  matchPwdFile(key: string) {
-    // type : 'post',
-    // url : '/ajaxm.php',
-    // data : 'action=downprocess&sign=BmABPw4_aDz4IAQA_aV2dRbVozAjVQPwExBTUHNVI2AzQAJgAjXDxXMglpAWcGZgI2Uz4CNlc_bAjYBMA_c_c&p='+pwd,
-    // dataType : 'json',
-    const result = this.html.match(new RegExp(`${key} ?: ?'(.*?)'`))
-    if (result) {
-      this.out[key] = result[1]
-    }
-    return this
-  }
-
-  matchIframe(key = 'iframe') {
-    const src = cheerio.load(this.html)('iframe').attr().src
-    if (src) {
-      this.out[key] = src
-    }
-    return this
-  }
-
-  matchSign() {
-    const result = this.html.match(new RegExp(`'sign':(.*?),`))
-    if (result) {
-      const signKey = result[1]
-      const postdown = this.html.match(new RegExp(`var ${signKey} = '(.*?)';`))
-      if (postdown) {
-        this.out.sign = postdown[1]
-      }
-    }
-    return this
-  }
-
-  // matchPdownload() {
-  //   const result = this.html.match(new RegExp(`var pdownload = '(.*?)';`))
-  //   if (result) {
-  //     this.out.pdownload = result[1]
-  //   }
-  //   return this
-  // }
-
-  matchWebsignkey() {
-    const result = this.html.match(new RegExp(`'websignkey':'(.*?)'`))
-    if (result) {
-      this.out.websignkey = result[1]
-    }
-    return this
-  }
-
-  matchVes() {
-    const result = this.html.match(new RegExp(`'ves':(.*?),`))
-    if (result) {
-      this.out.ves = result[1]
-    }
-    return this
-  }
-
-  private match(key: string, pattern: string) {
-    const result = this.html.match(new RegExp(pattern))
-    if (result) {
-      this.out[key] = result[1]
-    }
-    return this
-  }
-
-  done() {
-    return this.out
-  }
 }

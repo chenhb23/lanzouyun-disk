@@ -1,8 +1,8 @@
-import {Matcher} from './ls'
 import {baseHeaders} from '../request'
 import requireModule from '../requireModule'
 import {autorun, observable} from 'mobx'
 import IpcEvent from '../IpcEvent'
+import {Matcher} from './matcher'
 
 const electron = requireModule('electron')
 const querystring = requireModule('querystring')
