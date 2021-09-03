@@ -23,8 +23,11 @@ export function parseUrl(url: string) {
  * script
  */
 export async function pwdFileDownUrl(url: string, pwd: string) {
+  const response = await fetch(url)
+  url = response.url
+  const html = await response.text()
+
   const {is_newd} = parseUrl(url)
-  const html = await fetch(url).then(value => value.text())
 
   const body = new Matcher(html).matchPwdFile('url').matchPwdFile('data').done()
 
@@ -49,14 +52,16 @@ export async function pwdFileDownUrl(url: string, pwd: string) {
  * iframe
  */
 export async function fileDownUrl(url: string) {
+  const response = await fetch(url)
+  url = response.url
+  const html = await response.text()
+
   const {is_newd} = parseUrl(url)
-  const html = await fetch(url).then(value => value.text())
   const {iframe} = new Matcher(html).matchIframe().done()
   if (!iframe) {
     throw new Error('文件页面解析出错')
   }
   const downHtml = await fetch(is_newd + iframe).then(value => value.text())
-  console.log(downHtml)
   const {ajaxdata, sign, ves, /*pdownload,*/ websignkey} = new Matcher(downHtml)
     .matchVar('ajaxdata')
     .matchSign()
