@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react'
+import React, {useCallback, useEffect, useMemo, useState} from 'react'
 import {Header} from '../component/Header'
 import {Button} from '../component/Button'
 import {message} from '../component/Message'
@@ -29,20 +29,38 @@ export default function Files() {
   const {loading, request} = useRequest()
   const [form, setForm] = useState({} as FolderForm)
 
-  const [list, setList] = useState({} as AsyncReturnType<typeof ls>)
+  const [list, setList] = useState({text: [], info: []} as AsyncReturnType<typeof ls>)
+  const [search, setSearch] = useState('')
+  const renderList = useMemo(
+    () =>
+      search
+        ? {
+            ...list,
+            text: list.text?.filter(item => {
+              const name = ('id' in item ? item.name_all : item.name).toLowerCase()
+              return name.includes(search.toLowerCase())
+            }),
+          }
+        : list,
+    [list, search]
+  )
+
   const currentFolder = useMemo(() => list.info?.find(item => item.now === 1)?.folderid || -1, [list])
 
-  function listFile(folder_id) {
-    request(ls(folder_id), 'ls').then(value => setList(value))
-  }
+  const listFile = useCallback(
+    folder_id => {
+      request(ls(folder_id), 'ls').then(value => setList(value))
+    },
+    [request]
+  )
 
-  useEffect(() => listFile(-1), [])
+  useEffect(() => listFile(-1), [listFile])
 
   useEffect(() => {
     const refresh = () => listFile(currentFolder)
     upload.on('finish', refresh)
     return () => upload.removeListener('finish', refresh)
-  }, [currentFolder])
+  }, [currentFolder, listFile])
 
   function cancel() {
     setVisible(false)
@@ -82,7 +100,11 @@ export default function Files() {
       }}
       HeaderComponent={
         <>
-          <Header>
+          <Header
+            right={
+              <Input placeholder={'搜索当前页面'} value={search} onChange={event => setSearch(event.target.value)} />
+            }
+          >
             <Button
               icon={'upload'}
               file
@@ -120,8 +142,10 @@ export default function Files() {
         </>
       }
     >
-      <Table header={[`文件名${list.text?.length ? ` (共${list.text?.length}项)` : ''}`, '大小', '时间', '下载']}>
-        {list.text?.map(item => {
+      <Table
+        header={[`文件名${renderList.text?.length ? ` (共${renderList.text?.length}项)` : ''}`, '大小', '时间', '下载']}
+      >
+        {renderList.text?.map(item => {
           const size = 'id' in item ? item.size : '-'
           const time = 'id' in item ? item.time : ''
           const downs = 'id' in item ? item.downs : ''
@@ -131,6 +155,7 @@ export default function Files() {
             <Tr key={id}>
               <td className='table-file'>
                 {'id' in item ? (
+                  // 文件
                   <>
                     <Icon iconName={'file'} />
                     <span>{item.name_all}</span>
@@ -177,6 +202,7 @@ export default function Files() {
                     </div>
                   </>
                 ) : (
+                  // 文件夹
                   <>
                     <Icon iconName='folder' />
                     <span onClick={() => listFile(item.fol_id)}>{item.name}</span>

@@ -11,16 +11,15 @@ import {useRequest} from '../hook/useRequest'
 import {download} from '../store'
 import {message} from '../component/Message'
 
+const regExp = /^(.+) 密码: (.+)$/
+
 export default function Parse() {
   const [shareFiles, setShareFiles] = useState({} as LsShareObject)
 
   const [merge, setMerge] = useState(false)
 
   const {loading, request} = useRequest()
-  const [urlForm, setUrlForm] = useState({
-    url: '',
-    pwd: '',
-  })
+  const [urlForm, setUrlForm] = useState({url: '', pwd: ''})
 
   return (
     <ScrollView
@@ -30,7 +29,13 @@ export default function Parse() {
             <Input
               value={urlForm.url}
               onChange={event => {
-                setUrlForm(prevState => ({...prevState, url: event.target.value}))
+                const value = event.target.value
+                if (regExp.test(value)) {
+                  const [_, url, pwd] = value.match(regExp)
+                  setUrlForm(prevState => ({...prevState, url, pwd}))
+                } else {
+                  setUrlForm(prevState => ({...prevState, url: value}))
+                }
               }}
               placeholder='* https://...'
             />
