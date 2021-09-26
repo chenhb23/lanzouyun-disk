@@ -6,6 +6,48 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "200856",
+      "name": "3.1关闭",
+      "font_class": "clear",
+      "unicode": "e600",
+      "unicode_decimal": 58880
+    },
+    {
+      "icon_id": "15060467",
+      "name": "分割",
+      "font_class": "split",
+      "unicode": "e647",
+      "unicode_decimal": 58951
+    },
+    {
+      "icon_id": "5948351",
+      "name": "打开",
+      "font_class": "open-folder",
+      "unicode": "e641",
+      "unicode_decimal": 58945
+    },
+    {
+      "icon_id": "2224957",
+      "name": "pause",
+      "font_class": "pause",
+      "unicode": "e6d6",
+      "unicode_decimal": 59094
+    },
+    {
+      "icon_id": "4596310",
+      "name": "start  start  开始   s",
+      "font_class": "start",
+      "unicode": "e638",
+      "unicode_decimal": 58936
+    },
+    {
+      "icon_id": "17687750",
+      "name": "loading",
+      "font_class": "loading",
+      "unicode": "e764",
+      "unicode_decimal": 59236
+    },
+    {
       "icon_id": "9091801",
       "name": "删 除",
       "font_class": "delete",

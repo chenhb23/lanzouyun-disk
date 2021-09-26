@@ -1,0 +1,12 @@
+.Search {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  position: relative;
+}
+
+.Search .SearchIcon {
+  position: absolute;
+  right: 0;
+  cursor: pointer;
+}

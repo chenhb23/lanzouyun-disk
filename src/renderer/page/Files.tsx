@@ -17,6 +17,8 @@ import {Modal} from '../component/Modal'
 import {mkdir} from '../../common/core/mkdir'
 import {download, upload} from '../store'
 import {fileDetail, folderDetail} from '../../common/core/detail'
+import './Files.css'
+
 const electron = requireModule('electron')
 
 interface FolderForm {
@@ -47,14 +49,11 @@ export default function Files() {
 
   const currentFolder = useMemo(() => list.info?.find(item => item.now === 1)?.folderid || -1, [list])
 
-  const listFile = useCallback(
-    folder_id => {
-      request(ls(folder_id), 'ls').then(value => setList(value))
-    },
-    [request]
-  )
+  const listFile = useCallback(folder_id => request(ls(folder_id), 'ls').then(value => setList(value)), [request])
 
-  useEffect(() => listFile(-1), [listFile])
+  useEffect(() => {
+    listFile(-1)
+  }, [listFile])
 
   useEffect(() => {
     const refresh = () => listFile(currentFolder)
@@ -102,7 +101,10 @@ export default function Files() {
         <>
           <Header
             right={
-              <Input placeholder={'搜索当前页面'} value={search} onChange={event => setSearch(event.target.value)} />
+              <div className='Search'>
+                <Input placeholder={'搜索当前页面'} value={search} onChange={event => setSearch(event.target.value)} />
+                {!!search && <Icon iconName={'clear'} className='SearchIcon' onClick={() => setSearch('')} />}
+              </div>
             }
           >
             <Button
@@ -135,7 +137,7 @@ export default function Files() {
           <Bar>
             <Crumbs
               crumbs={[{name: '全部文件', folderid: -1}, ...(list.info || [])]}
-              onClick={folderid => listFile(folderid)}
+              onClick={folderid => listFile(folderid).then(() => setSearch(''))}
             />
             {(loading['ls'] || loading['download']) && <Icon iconName={'loading'} />}
           </Bar>
@@ -205,7 +207,7 @@ export default function Files() {
                   // 文件夹
                   <>
                     <Icon iconName='folder' />
-                    <span onClick={() => listFile(item.fol_id)}>{item.name}</span>
+                    <span onClick={() => listFile(item.fol_id).then(() => setSearch(''))}>{item.name}</span>
                     <div className='handle'>
                       <Button
                         icon={'share'}

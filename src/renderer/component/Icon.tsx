@@ -45,4 +45,5 @@ export type IconName =
   | 'start'
   | 'open-folder'
   | 'split'
+  | 'clear'
 // | string

@@ -75,13 +75,22 @@ export class Matcher {
     return this
   }
 
-  // matchPdownload() {
-  //   const result = this.html.match(new RegExp(`var pdownload = '(.*?)';`))
-  //   if (result) {
-  //     this.out.pdownload = result[1]
-  //   }
-  //   return this
-  // }
+  matchPdownload() {
+    const result = this.html.match(new RegExp(`var pdownload = '(.*?)';`))
+    if (result) {
+      this.out.pdownload = result[1]
+    }
+    return this
+  }
+
+  matchWebsign() {
+    // const result = this.html.match(new RegExp(`'websignkey':'(.*?)'`))
+    const result = this.html.match(new RegExp(`'websign':'(.*?)',`))
+    if (result) {
+      this.out.websign = result[1]
+    }
+    return this
+  }
 
   matchWebsignkey() {
     const result = this.html.match(new RegExp(`'websignkey':'(.*?)'`))
