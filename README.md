@@ -1,6 +1,6 @@
 ## 界面速览
 
-![](./docs/media/new-folder.png)
+![](./docs/media/search.png)
 
 ![](./docs/media/parse.png)
 
