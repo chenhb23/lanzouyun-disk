@@ -93,7 +93,7 @@ export default function Files() {
             name: file.name,
             type: file.type,
             path: file.path,
-            lastModifiedDate: file.lastModified,
+            lastModified: file.lastModified,
           })
         })
       }}
@@ -118,7 +118,7 @@ export default function Files() {
                     name: file.name,
                     type: file.type,
                     path: file.path,
-                    lastModifiedDate: file.lastModified,
+                    lastModified: file.lastModified,
                   })
                 })
               }}

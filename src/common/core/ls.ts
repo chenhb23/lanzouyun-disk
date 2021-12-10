@@ -60,6 +60,7 @@ export interface LsShareItem {
   url: string
   name: string
   size: string
+  time: string
   pwd?: string
 }
 export enum ShareType {
@@ -88,10 +89,12 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
 
   const $ = cheerio.load(html)
 
-  const isFile = $('iframe').length
-  const isPwdFile = $('#passwddiv').length
-  const isPwdFolder = $('#pwdload').length
-  const isFolder = $('#filemore').length && !isPwdFolder // 密码和无密码页面
+  const isFile = !!$('iframe').length
+  const isPwdFile = !!$('#passwddiv').length
+  const isPwdFolder = !!$('#pwdload').length
+  const isFolder = !!$('#filemore').length && !isPwdFolder // 密码和无密码页面
+
+  console.log(isFile, isPwdFile, isPwdFolder, isFolder)
 
   if ((isPwdFile || isPwdFolder) && !pwd) {
     throw new Error('密码不能为空')
@@ -100,10 +103,11 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
   const title = $('title').text()
   if (isFile) {
     const name = title.replace(' - 蓝奏云', '') // '(文件名) - 蓝奏云',
+    const time = html.match(/上传时间：<\/span>(.*?)<br>/)?.[1]
     const size = $('table')
       .text()
       .match(/文件大小：(.*)/)?.[1]
-    return {name, size, type: ShareType.file, list: [{url, name, size}]}
+    return {name, size, type: ShareType.file, list: [{url, name, size, time}]}
   } else if (isPwdFile) {
     const body = new Matcher(html).matchPwdFile('url').matchPwdFile('data').done()
     if (!body.url || !body.data) {
@@ -116,14 +120,20 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
     }).then<DownloadUrlRes>(value => value.json())
     const name = inf // 文件名
     const size = $('.n_filesize').text().replace('大小：', '')
-    return {name, size, type: ShareType.pwdFile, list: [{url, pwd, name, size}]}
+    const time = html.match(/<span class='n_file_infos'>(.*?)<\/span>/)?.[1]
+    return {name, size, type: ShareType.pwdFile, list: [{url, pwd, name, size, time}]}
   } else if (isFolder || isPwdFolder) {
     const value = await lsShareFolder({pwd, url, html})
     return {
       name: title, // (文件夹名)
       type: isFolder ? ShareType.folder : ShareType.pwdFolder,
       size: byteToSize(value.list?.reduce((total, item) => total + sizeToByte(item.size), 0)),
-      list: value.list?.map(item => ({url: `${is_newd}/${item.id}`, name: item.name_all, size: item.size})),
+      list: value.list?.map(item => ({
+        url: `${is_newd}/${item.id}`,
+        name: item.name_all,
+        size: item.size,
+        time: item.time,
+      })),
     }
   } else {
     throw new Error($('.off').text())

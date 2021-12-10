@@ -96,7 +96,7 @@ export default function Parse() {
         </>
       }
     >
-      <Table header={['文件名', '大小', '操作']}>
+      <Table header={['文件名', '时间', '大小', '操作']}>
         {shareFiles.list?.map(item => {
           return (
             <tr key={item.name}>
@@ -104,6 +104,7 @@ export default function Parse() {
                 <Icon iconName={'file'} />
                 <span>{item.name}</span>
               </td>
+              <td>{item.time}</td>
               <td>{item.size}</td>
               <td>
                 <Icon

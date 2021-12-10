@@ -30,6 +30,8 @@ export const baseHeaders = {
   'sec-fetch-dest': 'empty',
   'sec-fetch-mode': 'cors',
   'sec-fetch-site': 'same-origin',
+  'user-agent':
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36',
 }
 
 interface RequestParams<T extends Record<string, unknown> | Fm> extends RequestOptions {
@@ -60,13 +62,13 @@ function request<T, B>(params: RequestParams<B>): Promise<T> {
       ...params.headers,
     }
 
-    let data = ''
+    let reqParams = ''
     const body: Fm = params.body
     if (body) {
       if (body instanceof Form) {
         Object.assign(headers, (body as Fm).getHeaders())
       } else {
-        data = querystring.stringify(body)
+        reqParams = querystring.stringify(body)
       }
     }
 
@@ -88,8 +90,8 @@ function request<T, B>(params: RequestParams<B>): Promise<T> {
       }
     }
 
-    if (data) {
-      req.write(data)
+    if (reqParams) {
+      req.write(reqParams)
       req.end()
     } else {
       if (typeof params.onData === 'function') {

@@ -1,5 +1,5 @@
 export default {
-  lanzouUrl: 'https://up.woozooo.com',
+  lanzouUrl: 'https://pc.woozooo.com',
   page: {
     home: '/mydisk.php',
     login: '/account.php?action=login',
@@ -7,10 +7,9 @@ export default {
   api: {
     task: '/doupload.php',
   },
-  // splitSize: '50k', // 大于 maxSize 按 splitSize 分割
-  // maxSize: '50k',
-  splitSize: '50m', // 大于 maxSize 按 splitSize 分割
-  maxSize: '99.5m',
+  // 大于 maxSize 按 splitSize 分割
+  splitSize: '47m', // 错误7079 - Math.floor(50000000 / 1024 / 1024)
+  maxSize: '95m', // Math.floor(100000000 / 1024 / 1024)
   signSuffix: '.lzy.zip',
   homeTempDir: '.lanzouyun',
   supportList: [

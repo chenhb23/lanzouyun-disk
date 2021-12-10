@@ -1,6 +1,6 @@
 import {EventEmitter} from 'events'
 import {resolve} from 'path'
-import {autorun, makeObservable, toJS} from 'mobx'
+import {autorun, makeObservable} from 'mobx'
 import Task, {makeGetterProps, TaskStatus} from './AbstractTask'
 import config from '../../project.config'
 import {createSpecificName, debounce, sizeToByte} from '../../common/util'
@@ -23,6 +23,7 @@ export interface UploadInfo {
   folderId: FolderId
   name: string
   type: string
+  lastModified: number
 
   tasks: UploadTask[]
 }
@@ -131,7 +132,7 @@ export class Upload extends EventEmitter implements Task<UploadInfo> {
     name: string
     type: string
     path: string // 全路径
-    lastModifiedDate: number
+    lastModified: number
   }) {
     try {
       const info: UploadInfo = {
@@ -139,6 +140,7 @@ export class Upload extends EventEmitter implements Task<UploadInfo> {
         path: options.path,
         folderId: options.folderId,
         type: options.type,
+        lastModified: options.lastModified,
         tasks: [],
       }
       if (options.size <= sizeToByte(config.maxSize)) {
@@ -234,10 +236,9 @@ export class Upload extends EventEmitter implements Task<UploadInfo> {
       if (task) {
         task.status = TaskStatus.pending
         try {
-          const fr = fs.createReadStream(
-            task.path,
-            task.endByte ? {start: task.startByte, end: task.endByte} : undefined
-          )
+          const fr = task.endByte
+            ? fs.createReadStream(task.path, {start: task.startByte, end: task.endByte})
+            : fs.createReadStream(task.path)
 
           const form = createUploadForm({
             fr,
@@ -246,13 +247,14 @@ export class Upload extends EventEmitter implements Task<UploadInfo> {
             folderId: task.folderId,
             id: task.name,
             type: task.type,
+            lastModified: info.lastModified,
           })
 
-          const updateResolve = debounce(bytes => {
-            task.resolve = bytes
-          })
+          const updateResolve = debounce(bytes => (task.resolve = bytes), {time: 1000})
 
           const abort = new AbortController()
+          this.taskSignal[resolve(task.path, task.name)] = abort
+
           request<Do1Res, any>({
             path: '/fileup.php',
             body: form,
@@ -270,8 +272,6 @@ export class Upload extends EventEmitter implements Task<UploadInfo> {
             .catch(reason => {
               task.status = TaskStatus.fail
             })
-
-          this.taskSignal[resolve(task.path, task.name)] = abort
         } catch (e) {
           task.status = TaskStatus.fail
           // this.emit('error', e)
@@ -305,15 +305,15 @@ interface FormOptions {
   folderId: FolderId
   id?: string
   type?: string
+  lastModified: number
 }
 
 export function createUploadForm(options: FormOptions) {
   const form = new FormData()
   form.append('task', '1')
   form.append('ve', '2')
-  form.append('lastModifiedDate', new Date().toString()) // todo: 保留文件修改日期？
+  form.append('lastModifiedDate', new Date(options.lastModified).toString())
   form.append('type', options.type || 'application/octet-stream')
-  // form.append('type', 'application/octet-stream')
   form.append('id', options.id ?? 'WU_FILE_0')
   form.append('folder_id_bb_n', options.folderId)
   form.append('size', options.size)
