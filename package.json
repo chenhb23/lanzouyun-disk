@@ -1,6 +1,6 @@
 {
   "name": "lanzouyun-pan",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "private": true,
   "main": "build/electron.js",
   "homepage": "./",
@@ -65,7 +65,7 @@
     "concurrently": "^5.3.0",
     "cross-env": "^7.0.3",
     "electron": "^10.1.5",
-    "electron-builder": "^22.9.1",
+    "electron-builder": "23.0.2",
     "eslint-config-prettier": "^6.15.0",
     "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-react": "^7.21.5",
@@ -79,7 +79,7 @@
     "web-vitals": "^0.2.4"
   },
   "build": {
-    "productName": "蓝奏云盘",
+    "productName": "lanzouyun-disk",
     "copyright": "更多内容到 https://github.com/chenhb23/lanzouyun-disk",
     "appId": "org.chenhb23.lanzou",
     "asar": true,
