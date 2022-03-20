@@ -4,13 +4,14 @@ import {Header} from '../component/Header'
 import {Button} from '../component/Button'
 import {Bar} from '../component/Bar'
 import {Icon} from '../component/Icon'
-import {byteToSize} from '../../common/util'
+import {byteToSize, isSpecificFile, restoreFileName} from '../../common/util'
 import {Table} from '../component/Table'
 import {download} from '../store'
 import IpcEvent from '../../common/IpcEvent'
 import requireModule from '../../common/requireModule'
 import {observer} from 'mobx-react'
 const electron = requireModule('electron')
+const path = requireModule('path')
 
 const Complete = observer(() => {
   return (
@@ -38,7 +39,7 @@ const Complete = observer(() => {
             <tr key={`${item.url}${i}`}>
               <td>
                 <Icon iconName={'file'} />
-                <span>{item.name}</span>
+                <span title={item.path}>{item.name}</span>
               </td>
               <td>{`${byteToSize(item.size)}`}</td>
               <td>
@@ -46,8 +47,13 @@ const Complete = observer(() => {
                   icon={'open-folder'}
                   type={'icon'}
                   onClick={() => {
-                    // todo: 精确到文件
-                    electron.ipcRenderer.invoke(IpcEvent.shell, 'showItemInFolder', item.path)
+                    // todo: 判断文件是否存在
+                    const file = item.tasks[0]
+                    let filePath = path.join(file.path, file.name)
+                    if (isSpecificFile(filePath)) {
+                      filePath = restoreFileName(filePath)
+                    }
+                    electron.ipcRenderer.invoke(IpcEvent.shell, 'showItemInFolder', filePath)
                   }}
                 />
               </td>

@@ -160,7 +160,7 @@ export default function Files() {
                   // 文件
                   <>
                     <Icon iconName={'file'} />
-                    <span>{item.name_all}</span>
+                    <span title={item.name_all}>{item.name_all}</span>
                     <div className='handle'>
                       <Button
                         icon={'share'}
@@ -207,7 +207,9 @@ export default function Files() {
                   // 文件夹
                   <>
                     <Icon iconName='folder' />
-                    <span onClick={() => listFile(item.fol_id).then(() => setSearch(''))}>{item.name}</span>
+                    <span title={item.name} onClick={() => listFile(item.fol_id).then(() => setSearch(''))}>
+                      {item.name}
+                    </span>
                     <div className='handle'>
                       <Button
                         icon={'share'}

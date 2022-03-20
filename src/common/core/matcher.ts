@@ -1,122 +1,38 @@
 import cheerio from 'cheerio'
 
+/**
+ * 获取页面各种元素
+ */
 export class Matcher {
-  out: Record<string, any> = {}
-
-  constructor(public html: string) {}
-
-  matchVar(key: string) {
-    const result = this.html.match(new RegExp(`var ${key} = '(.+?)';`))
-    if (result) {
-      this.out[key] = result[1]
-    }
-    return this
+  static matchIframe(html: string) {
+    return cheerio.load(html)('iframe').attr()?.src
   }
 
-  // 获取对象属性的变量值
-  matchDataVar(key: string) {
-    const varName = this.html.match(new RegExp(`'${key}':'?(\\w+)'?,`))
-    if (varName) {
-      const result = this.html.match(new RegExp(`var ${varName[1]} = '(.+?)';`))
-      if (result) {
-        this.out[key] = result[1]
-      }
-    }
-    return this
+  /**
+   * 文件夹：无密码/带密码
+   * @return object 返回值不包含 pwd
+   */
+  static parseFolderAjax(html: string) {
+    const script = html.match(/<script type="text\/javascript">([\s\S]+?)<\/script>/)[1]
+    const variable = script.match(/([\s\S]+?)(function )?file\(\)/)?.[1].replace(/document\..+?;/g, '')
+
+    const params = script.replace(/function more\(\){[\s\S]+}/, '').match(/\$\.ajax\(({[\s\S]+})\);/)?.[1]
+
+    return eval(`${variable}(${params})`)
   }
 
-  // 获取对象属性的值
-  matchData(key: string) {
-    const result = this.html.match(new RegExp(`'${key}':'?(\\w+)'?,`))
-    if (result) {
-      this.out[key] = result[1]
-    }
-    return this
+  // 文件：无密码
+  static parseAjax(html: string) {
+    const script = html.match(/<script type="text\/javascript">([\s\S]+?)<\/script>/)[1]
+    const variable = script.match(/([\s\S]+)\$\.ajax/)[1]
+    const params = script.match(/\$\.ajax\(([\s\S]+)\)/)[1]
+    return eval(`${variable}(${params})`)
   }
 
-  matchObject(key: string) {
-    const result = this.html.match(new RegExp(`${key} : '(.+?)',`))
-    if (result) {
-      this.out[key] = result[1]
-    }
-    return this
-  }
-
-  // 文件，带密码
-  matchPwdFile(key: string) {
-    // type : 'post',
-    // url : '/ajaxm.php',
-    // data : 'action=downprocess&sign=BmABPw4_aDz4IAQA_aV2dRbVozAjVQPwExBTUHNVI2AzQAJgAjXDxXMglpAWcGZgI2Uz4CNlc_bAjYBMA_c_c&p='+pwd,
-    // dataType : 'json',
-    const result = this.html.match(new RegExp(`${key} ?: ?'(.*?)'`))
-    if (result) {
-      this.out[key] = result[1]
-    }
-    return this
-  }
-
-  matchIframe(key = 'iframe') {
-    const src = cheerio.load(this.html)('iframe').attr().src
-    if (src) {
-      this.out[key] = src
-    }
-    return this
-  }
-
-  matchSign() {
-    const result = this.html.match(new RegExp(`'sign':(.*?),`))
-    if (result) {
-      const signKey = result[1]
-      const postdown = this.html.match(new RegExp(`var ${signKey} = '(.*?)';`))
-      if (postdown) {
-        this.out.sign = postdown[1]
-      }
-    }
-    return this
-  }
-
-  matchPdownload() {
-    const result = this.html.match(new RegExp(`var pdownload = '(.*?)';`))
-    if (result) {
-      this.out.pdownload = result[1]
-    }
-    return this
-  }
-
-  matchWebsign() {
-    // const result = this.html.match(new RegExp(`'websignkey':'(.*?)'`))
-    const result = this.html.match(new RegExp(`'websign':'(.*?)',`))
-    if (result) {
-      this.out.websign = result[1]
-    }
-    return this
-  }
-
-  matchWebsignkey() {
-    const result = this.html.match(new RegExp(`'websignkey':'(.*?)'`))
-    if (result) {
-      this.out.websignkey = result[1]
-    }
-    return this
-  }
-
-  matchVes() {
-    const result = this.html.match(new RegExp(`'ves':(.*?),`))
-    if (result) {
-      this.out.ves = result[1]
-    }
-    return this
-  }
-
-  private match(key: string, pattern: string) {
-    const result = this.html.match(new RegExp(pattern))
-    if (result) {
-      this.out[key] = result[1]
-    }
-    return this
-  }
-
-  done() {
-    return this.out
+  // 文件：带密码
+  static parsePwdAjax(html: string, password = '') {
+    const script = html.match(/<script type="text\/javascript">([\s\S]+?)<\/script>/)[1]
+    const params = script.match(/\$\.ajax\(({[\s\S]+?})\);/)?.[1]
+    return eval(`var pwd = "${password}";(${params})`)
   }
 }

@@ -109,14 +109,12 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
       .match(/文件大小：(.*)/)?.[1]
     return {name, size, type: ShareType.file, list: [{url, name, size, time}]}
   } else if (isPwdFile) {
-    const body = new Matcher(html).matchPwdFile('url').matchPwdFile('data').done()
-    if (!body.url || !body.data) {
-      throw new Error('文件密码页面解析出错')
-    }
-    const {inf} = await fetch(`${is_newd}${body.url}`, {
-      method: 'post',
+    const ajaxData = Matcher.parsePwdAjax(html, pwd)
+
+    const {inf} = await fetch(`${is_newd}${ajaxData.url}`, {
+      method: ajaxData.type,
       headers: {...baseHeaders, 'custom-referer': url},
-      body: body.data + pwd,
+      body: ajaxData.data,
     }).then<DownloadUrlRes>(value => value.json())
     const name = inf // 文件名
     const size = $('.n_filesize').text().replace('大小：', '')
@@ -142,7 +140,7 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
 
 /**
  * 解析分享文件夹
- * 发送 ajax，有密码加上 pwd
+ * 发送 ajax，如有密码，则带上 pwd
  * @param options
  */
 export async function lsShareFolder({url: paramsUrl, pwd, html}: {url: string; pwd?: string; html?: string}) {
@@ -156,35 +154,21 @@ export async function lsShareFolder({url: paramsUrl, pwd, html}: {url: string; p
   const $ = cheerio.load(html)
   const title = $('title').text()
 
-  const {url, ...body} = new Matcher(html)
-    .matchObject('url')
-    .matchDataVar('t')
-    .matchDataVar('k')
-    .matchData('lx')
-    .matchData('fid')
-    .matchData('uid')
-    .matchData('rep')
-    .matchData('up')
-    .matchData('ls')
-    .done()
-
-  if (!url) {
-    return {name: $('.off').text(), list: null}
-  }
+  const ajaxData = Matcher.parseFolderAjax(html)
 
   let pg = 1
   // let zt
   const shareFiles: ShareFile[] = []
 
   while (true) {
-    const {text, zt} = await fetch(`${is_newd}${url}`, {
-      method: 'post',
+    const {text, zt} = await fetch(`${is_newd}${ajaxData.url}`, {
+      method: ajaxData.type,
       headers: {...baseHeaders, 'custom-referer': paramsUrl},
-      body: querystring.stringify({...body, pg: pg++, pwd}),
+      body: querystring.stringify({...ajaxData.data, pg: pg++, pwd}),
     }).then<ShareFileRes>(value => value.json())
 
     if (zt == 1 && Array.isArray(text)) {
-      shareFiles.push(...(text || []))
+      shareFiles.push(...text)
       await delay(2000)
     } else {
       break

@@ -29,16 +29,12 @@ export async function pwdFileDownUrl(url: string, pwd: string) {
 
   const {is_newd} = parseUrl(url)
 
-  const body = new Matcher(html).matchPwdFile('url').matchPwdFile('data').done()
+  const ajaxData = Matcher.parsePwdAjax(html, pwd)
 
-  if (!body.data) {
-    throw new Error('文件密码页面解析出错')
-  }
-
-  const value = await fetch(`${is_newd}${body.url}`, {
+  const value = await fetch(`${is_newd}${ajaxData.url}`, {
     method: 'post',
     headers: {...baseHeaders, 'custom-referer': url},
-    body: body.data + pwd,
+    body: ajaxData.data,
   }).then<DownloadUrlRes>(value => value.json())
 
   return {
@@ -48,7 +44,7 @@ export async function pwdFileDownUrl(url: string, pwd: string) {
 }
 
 /**
- * 文件下载链接, 不带密码
+ * 无密码文件下载链接
  * iframe
  */
 export async function fileDownUrl(url: string) {
@@ -57,37 +53,21 @@ export async function fileDownUrl(url: string) {
   const html = await response.text()
 
   const {is_newd} = parseUrl(url)
-  const {iframe} = new Matcher(html).matchIframe().done()
+  const iframe = Matcher.matchIframe(html)
   if (!iframe) {
     throw new Error('文件页面解析出错')
   }
 
   const downHtml = await fetch(is_newd + iframe).then(value => value.text())
-  const {ajaxdata, sign, ves, pdownload, websign, websignkey} = new Matcher(downHtml)
-    .matchVar('ajaxdata')
-    .matchSign()
-    .matchVes()
-    .matchPdownload()
-    .matchWebsignkey()
-    .matchWebsign()
-    .done()
-  if (!ajaxdata) {
-    throw new Error('ajaxdata 无法解析')
-  }
-  const value = await fetch(`${is_newd}/ajaxm.php`, {
-    method: 'post',
+
+  const ajaxData = Matcher.parseAjax(downHtml)
+  const value = await fetch(`${is_newd}/${ajaxData.url}`, {
+    method: ajaxData.type,
     headers: {
       ...baseHeaders,
       'custom-referer': is_newd + iframe,
     },
-    body: querystring.stringify({
-      action: 'downprocess',
-      signs: ajaxdata,
-      sign: pdownload || sign,
-      websign: websign || '',
-      ves,
-      websignkey,
-    }),
+    body: querystring.stringify(ajaxData.data),
   }).then<DownloadUrlRes>(value => value.json())
 
   return {
