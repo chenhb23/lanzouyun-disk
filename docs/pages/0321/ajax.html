@@ -1,0 +1,43 @@
+<!-- file pages1 -->
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script type="text/javascript" src="/includes/js/jquery.js"></script>
+<link href="/img/tf.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<div id="outime">地址超时，请刷新</div>
+
+<div class="load" id="go">
+文件加载中...
+</div>
+<script type="text/javascript">
+		var ajaxdata = '?ctdf';
+		//var ispostdowns = '';
+		var websignkey = 'rnu2';
+		var websign = '';
+		$.ajax({
+			type : 'post',
+			url : '/ajaxm.php',
+			data : { 'action':'downprocess','signs':ajaxdata,'sign':'AGYHOQs6Dj8IAQU6ADBdYQRqU2cCZVdhUWQHMFI8W2lTdQYlWTkCZ1ExA2FRMlNqWzUDNwBoBjAKPw_c_c','ves':1,'websign':websign,'websignkey':websignkey },
+			//data : { 'action':'downprocess','sign':sign,'sign':sign,'ves':1},
+			dataType : 'json',
+			success:function(msg){
+				var date = msg;
+				if(date.zt == '1'){
+										$("#go").html("<a href="+date.dom+"/file/"+ date.url +" target=_blank rel=noreferrer><span class=txt>电信下载</span><span class='txt txtc'>联通下载</span><span class=txt>普通下载</span></a>");
+					setTimeout('$("#outime").css("display","block");',1800000);
+									}else{
+					$("#go").html("网页超时，请刷新");
+				};
+
+			},
+			error:function(){
+				$("#go").html("获取失败，请刷新");
+			}
+
+		});
+</script>
+</body>
+</html>

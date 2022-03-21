@@ -22,6 +22,11 @@ function parseJson(str) {
   }
 }
 
+/**
+ * accept: 保证客户端数据接收正常
+ * content-type：x-www-form-urlencoded 使用表单数据提交，保证服务器数据接收正常
+ * 其实不需要 custom-referer
+ */
 export const baseHeaders = {
   accept: 'application/json, text/javascript, */*; q=0.01',
   'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',

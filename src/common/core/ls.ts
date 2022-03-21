@@ -114,7 +114,7 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
     const {inf} = await fetch(`${is_newd}${ajaxData.url}`, {
       method: ajaxData.type,
       headers: {...baseHeaders, 'custom-referer': url},
-      body: ajaxData.data,
+      body: new URLSearchParams(ajaxData.data),
     }).then<DownloadUrlRes>(value => value.json())
     const name = inf // 文件名
     const size = $('.n_filesize').text().replace('大小：', '')
@@ -164,7 +164,7 @@ export async function lsShareFolder({url: paramsUrl, pwd, html}: {url: string; p
     const {text, zt} = await fetch(`${is_newd}${ajaxData.url}`, {
       method: ajaxData.type,
       headers: {...baseHeaders, 'custom-referer': paramsUrl},
-      body: querystring.stringify({...ajaxData.data, pg: pg++, pwd}),
+      body: new URLSearchParams({...ajaxData.data, pg: pg++, pwd}),
     }).then<ShareFileRes>(value => value.json())
 
     if (zt == 1 && Array.isArray(text)) {

@@ -32,9 +32,9 @@ export async function pwdFileDownUrl(url: string, pwd: string) {
   const ajaxData = Matcher.parsePwdAjax(html, pwd)
 
   const value = await fetch(`${is_newd}${ajaxData.url}`, {
-    method: 'post',
+    method: ajaxData.type,
     headers: {...baseHeaders, 'custom-referer': url},
-    body: ajaxData.data,
+    body: new URLSearchParams(ajaxData.data),
   }).then<DownloadUrlRes>(value => value.json())
 
   return {
@@ -61,13 +61,10 @@ export async function fileDownUrl(url: string) {
   const downHtml = await fetch(is_newd + iframe).then(value => value.text())
 
   const ajaxData = Matcher.parseAjax(downHtml)
-  const value = await fetch(`${is_newd}/${ajaxData.url}`, {
+  const value = await fetch(`${is_newd}${ajaxData.url}`, {
     method: ajaxData.type,
-    headers: {
-      ...baseHeaders,
-      'custom-referer': is_newd + iframe,
-    },
-    body: querystring.stringify(ajaxData.data),
+    headers: {...baseHeaders, 'custom-referer': is_newd + iframe},
+    body: new URLSearchParams(ajaxData.data),
   }).then<DownloadUrlRes>(value => value.json())
 
   return {

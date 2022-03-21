@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" />
+<title>蓝奏云盘下载</title>
+<link rel="dns-prefetch" href="https://static.woozooo.com">
+<link rel="dns-prefetch" href="https://statics.woozooo.com">
+<link href="/img/t0.css" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="/includes/js/jquery.js"></script>
+<link rel="shortcut icon" href="/favicon.ico">
+</head>
+<body>
+<div class="top">
+<div class="d1">
+<div class="d11 bgimg">
+<a href="/" class="d7"> </a></div>
+<div class="d12">
+<a href="/account.php?action=login">登录</a></div>
+</div>
+</div>
+<div class="pc bgimg"></div>
+
+
+<style>
+.rets{text-align: center;font-size: 14px;color: #aaa;padding-top: 6px;}
+.retspan{margin-left:18px;opacity: .5;}
+.tet{margin-bottom: 28px;line-height: 34px;padding: 8px;}
+.teta{padding: 5px;background: #de5823;color: #fff;border-radius: 3px 0 0 3px;}
+.tetb{background:#666;margin-right:15px;border-radius: 0 3px 3px 0;}
+.nameh{font-weight: 700;float: left;width: 523px;}
+.sizeh{font-weight: 700;float: left;width: 280px;text-align: center;}
+.timeh{font-weight: 700;float: left;width: 150px;text-align: center;}
+#infos{clear: both;}
+#ready{clear: both;line-height: 43px;padding: 0 10px;text-align: center;}
+#name{float: left;width: 523px;text-align: left;}
+#size{float: left;width: 280px;}
+#time{float: left;width: 150px;}
+.nosha{clear: both;text-align: center;}
+#infomores{clear: both;padding-top: 38px;}
+#filemore{border: 1px solid #52a6ef;color: #52a6ef;cursor: pointer;display: block;text-align: center;width: 170px;border-radius: 3px;margin: auto;height: 36px;line-height: 36px;}
+#filemore:hover{opacity: .7;}
+.load2 .loader,
+.load2 .loader:before,
+.load2 .loader:after {border-radius: 50%;}
+.load2 .loader:before,
+.load2 .loader:after {position: absolute;content: '';}
+.load2 .loader:before {width: 16px;height: 32px;background: #fff;border-radius: 32px 0 0 32px;top: -1px;left: -1px;transform-origin: 16px 16px;animation: load2 2s infinite ease 1.5s;}
+.load2 .loader {font-size: 11px;text-indent: -99999em;margin: auto;position: relative;width: 30px;height: 30px;box-shadow: inset 0 0 0 4px #09f;}
+.load2 .loader:after {width: 16px;height: 32px;background: #fff;border-radius: 0 31px 31px 0;top: -1px;left: 15px;transform-origin: 0px 16px;animation: load2 2s infinite ease;}
+@keyframes load2 {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.load2{position: fixed;width: 100%;background: #fff;height: 100%;z-index: 999;padding-top: 10%;display: none;}
+.loader2{text-align:center;padding-top: 30px;}
+.s_ad{    color: #fff;
+    background: #a4df70;
+    font-size: 12px;
+    margin-left: 5px;
+    padding: 1px 2px;
+    border-radius: 3px;}
+</style>
+<div class="load2" id="load2"><div class="loader"></div><div class="loader2">努力加载中...</div></div>
+<div class="d" id="info">
+<div class="b"><div id="sp_name"></div>
+<div class="rets">11-10<a href="/q/jb/?f=2553948&l=b&report=2" target="_blank"><span class="retspan">文件投诉</span></a></div>
+</div>
+<div class="d2">
+<div class="nameh">文件名</div>
+<div class="sizeh">大小</div>
+<div class="timeh">时间</div>
+</div>
+<div id="infos"></div>
+<!--filemore-->
+<div id="infomores"><span id="filemore" onclick="more();">显示更多文件</span></div>
+</div>
+
+<script type="text/javascript">
+	var imuwk5 ='蓝奏云盘下载';
+	document.title = imuwk5;
+　　document.getElementById('sp_name').innerHTML=imuwk5;	var pwd;
+	var pgs;
+	var iay8gj = '1647842382';
+	var igwkic = 'ec516ee8b431a69065ac249460ea32f4';
+	pgs =1;
+		document.getElementById("load2").style.display="block";
+	file();
+	function file(){
+		$.ajax({
+			type : 'post',
+			url : '/filemoreajax.php',
+			data : { 
+			'lx':2,
+			'fid':2553948,
+			'uid':'1702063',
+			'pg':pgs,
+			'rep':'0',
+			't':iay8gj,
+			'k':igwkic,
+			'up':1,
+						},
+			dataType : 'json',
+			success:function(msg){
+				//隐藏
+				document.getElementById("load2").style.display="none";
+				if(msg.zt == '1'){
+										var data = msg.text;
+					$.each(data, function(i, n){
+						var str;
+						var alink = '/' + n.id;
+						if(n.t ==1){
+							alink = n.id;
+							n.name_all = n.name_all + '<span class="s_ad">推广</span>';
+						}
+												str ='<div id=ready><div id=name>&nbsp;<img src=/images/filetype/'+ n.icon +'.gif align=absmiddle border=0>&nbsp;<a href=' + alink + ' target=_blank>' + n.name_all + '</a></div><div id=size>'+n.size+'</div><div id=time>'+n.time+'</div></div>';
+												if(n.id != '-1'){
+							$(str).appendTo("#infos");
+						}
+					});
+					pgs++;
+					//少于50条，隐"more"
+					if(data.length<50){
+						document.getElementById("filemore").style.display="none";
+					}
+				}else if(msg.zt == '2'){
+					$("#infos").html("<div style='clear: both;text-align: center;padding: 30px;'>没有文件</div>");
+					document.getElementById("filemore").style.display="none";
+									}else if(msg.zt == '3'){
+									}else if(msg.zt == '6'){
+					//$("#infos").text(msg.info);
+					$("#infos").html("<div style='clear: both;text-align: center;padding: 30px;'>"+msg.info+"</div>");
+					document.getElementById("filemore").style.display="none";
+									}else{
+					$("#infos").text(msg.info);
+				}
+			},
+			error:function(){
+				$("#infos").text("获取失败，请重试");
+			}
+	
+	});
+}
+function more(){
+				$("#filemore").text("文件获取中...");
+		$.ajax({
+			type : 'post',
+			url : '/filemoreajax.php',
+			data : { 
+			'lx':2,
+			'fid':2553948,
+			'uid':'1702063',
+			'pg':pgs,
+			'rep':'0',
+			't':iay8gj,
+			'k':igwkic,
+			'up':1,
+			 
+			},
+			dataType : 'json',
+			success:function(msg){
+				if(msg.zt == '1'){
+					var data = msg.text;
+					$.each(data, function(i, n){
+						var str;
+						var alink = '/' + n.id;
+						if(n.t ==1){
+							alink = n.id;
+							n.name_all = n.name_all + '<span class="s_ad">推广</span>';
+						}
+												str ='<div id=ready><div id=name>&nbsp;<img src=/images/filetype/'+ n.icon +'.gif align=absmiddle border=0>&nbsp;<a href=' + alink + ' target=_blank>' + n.name_all + '</a></div><div id=size>'+n.size+'</div><div id=time>'+n.time+'</div></div>';
+												if(n.id != '-1'){
+							$(str).appendTo("#infos");
+						}
+					});
+					if(data.length<50){
+						document.getElementById("filemore").style.display="none";
+					}else{
+						$("#filemore").text("显示更多文件");
+					}
+					pgs++;
+
+				}else{
+					document.getElementById("filemore").style.display="none";
+				}
+			},
+			error:function(){
+				$("filemore").text("获取失败，请重试");
+			}
+	
+		});
+	}
+</script>
+
+<div class="foot_info">&copy; 2022 Lanzou</div>
+<div style="display:none"><script src="https://s95.cnzz.com/stat.php?id=1253610888&web_id=1253610888" language="JavaScript"></script><script src="https://statics.woozooo.com/img/hm.js"></script></div>
+</body>
+</html>
