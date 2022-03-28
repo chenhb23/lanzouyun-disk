@@ -27,7 +27,7 @@ export function sizeToByte(size: string | number) {
         get t() {
           return this.g * 1024
         },
-      }[unit] || 1)
+      }[unit] || 1) // todo: 1 是有问题的
     const [_, num, unit] = size
       .toLowerCase()
       .replace(' ', '')
@@ -41,7 +41,8 @@ export function sizeToByte(size: string | number) {
 
 export function byteToSize(byte: number) {
   const formatSize = (total, persize) => {
-    return Math.floor((total * 100) / persize) / 100
+    const [integer, decimal = ''] = `${Math.floor((total * 100) / persize) / 100}`.split('.')
+    return `${integer}.${decimal.padEnd(2, '0')}`
   }
 
   if (byte < sizeToByte('1k')) return `0`
