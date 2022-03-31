@@ -10,7 +10,6 @@ import {rmFile, rmFolder} from '../../common/core/rm'
 import {ls} from '../../common/core/ls'
 import {Bar} from '../component/Bar'
 import {useRequest} from '../hook/useRequest'
-import requireModule from '../../common/requireModule'
 import {ScrollView} from '../component/ScrollView'
 import {Input, Textarea} from '../component/Input'
 import {Modal} from '../component/Modal'
@@ -19,7 +18,7 @@ import {download, upload} from '../store'
 import {fileDetail, folderDetail} from '../../common/core/detail'
 import './Files.css'
 
-const electron = requireModule('electron')
+const electron = window.require('electron')
 
 interface FolderForm {
   name: string

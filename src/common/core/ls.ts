@@ -1,11 +1,11 @@
 import cheerio from 'cheerio'
 import request, {baseHeaders} from '../request'
 import {byteToSize, delay, isFile, sizeToByte} from '../util'
-import requireModule from '../requireModule'
+// import requireModule from '../requireModule'
 import {parseUrl} from './download'
 import {Matcher} from './matcher'
 
-const querystring = requireModule('querystring')
+// const querystring = requireModule('querystring')
 
 /**
  * 列出文件夹下的所有文件 + 目录

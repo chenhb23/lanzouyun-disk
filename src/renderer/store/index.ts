@@ -1,7 +1,12 @@
+import {configure} from 'mobx'
 import {create} from 'mobx-persist'
 import {Upload} from './Upload'
 import {Download} from './Download'
 import {makeGetterProps, TaskBase, TaskStatus} from './AbstractTask'
+
+configure({
+  enforceActions: 'never',
+})
 
 const hydrate = create({
   storage: localStorage,

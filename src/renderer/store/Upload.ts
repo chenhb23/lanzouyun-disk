@@ -232,8 +232,9 @@ export class Upload extends EventEmitter implements Task<UploadInfo> {
         })
       }
 
-      const task = info.tasks.find(item => TaskStatus.ready === item.status)
-      if (task) {
+      const taskIndex = info.tasks.findIndex(item => TaskStatus.ready === item.status)
+      if (taskIndex !== -1) {
+        const task = info.tasks[taskIndex]
         task.status = TaskStatus.pending
         try {
           const fr = task.endByte
@@ -248,6 +249,7 @@ export class Upload extends EventEmitter implements Task<UploadInfo> {
             id: task.name,
             type: task.type,
             lastModified: info.lastModified,
+            taskIndex,
           })
 
           const updateResolve = debounce(bytes => (task.resolve = bytes), {time: 1000})
@@ -267,6 +269,7 @@ export class Upload extends EventEmitter implements Task<UploadInfo> {
                 this.emit('finish-task', info, task)
               } else {
                 task.status = TaskStatus.fail
+                console.log(value)
               }
             })
             .catch(reason => {
@@ -305,6 +308,7 @@ interface FormOptions {
   id?: string
   type?: string
   lastModified: number
+  taskIndex: number
 }
 
 export function createUploadForm(options: FormOptions) {
@@ -313,7 +317,8 @@ export function createUploadForm(options: FormOptions) {
   form.append('ve', '2')
   form.append('lastModifiedDate', new Date(options.lastModified).toString())
   form.append('type', options.type || 'application/octet-stream')
-  form.append('id', options.id ?? 'WU_FILE_0')
+  // form.append('id', options.id ?? 'WU_FILE_0')
+  form.append('id', `WU_FILE_${options.taskIndex}`)
   form.append('folder_id_bb_n', options.folderId)
   form.append('size', options.size)
   form.append('name', options.name)

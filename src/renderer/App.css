@@ -54,6 +54,7 @@ h1, h2, h3, h4, h5 {
   flex-direction: column;
   justify-content: space-between;
   user-select: none;
+  -webkit-app-region: drag;
 }
 .content {
   display: flex;

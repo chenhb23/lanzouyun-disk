@@ -1,11 +1,8 @@
-import {baseHeaders} from '../request'
-import requireModule from '../requireModule'
 import {autorun, observable} from 'mobx'
+import electron from 'electron'
+import {baseHeaders} from '../request'
 import IpcEvent from '../IpcEvent'
 import {Matcher} from './matcher'
-
-const electron = requireModule('electron')
-const querystring = requireModule('querystring')
 
 /**
  * 生成 is_newd, f_id

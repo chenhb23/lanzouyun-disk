@@ -18,9 +18,10 @@ function createWindow() {
     // autoHideMenuBar: true,
     titleBarStyle: 'hidden',
     webPreferences: {
-      preload: path.resolve(__dirname, 'main/preload.js'),
+      // preload: path.resolve(__dirname, 'main/preload.js'),
       webSecurity: false, // 不使用网页安全性，跨域
       nodeIntegration: true, // 开启后可在渲染线程 require()
+      contextIsolation: false,
     },
   })
 
@@ -97,5 +98,10 @@ function loadMain(win: BrowserWindow) {
     }
     callback({requestHeaders: details.requestHeaders})
   })
-  win.loadURL(loadURL)
+  win.loadURL(loadURL, {
+    httpReferrer: 'https://lanzoui.com/',
+    // 设置全局 userAgent，包括页面的 fetch 请求
+    userAgent:
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36',
+  })
 }
