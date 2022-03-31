@@ -11,6 +11,8 @@ export default {
   splitSize: '47m', // 错误7079 - Math.floor(50000000 / 1024 / 1024)
   maxSize: '95m', // Math.floor(100000000 / 1024 / 1024)
   signSuffix: '.lzy.zip',
+  sign: 'lzy',
+  ext: 'zip',
   homeTempDir: '.lanzouyun',
   supportList: [
     'doc',

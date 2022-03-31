@@ -22,7 +22,7 @@ export interface UploadInfo {
   path: string // 文件路径, 作为id
   folderId: FolderId
   name: string
-  type: string
+  type: string // 文件类型 mime
   lastModified: number
 
   tasks: UploadTask[]
@@ -274,7 +274,6 @@ export class Upload extends EventEmitter implements Task<UploadInfo> {
             })
         } catch (e) {
           task.status = TaskStatus.fail
-          // this.emit('error', e)
           message.error(e)
         }
       }

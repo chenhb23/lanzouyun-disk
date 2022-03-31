@@ -31,7 +31,7 @@ export const message = {
   },
 }
 
-function show({duration = 1500, type = 'success', message} = {} as MessageOptions) {
+function show({duration = 2000, type = 'success', message} = {} as MessageOptions) {
   const div = document.createElement('div')
   div.innerText = message
   div.className = `Message ${type}`

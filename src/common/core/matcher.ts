@@ -3,6 +3,12 @@ import prettier from 'prettier/standalone'
 import parserBabel from 'prettier/parser-babel'
 import * as queryString from 'querystring'
 
+interface AjaxData {
+  type: string
+  url: string
+  data: any
+}
+
 /**
  * 获取页面各种元素
  */
@@ -35,7 +41,7 @@ export class Matcher {
     html: string,
     getVariable: (script: string) => string,
     getData: (script: string) => string
-  ) {
+  ): AjaxData {
     const script = this.formatScript(html)
 
     const variable = getVariable(script)

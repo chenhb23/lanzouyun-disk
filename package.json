@@ -1,6 +1,6 @@
 {
   "name": "lanzouyun-pan",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "private": true,
   "main": "build/electron.js",
   "homepage": "./",
@@ -20,7 +20,7 @@
     "react-start": "cross-env BROWSER=none react-scripts start",
     "react-build": "react-scripts build",
     "electron-start": "yarn tsc-electron-build && electron .",
-    "electron-build": "yarn tsc-electron-build && electron-builder",
+    "electron-build": "yarn tsc-electron-build && electron-builder -mw",
     "release": "yarn react-build && electron-builder --publish=always",
     "build": "yarn react-build && yarn electron-build",
     "start": "concurrently \"cross-env BROWSER=none yarn react-start\" \"wait-on http://localhost:3000 && yarn electron-start\"",
@@ -80,7 +80,7 @@
     "web-vitals": "^0.2.4"
   },
   "build": {
-    "productName": "lanzouyun-disk",
+    "productName": "蓝奏云盘",
     "copyright": "更多内容到 https://github.com/chenhb23/lanzouyun-disk",
     "appId": "org.chenhb23.lanzou",
     "asar": true,
