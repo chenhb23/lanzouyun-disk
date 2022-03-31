@@ -13,12 +13,12 @@ import {download, upload} from './store'
 import request from '../common/request'
 import {message} from './component/Message'
 import {Button} from './component/Button'
-import requireModule from '../common/requireModule'
 import IpcEvent from '../common/IpcEvent'
 import {Icon} from './component/Icon'
 import {basename} from 'path'
 import store from '../main/store'
-const electron = requireModule('electron')
+// const electron = requireModule('electron')
+import electron from 'electron'
 
 request.intercepter.response = res => {
   if (![1, 2].includes(res.zt)) {

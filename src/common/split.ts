@@ -1,9 +1,8 @@
-import requireModule from './requireModule'
 import {createSpecificIndexName, mkTempDirSync, sizeToByte} from './util'
 import config from '../project.config'
 
-const fs = requireModule('fs-extra')
-const path = requireModule('path')
+import fs from 'fs-extra'
+import path from 'path'
 
 interface SplitData {
   path: string

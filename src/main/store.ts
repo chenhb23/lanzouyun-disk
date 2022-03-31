@@ -1,7 +1,5 @@
-import requireModule from '../common/requireModule'
+import electron from 'electron'
 import IpcEvent from '../common/IpcEvent'
-
-const electron = requireModule('electron')
 
 export default electron.ipcMain
   ? new (require('electron-store'))()

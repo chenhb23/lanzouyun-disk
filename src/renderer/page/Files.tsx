@@ -57,7 +57,9 @@ export default function Files() {
   useEffect(() => {
     const refresh = () => listFile(currentFolder)
     upload.on('finish', refresh)
-    return () => upload.removeListener('finish', refresh)
+    return () => {
+      upload.removeListener('finish', refresh)
+    }
   }, [currentFolder, listFile])
 
   function cancel() {

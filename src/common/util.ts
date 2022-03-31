@@ -1,9 +1,7 @@
+import fs from 'fs-extra'
+import path from 'path'
+import os from 'os'
 import config from '../project.config'
-import requireModule from './requireModule'
-
-const fs = requireModule('fs-extra')
-const path = requireModule('path')
-const os = requireModule('os')
 
 export const delay = (ms = 1000) => new Promise(resolve => setTimeout(resolve, ms))
 

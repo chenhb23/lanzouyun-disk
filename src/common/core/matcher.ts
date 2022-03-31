@@ -22,9 +22,10 @@ export class Matcher {
    */
   private static formatScript(html: string) {
     const scripts = cheerio.load(html)('html script:not([src])')
-    if (!scripts.length) throw new Error('script 获取失败')
+    const script = scripts.eq(0).html()
+    if (!script) throw new Error('script 获取失败')
 
-    return prettier.format(scripts[0].firstChild.data, {
+    return prettier.format(script, {
       plugins: [parserBabel],
       parser: 'babel',
       semi: true, // 加上分号

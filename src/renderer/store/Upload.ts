@@ -7,12 +7,12 @@ import {createSpecificName, debounce, sizeToByte} from '../../common/util'
 import {isExistByName} from '../../common/core/isExist'
 import {mkdir} from '../../common/core/mkdir'
 import split from '../../common/split'
-import requireModule from '../../common/requireModule'
 import request from '../../common/request'
 import {message} from '../component/Message'
 import {persist} from 'mobx-persist'
 
-const fs = requireModule('fs-extra')
+import fs from 'fs-extra'
+import FormData from 'form-data'
 
 export interface UploadInfo {
   readonly size?: TaskStatus
@@ -53,8 +53,6 @@ export interface Upload {
   emit(event: 'finish-task', info: UploadInfo, task: UploadTask)
   // emit(event: 'error', msg: string)
 }
-
-const FormData = requireModule('form-data')
 
 /**
  * 分割完再上传
@@ -168,7 +166,7 @@ export class Upload extends EventEmitter implements Task<UploadInfo> {
           ...splitData.splitFiles.map<UploadTask>(file => ({
             name: file.name,
             path: info.path,
-            folderId: subFolderId,
+            folderId: subFolderId!,
             resolve: 0,
             size: file.size,
             status: TaskStatus.ready,
@@ -181,7 +179,7 @@ export class Upload extends EventEmitter implements Task<UploadInfo> {
 
       makeGetterProps(info)
       this.list.push(info)
-    } catch (e) {
+    } catch (e: any) {
       message.error(e)
     }
   }
@@ -275,7 +273,7 @@ export class Upload extends EventEmitter implements Task<UploadInfo> {
             .catch(reason => {
               task.status = TaskStatus.fail
             })
-        } catch (e) {
+        } catch (e: any) {
           task.status = TaskStatus.fail
           message.error(e)
         }

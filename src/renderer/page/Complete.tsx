@@ -8,10 +8,9 @@ import {byteToSize, isSpecificFile, restoreFileName} from '../../common/util'
 import {Table} from '../component/Table'
 import {download} from '../store'
 import IpcEvent from '../../common/IpcEvent'
-import requireModule from '../../common/requireModule'
 import {observer} from 'mobx-react'
-const electron = requireModule('electron')
-const path = requireModule('path')
+import * as path from 'path'
+import * as electron from 'electron'
 
 const Complete = observer(() => {
   return (

@@ -1,15 +1,11 @@
-import requireModule from './requireModule'
 import {RequestOptions} from 'https'
 import config from '../project.config'
 import store from '../main/store'
 
-const querystring = requireModule('querystring')
-const http = requireModule('https')
-const Form = requireModule('form-data')
-const fs = requireModule('fs-extra')
-
-const form = new Form()
-type Fm = typeof form
+import querystring from 'querystring'
+import http from 'https'
+import FormData from 'form-data'
+import fs from 'fs-extra'
 
 let cookie = ''
 const defaultPath = '/doupload.php'
@@ -39,7 +35,7 @@ export const baseHeaders = {
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36',
 }
 
-interface RequestParams<T extends Record<string, unknown> | Fm> extends RequestOptions {
+interface RequestParams<T> extends RequestOptions {
   body?: T
   onData?: (bytes: number) => void
   signal?: AbortSignal
@@ -48,7 +44,7 @@ interface RequestParams<T extends Record<string, unknown> | Fm> extends RequestO
 /**
  *
  */
-function request<T, B>(params: RequestParams<B>): Promise<T> {
+function request<T, B extends Record<string, any> | FormData>(params: RequestParams<B>): Promise<T> {
   return new Promise(async (resolve, reject) => {
     const url = new URL(config.lanzouUrl)
     const options: RequestOptions = {
@@ -68,10 +64,10 @@ function request<T, B>(params: RequestParams<B>): Promise<T> {
     }
 
     let reqParams = ''
-    const body: Fm = params.body
+    const body = params.body
     if (body) {
-      if (body instanceof Form) {
-        Object.assign(headers, (body as Fm).getHeaders())
+      if (body instanceof FormData) {
+        Object.assign(headers, body.getHeaders())
       } else {
         reqParams = querystring.stringify(body)
       }
@@ -138,7 +134,7 @@ export function downloadFile(options: DownloadFile) {
       return url
     })
 
-  return new Promise(async (resolve, reject) => {
+  return new Promise<void>(async (resolve, reject) => {
     let totalBytes = 0
     let receivedBytes = 0
 

@@ -74,7 +74,7 @@ export async function fileDownUrl(url: string) {
  * 等待状态的返回
  */
 const waitStatus = (observableQueue, sign) => {
-  return new Promise(resolve => {
+  return new Promise<void>(resolve => {
     autorun(
       r => {
         if (!observableQueue.length || observableQueue[0] === sign) {
@@ -92,7 +92,7 @@ const waitStatus = (observableQueue, sign) => {
 const downloadTaskFactory = () => {
   const queue = observable([])
   return (ipcMessage: IpcDownloadMsg) =>
-    new Promise(async resolve => {
+    new Promise<void>(async resolve => {
       const sign = ipcMessage.replyId
       queue.push(sign)
       await waitStatus(queue, sign)

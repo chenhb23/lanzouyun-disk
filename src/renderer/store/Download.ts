@@ -5,7 +5,6 @@ import Task, {makeGetterProps, TaskStatus} from './AbstractTask'
 import {fileDownUrl, parseUrl, pwdFileDownUrl, sendDownloadTask} from '../../common/core/download'
 import {delay, isSpecificFile, mkTempDirSync, restoreFileName, sizeToByte} from '../../common/util'
 import {lsFile, lsShare, lsShareFolder} from '../../common/core/ls'
-import requireModule from '../../common/requireModule'
 import merge from '../../common/merge'
 import {fileDetail, folderDetail} from '../../common/core/detail'
 import IpcEvent from '../../common/IpcEvent'
@@ -13,8 +12,8 @@ import store from '../../main/store'
 import {message} from '../component/Message'
 import {persist} from 'mobx-persist'
 
-const electron = requireModule('electron')
-const fs = requireModule('fs-extra')
+import fs from 'fs-extra'
+import electron from 'electron'
 
 interface DownloadInfo {
   readonly size?: number
@@ -143,7 +142,7 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
   }
 
   abortTask = (task: DownloadTask) => {
-    return new Promise(resolve => {
+    return new Promise<void>(resolve => {
       if (this.taskSignal[task.url]) {
         this.taskSignal[task.url].abort()
         delete this.taskSignal[task.url]
@@ -261,7 +260,7 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
             electron.ipcRenderer.send(IpcEvent.abort, replyId)
             removeListener()
           }
-        } catch (e) {
+        } catch (e: any) {
           task.status = TaskStatus.fail
           message.error(e)
         }
@@ -312,7 +311,7 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
 
       makeGetterProps(info)
       this.list.push(info)
-    } catch (e) {
+    } catch (e: any) {
       message.error(e)
     }
   }
@@ -343,7 +342,7 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
       }
       makeGetterProps(task)
       this.list.push(task)
-    } catch (e) {
+    } catch (e: any) {
       message.error(e)
     }
   }
@@ -384,7 +383,7 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
 
       makeGetterProps(info)
       this.list.push(info)
-    } catch (e) {
+    } catch (e: any) {
       message.error(e)
     }
   }
@@ -422,7 +421,7 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
 
       makeGetterProps(info)
       this.list.push(info)
-    } catch (e) {
+    } catch (e: any) {
       message.error(e)
     }
   }

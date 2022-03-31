@@ -1,7 +1,6 @@
 import {PathLike, WriteStream} from 'fs'
-import requireModule from './requireModule'
 
-const fs = requireModule('fs')
+import fs from 'fs-extra'
 
 function write(filePath: PathLike, target: WriteStream) {
   return new Promise((resolve, reject) => {
