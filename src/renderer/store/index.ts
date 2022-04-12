@@ -1,8 +1,8 @@
 import {configure} from 'mobx'
 import {create} from 'mobx-persist'
-import {Upload} from './Upload'
-import {Download} from './Download'
-import {makeGetterProps, TaskBase, TaskStatus} from './AbstractTask'
+import {Upload, UploadTask} from './Upload'
+import {Download, DownloadTask} from './Download'
+import {TaskStatus} from './AbstractTask'
 
 configure({
   enforceActions: 'never',
@@ -16,17 +16,29 @@ const hydrate = create({
 export const upload = new Upload()
 export const download = new Download()
 
-function makeReady<T extends {list: B; finishList?: B}, B extends TaskBase[]>(value: T) {
-  value?.list?.forEach(info => {
-    makeGetterProps(info)
-    info.tasks.forEach(task => {
-      if (task.status === TaskStatus.pending) {
-        task.status = TaskStatus.pause
-      }
-    })
+function makePause<T extends {tasks: {status: TaskStatus}[]}>(task: T) {
+  task.tasks.forEach(task => {
+    if (task.status === TaskStatus.pending) {
+      task.status = TaskStatus.pause
+    }
+    return task
   })
-  value?.finishList?.forEach(makeGetterProps)
+  return task
 }
 
-hydrate('download', download, (window as any).__STATE__?.download).then(makeReady)
-hydrate('upload', upload, (window as any).__STATE__?.upload).then(makeReady)
+hydrate('download', download, (window as any).__STATE__?.download).then(value => {
+  value.list = value.list.map(item => {
+    const task = makePause(item)
+    return new DownloadTask(task)
+  })
+  value.finishList = value.finishList.map(item => {
+    const task = makePause(item)
+    return new DownloadTask(task)
+  })
+})
+hydrate('upload', upload, (window as any).__STATE__?.upload).then(value => {
+  value.list = value.list.map(item => {
+    const task = makePause(item)
+    return new UploadTask(task)
+  })
+})

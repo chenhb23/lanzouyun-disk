@@ -1,11 +1,8 @@
 import cheerio from 'cheerio'
-import request, {baseHeaders} from '../request'
 import {byteToSize, delay, isFile, sizeToByte} from '../util'
-// import requireModule from '../requireModule'
 import {parseUrl} from './download'
 import {Matcher} from './matcher'
-
-// const querystring = requireModule('querystring')
+import * as http from '../http'
 
 /**
  * 列出文件夹下的所有文件 + 目录
@@ -29,14 +26,17 @@ export async function ls(folder_id = -1) {
  * cookie
  */
 export async function lsFile(folder_id: FolderId) {
-  let pg = 1,
-    len = 0
-  const fileList: Do5Res['text'] = []
+  let pg = 1
+  let next = true
+  const fileList: Task5Res['text'] = []
   do {
-    const {text} = await request<Do5Res, Do5>({body: {task: 5, folder_id, pg: pg++}})
-    len = text.length
+    const {text} = await http.request
+      .post('doupload.php', {form: {task: 5, folder_id, pg: pg++} as Task5})
+      .json<Task5Res>()
+    // todo: 蓝奏分页数量：api：18，分享页：50
+    next = Array.isArray(text) && text.length >= 18
     fileList.push(...text)
-  } while (len)
+  } while (next)
 
   return fileList
 }
@@ -46,28 +46,26 @@ export async function lsFile(folder_id: FolderId) {
  * cookie
  */
 export async function lsDir(folder_id: FolderId) {
-  return request<Do47Res, Do47>({body: {task: 47, folder_id}})
+  return http.request.post('doupload.php', {form: {task: 47, folder_id} as Task47}).json<Task47Res>()
 }
 
 export interface LsShareObject {
   name: string
   size: string
-  type: ShareType
+  type: URLType
   list: LsShareItem[]
 }
 
 export interface LsShareItem {
-  url: string
+  url: string // 如果文件有密码，则带有 webpage 参数
   name: string
   size: string
   time: string
   pwd?: string
 }
-export enum ShareType {
-  file, // https://wws.lanzous.com/ivvHsi3qyef
-  pwdFile, // https://wws.lanzous.com/i7wyli3mm9e, 8h40
-  folder, // https://wws.lanzous.com/b01tp3zkj
-  pwdFolder, // https://wws.lanzous.com/b01tp39pi, 34zf
+export enum URLType {
+  file = 'file', // https://wws.lanzous.com/ivvHsi3qyef
+  folder = 'folder', // https://wws.lanzous.com/b01tp3zkj
 }
 
 /**
@@ -79,10 +77,11 @@ export enum ShareType {
  * * 密码: #pwdload
  */
 export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<LsShareObject> {
-  const response = await fetch(url)
+  const instance = http.share.get(url)
+  const response = await instance
+  const html = await instance.text()
   // 覆盖原url（防url重定向）
   url = response.url
-  const html = await response.text()
 
   // 根据html区分哪种解析类型
   const {is_newd} = parseUrl(url)
@@ -93,8 +92,6 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
   const isPwdFile = !!$('#passwddiv').length
   const isPwdFolder = !!$('#pwdload').length
   const isFolder = !!$('#filemore').length && !isPwdFolder // 密码和无密码页面
-
-  console.log(isFile, isPwdFile, isPwdFolder, isFolder)
 
   if ((isPwdFile || isPwdFolder) && !pwd) {
     throw new Error('密码不能为空')
@@ -107,24 +104,26 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
     const size = $('table')
       .text()
       .match(/文件大小：(.*)/)?.[1]
-    return {name, size, type: ShareType.file, list: [{url, name, size, time}]}
+    return {name, size, type: URLType.file, list: [{url, name, size, time}]}
   } else if (isPwdFile) {
     const ajaxData = Matcher.parsePwdAjax(html, pwd)
 
-    const {inf} = await fetch(`${is_newd}${ajaxData.url}`, {
-      method: ajaxData.type,
-      headers: {...baseHeaders, 'custom-referer': url},
-      body: new URLSearchParams(ajaxData.data),
-    }).then<DownloadUrlRes>(value => value.json())
+    const {inf} = await http
+      .share(`${is_newd}${ajaxData.url}`, {
+        method: ajaxData.type,
+        headers: {referer: url},
+        form: ajaxData.data,
+      })
+      .json<DownloadUrlRes>()
     const name = inf // 文件名
     const size = $('.n_filesize').text().replace('大小：', '')
     const time = html.match(/<span class='n_file_infos'>(.*?)<\/span>/)?.[1]
-    return {name, size, type: ShareType.pwdFile, list: [{url, pwd, name, size, time}]}
+    return {name, size, type: URLType.file, list: [{url, pwd, name, size, time}]}
   } else if (isFolder || isPwdFolder) {
     const value = await lsShareFolder({pwd, url, html})
     return {
       name: title, // (文件夹名)
-      type: isFolder ? ShareType.folder : ShareType.pwdFolder,
+      type: URLType.folder,
       size: byteToSize(value.list?.reduce((total, item) => total + sizeToByte(item.size), 0)),
       list: value.list?.map(item => ({
         url: `${is_newd}/${item.id}`,
@@ -143,13 +142,14 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
  * 发送 ajax，如有密码，则带上 pwd
  * @param options
  */
-export async function lsShareFolder({url: paramsUrl, pwd, html}: {url: string; pwd?: string; html?: string}) {
+export async function lsShareFolder({url, pwd, html}: {url: string; pwd?: string; html?: string}) {
   if (!html) {
-    const response = await fetch(paramsUrl)
-    paramsUrl = response.url
-    html = await response.text()
+    const instance = http.share.get(url)
+    const response = await instance
+    url = response.url
+    html = await instance.text()
   }
-  const {is_newd} = parseUrl(paramsUrl)
+  const {is_newd} = parseUrl(url)
 
   const $ = cheerio.load(html)
   const title = $('title').text()
@@ -157,18 +157,22 @@ export async function lsShareFolder({url: paramsUrl, pwd, html}: {url: string; p
   const ajaxData = Matcher.parseFolderAjax(html)
 
   let pg = 1
-  // let zt
   const shareFiles: ShareFile[] = []
 
   while (true) {
-    const {text, zt} = await fetch(`${is_newd}${ajaxData.url}`, {
-      method: ajaxData.type,
-      headers: {...baseHeaders, 'custom-referer': paramsUrl},
-      body: new URLSearchParams({...ajaxData.data, pg: pg++, pwd}),
-    }).then<ShareFileRes>(value => value.json())
+    const {text} = await http
+      .share(`${is_newd}${ajaxData.url}`, {
+        method: ajaxData.type,
+        headers: {referer: url},
+        form: {...ajaxData.data, pg: pg++, pwd},
+      })
+      .json<ShareFileRes>()
 
-    if (zt == 1 && Array.isArray(text)) {
+    if (Array.isArray(text)) {
       shareFiles.push(...text)
+    }
+
+    if (Array.isArray(text) && text.length >= 50) {
       await delay(2000)
     } else {
       break

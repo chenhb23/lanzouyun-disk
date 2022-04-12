@@ -5,8 +5,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
-  /*color: #282c34;*/
-  color: rgb(69,69,69);
+  color: #585858;
   font-size: 13px;
 }
 
@@ -54,7 +53,6 @@ h1, h2, h3, h4, h5 {
   flex-direction: column;
   justify-content: space-between;
   user-select: none;
-  -webkit-app-region: drag;
 }
 .content {
   display: flex;

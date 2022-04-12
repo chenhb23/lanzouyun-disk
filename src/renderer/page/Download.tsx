@@ -9,10 +9,10 @@ import {byteToSize} from '../../common/util'
 import {Table} from '../component/Table'
 import {download} from '../store'
 import {TaskStatus} from '../store/AbstractTask'
-import {useRequest} from '../hook/useRequest'
+import {useLoading} from '../hook/useLoading'
 
 const Download = observer(() => {
-  const {loading, request} = useRequest()
+  const {loading, listener} = useLoading()
 
   return (
     <ScrollView
@@ -37,7 +37,7 @@ const Download = observer(() => {
                 <Icon iconName={'file'} />
                 <span>{item.name}</span>
               </td>
-              <td>{`${byteToSize(item.resolve)} / ${byteToSize(item.size)}`}</td>
+              <td>{`${byteToSize(item.resolve)} / ${byteToSize(item.total)}`}</td>
               <td>
                 <Button
                   icon={item.status === TaskStatus.pending ? 'pause' : 'start'}
@@ -45,9 +45,9 @@ const Download = observer(() => {
                   loading={loading['download.pause'] || loading['download.start']}
                   onClick={() => {
                     if (item.status === TaskStatus.pending) {
-                      request(download.pause(item.url), 'download.pause')
+                      listener(download.pause(item.url), 'download.pause')
                     } else {
-                      request(download.start(item.url, true), 'download.start')
+                      listener(download.start(item.url, true), 'download.start')
                     }
                   }}
                 />

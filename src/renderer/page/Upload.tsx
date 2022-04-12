@@ -6,14 +6,14 @@ import {Bar} from '../component/Bar'
 import {Icon} from '../component/Icon'
 import {byteToSize} from '../../common/util'
 import {Table} from '../component/Table'
-import {UploadInfo} from '../store/Upload'
+import {UploadTask} from '../store/Upload'
 import {upload} from '../store'
 import {Modal} from '../component/Modal'
 import {observer} from 'mobx-react'
 import {TaskStatus} from '../store/AbstractTask'
 
 const Upload = observer(() => {
-  const [showItem, setShowItem] = useState<UploadInfo>(null)
+  const [showItem, setShowItem] = useState<UploadTask>(null)
 
   return (
     <ScrollView
@@ -33,30 +33,30 @@ const Upload = observer(() => {
       <Table header={['文件名', '大小', '操作']}>
         {upload.list.map(item => {
           return (
-            <tr key={item.path}>
+            <tr key={item.file.path}>
               <td
                 onClick={() => {
                   setShowItem(item)
                 }}
               >
                 <Icon iconName={'file'} />
-                <span>{item.name}</span>
+                <span>{item.file.name}</span>
                 {item.tasks.length > 1 && <span>{` | ${item.tasks.length} 个子任务`}</span>}
               </td>
-              <td>{`${byteToSize(item.resolve)} / ${byteToSize(item.size)}`}</td>
+              <td>{`${byteToSize(item.resolve)} / ${byteToSize(item.file.size)}`}</td>
               <td>
                 <Button
                   icon={item.status === TaskStatus.pending ? 'pause' : 'start'}
                   type={'icon'}
                   onClick={() => {
                     if (item.status === TaskStatus.pending) {
-                      upload.pause(item.path)
+                      upload.pause(item.file.path)
                     } else {
-                      upload.start(item.path, true)
+                      upload.start(item.file.path, true)
                     }
                   }}
                 />
-                <Button icon={'delete'} type={'icon'} onClick={() => upload.remove(item.path)} />
+                <Button icon={'delete'} type={'icon'} onClick={() => upload.remove(item.file.path)} />
               </td>
               <td />
             </tr>

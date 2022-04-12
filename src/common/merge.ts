@@ -1,22 +1,14 @@
-import {PathLike, WriteStream} from 'fs'
-
 import fs from 'fs-extra'
+import {pipeline} from 'stream/promises'
 
-function write(filePath: PathLike, target: WriteStream) {
-  return new Promise((resolve, reject) => {
-    const rs = fs.createReadStream(filePath)
-    rs.pipe(target, {end: false}).on('error', reject)
-    rs.on('end', resolve)
-    rs.on('error', reject)
-  })
-}
-
-async function merge(files: PathLike[], target: PathLike) {
-  const ws = fs.createWriteStream(target, {flags: 'w'})
-  for (const file of files) {
-    await write(file, ws)
+async function merge(files: string[], target: string) {
+  for (const [index, file] of files.entries()) {
+    await pipeline(
+      // pipeline 会自动释放文件的引用
+      fs.createReadStream(file),
+      fs.createWriteStream(target, {flags: index === 0 ? 'w' : 'a'})
+    )
   }
-  return true
 }
 
 export default merge

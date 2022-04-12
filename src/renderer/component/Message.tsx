@@ -1,6 +1,6 @@
 import React from 'react'
-import './Message.css'
 import {delay} from '../../common/util'
+import './Message.css'
 
 interface MessageOptions {
   message?: string

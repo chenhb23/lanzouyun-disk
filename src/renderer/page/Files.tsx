@@ -1,24 +1,24 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react'
+import electron from 'electron'
 import {Header} from '../component/Header'
 import {Button} from '../component/Button'
 import {message} from '../component/Message'
 import {Crumbs} from '../component/Crumbs'
 import {Table, Tr} from '../component/Table'
 import {Icon} from '../component/Icon'
-import {isFile, sizeToByte} from '../../common/util'
+import {isFile} from '../../common/util'
 import {rmFile, rmFolder} from '../../common/core/rm'
 import {ls} from '../../common/core/ls'
 import {Bar} from '../component/Bar'
-import {useRequest} from '../hook/useRequest'
+import {useLoading} from '../hook/useLoading'
 import {ScrollView} from '../component/ScrollView'
 import {Input, Textarea} from '../component/Input'
 import {Modal} from '../component/Modal'
 import {mkdir} from '../../common/core/mkdir'
 import {download, upload} from '../store'
 import {fileDetail, folderDetail} from '../../common/core/detail'
-import './Files.css'
 
-const electron = window.require('electron')
+import './Files.css'
 
 interface FolderForm {
   name: string
@@ -27,7 +27,7 @@ interface FolderForm {
 
 export default function Files() {
   const [visible, setVisible] = useState(false)
-  const {loading, request} = useRequest()
+  const {loading, listener} = useLoading()
   const [form, setForm] = useState({} as FolderForm)
 
   const [list, setList] = useState({text: [], info: []} as AsyncReturnType<typeof ls>)
@@ -48,7 +48,7 @@ export default function Files() {
 
   const currentFolder = useMemo(() => list.info?.find(item => item.now === 1)?.folderid || -1, [list])
 
-  const listFile = useCallback(folder_id => request(ls(folder_id), 'ls').then(value => setList(value)), [request])
+  const listFile = useCallback(folder_id => listener(ls(folder_id), 'ls').then(value => setList(value)), [listener])
 
   useEffect(() => {
     listFile(-1)
@@ -68,7 +68,7 @@ export default function Files() {
   }
 
   async function makeDir() {
-    await request(mkdir(currentFolder, form.name, form.folderDesc), 'mkdir')
+    await listener(mkdir(currentFolder, form.name, form.folderDesc), 'mkdir')
     message.success('创建成功')
     cancel()
     listFile(currentFolder)
@@ -88,14 +88,7 @@ export default function Files() {
         message.destroy()
         message.success('上传中...')
         Array.prototype.map.call(event.dataTransfer.files, (file: File) => {
-          upload.addTask({
-            folderId: currentFolder,
-            size: file.size,
-            name: file.name,
-            type: file.type,
-            path: file.path,
-            lastModified: file.lastModified,
-          })
+          upload.addTask({folderId: currentFolder, file})
         })
       }}
       HeaderComponent={
@@ -113,14 +106,7 @@ export default function Files() {
               file
               onChange={files => {
                 Array.prototype.map.call(files, (file: File) => {
-                  upload.addTask({
-                    folderId: currentFolder,
-                    size: file.size,
-                    name: file.name,
-                    type: file.type,
-                    path: file.path,
-                    lastModified: file.lastModified,
-                  })
+                  upload.addTask({folderId: currentFolder, file})
                 })
               }}
             >
@@ -168,7 +154,7 @@ export default function Files() {
                         type={'icon'}
                         loading={loading['fileDetail']}
                         onClick={async () => {
-                          const info = await request(fileDetail(item.id), 'fileDetail')
+                          const info = await listener(fileDetail(item.id), 'fileDetail')
                           const shareUrl = `${info.is_newd}/${info.f_id}${
                             info.onof === '1' ? `\n密码: ${info.pwd}` : ''
                           }`
@@ -181,14 +167,26 @@ export default function Files() {
                         type={'icon'}
                         loading={loading['download']}
                         onClick={async () => {
-                          request(
-                            download.addFileTask({
-                              name: item.name,
-                              size: sizeToByte(item.size),
-                              file_id: `${item.id}`,
-                            }),
-                            'download'
-                          )
+                          /*
+                          const {f_id, is_newd, pwd, onof} = await fileDetail(item.id)
+                          const url = `${is_newd}/${f_id}`
+                          const password = onof == '1' ? pwd : undefined
+                          await download.addFiTask({
+                            url,
+                            name: item.name,
+                            size: item.size,
+                            pwd: password,
+                          })
+                          */
+
+                          // todo: 1.监听函数改造; 2.loading
+                          const {f_id, is_newd, pwd, onof} = await fileDetail(item.id)
+                          await download.addTask({
+                            url: `${is_newd}/${f_id}`,
+                            pwd: `${onof}` === '1' ? pwd : undefined,
+                            name: item.name,
+                            merge: false,
+                          })
                         }}
                       />
                       <Button
@@ -196,7 +194,7 @@ export default function Files() {
                         type={'icon'}
                         loading={loading['rmFile']}
                         onClick={async () => {
-                          const {zt, info} = await request(rmFile(id), 'rmFile')
+                          const {zt, info} = await listener(rmFile(id), 'rmFile')
                           if (zt !== 1) return message.error(info)
                           message.success('已删除')
                           listFile(currentFolder)
@@ -217,7 +215,7 @@ export default function Files() {
                         type={'icon'}
                         loading={loading['folderDetail']}
                         onClick={async () => {
-                          const info = await request(folderDetail(item.fol_id), 'folderDetail')
+                          const info = await listener(folderDetail(item.fol_id), 'folderDetail')
                           const shareUrl = `${info.new_url}${info.onof === '1' ? `\n密码: ${info.pwd}` : ''}`
                           electron.clipboard.writeText(shareUrl)
                           message.success(`分享链接已复制：\n${shareUrl}`)
@@ -228,14 +226,15 @@ export default function Files() {
                         type={'icon'}
                         loading={loading['addFolderTask']}
                         onClick={async () => {
-                          request(
-                            download.addFolderTask({
-                              folder_id: item.fol_id,
-                              merge: isFile(item.name),
-                              name: item.name,
-                            }),
-                            'addFolderTask'
-                          )
+                          // listener(download.addFolderTask({folder_id: item.fol_id}), 'addFolderTask')
+
+                          const {new_url, onof, pwd, name} = await folderDetail(item.fol_id)
+                          await download.addTask({
+                            name: name,
+                            url: new_url,
+                            pwd: `${onof}` === '1' ? pwd : undefined,
+                            merge: isFile(name),
+                          })
                         }}
                       />
                       <Button
@@ -243,7 +242,7 @@ export default function Files() {
                         type={'icon'}
                         loading={loading['rmFolder']}
                         onClick={async () => {
-                          const {zt, info} = await request(rmFolder(item.fol_id), 'rmFolder')
+                          const {zt, info} = await listener(rmFolder(item.fol_id), 'rmFolder')
                           if (zt !== 1) return message.error(info)
                           message.success('已删除')
                           listFile(currentFolder)

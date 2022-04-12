@@ -1,62 +1,89 @@
 import {EventEmitter} from 'events'
-import {autorun, makeObservable} from 'mobx'
-import path from 'path'
-import Task, {makeGetterProps, TaskStatus} from './AbstractTask'
-import {fileDownUrl, parseUrl, pwdFileDownUrl, sendDownloadTask} from '../../common/core/download'
-import {delay, isSpecificFile, mkTempDirSync, restoreFileName, sizeToByte} from '../../common/util'
-import {lsFile, lsShare, lsShareFolder} from '../../common/core/ls'
-import merge from '../../common/merge'
-import {fileDetail, folderDetail} from '../../common/core/detail'
-import IpcEvent from '../../common/IpcEvent'
-import store from '../../main/store'
-import {message} from '../component/Message'
+import {autorun, makeAutoObservable, makeObservable, observable} from 'mobx'
 import {persist} from 'mobx-persist'
+import path from 'path'
+import Task, {TaskStatus} from './AbstractTask'
+import {fileDownUrl, pwdFileDownUrl} from '../../common/core/download'
+import {delay, isSpecificFile, restoreFileName, sizeToByte} from '../../common/util'
+import {lsShare, URLType} from '../../common/core/ls'
+import merge from '../../common/merge'
+import store from '../../common/store'
+import {message} from '../component/Message'
+import * as http from '../../common/http'
 
 import fs from 'fs-extra'
-import electron from 'electron'
+import {Progress} from 'got/dist/source/core'
+import {pipeline} from 'stream/promises'
+import {Request} from 'got'
 
-interface DownloadInfo {
-  readonly size?: number
-  readonly resolve?: number
-  readonly status?: TaskStatus
-
+export interface DownloadSubTask {
   url: string
-  name: string
   pwd?: string
-  merge?: boolean
-  path: string
-  tasks: DownloadTask[]
-}
-
-interface DownloadTask {
-  url: string
-  name: string
+  dir: string // 临时地址
+  name: string // 真实名称
   resolve: number
   status: TaskStatus
-  pwd?: string
-  path: string
   size: number
 }
 
+/**
+ * 1. 文件：获取 url
+ * 2. 文件夹：
+ */
+export class DownloadTask {
+  // 分享链接
+  url: string
+  // 任务类型，文件 | 文件夹 (初始化 task 的时候赋值)
+  urlType: URLType
+  // 文件名（真实名称）
+  name: string
+  // 文件下载保存的地址（真实地址）
+  dir: string
+  // 分享链接的密码
+  pwd?: string
+  // 自定合并 tasks 的文件。如果需要合并，则会创建 文件名+.download 的临时文件夹
+  merge?: boolean
+
+  tasks: DownloadSubTask[] = []
+
+  constructor(props: Partial<DownloadTask> = {}) {
+    makeAutoObservable(this)
+    Object.assign(this, props)
+  }
+
+  get total() {
+    return this.tasks.reduce((total, item) => total + item.size, 0)
+  }
+
+  get resolve() {
+    return this.tasks.reduce((total, item) => total + item.resolve, 0)
+  }
+
+  get status() {
+    if (this.tasks.some(item => item.status === TaskStatus.pending)) return TaskStatus.pending
+    return TaskStatus.ready
+  }
+}
+
 export interface Download {
-  on(event: 'finish', listener: (info: DownloadInfo) => void): this
-  on(event: 'finish-task', listener: (info: DownloadInfo, task: DownloadTask) => void): this
+  on(event: 'finish', listener: (info: DownloadTask) => void): this
+  on(event: 'finish-task', listener: (info: DownloadTask, task: DownloadSubTask) => void): this
   // on(event: 'error', listener: (msg: string) => void): this
 
-  removeListener(event: 'finish', listener: (info: DownloadInfo) => void): this
-  removeListener(event: 'finish-task', listener: (info: DownloadInfo, task: DownloadTask) => void): this
+  removeListener(event: 'finish', listener: (info: DownloadTask) => void): this
+  removeListener(event: 'finish-task', listener: (info: DownloadTask, task: DownloadSubTask) => void): this
   // removeListener(event: 'error', listener: (msg: string) => void): this
 
-  emit(event: 'finish', info: DownloadInfo)
-  emit(event: 'finish-task', info: DownloadInfo, task: DownloadTask)
+  emit(event: 'finish', info: DownloadTask)
+  emit(event: 'finish-task', info: DownloadTask, task: DownloadSubTask)
   // emit(event: 'error', msg: string)
 }
 
-export class Download extends EventEmitter implements Task<DownloadInfo> {
+export class Download extends EventEmitter implements Task<DownloadTask> {
   handler: ReturnType<typeof autorun>
   taskSignal: {[taskUrl: string]: AbortController} = {}
-  @persist('list') list: DownloadInfo[] = []
-  @persist('list') finishList: DownloadInfo[] = []
+  @persist('list') list: DownloadTask[] = []
+  @persist('list') finishList: DownloadTask[] = []
   @persist dir = ''
 
   get queue() {
@@ -66,9 +93,9 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
   constructor() {
     super()
     makeObservable(this, {
-      list: true,
-      finishList: true,
-      dir: true,
+      list: observable,
+      finishList: observable,
+      dir: observable,
     })
 
     process.nextTick(this.init)
@@ -76,7 +103,7 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
 
   private init = () => {
     if (!this.dir) {
-      store.get('downloads').then(value => (this.dir = value))
+      this.dir = store.get('downloads')
     }
 
     this.startQueue()
@@ -95,17 +122,27 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
     })
   }
 
-  async onTaskFinish(info: DownloadInfo) {
-    const resolveTarget = path.join(info.path, info.name)
-    if (info.merge) {
-      const tempDir = info.tasks[0].path
-      const files = fs.readdirSync(tempDir).map(name => path.join(tempDir, name))
-      await merge(files, resolveTarget)
-      await delay(200)
-      // 删除临时文件夹
-      fs.removeSync(tempDir)
-    } else if (isSpecificFile(info.name)) {
-      fs.renameSync(resolveTarget, restoreFileName(resolveTarget))
+  async onTaskFinish(task: DownloadTask) {
+    const resolveTarget = path.join(task.dir, task.name)
+    const subTask = task.tasks[0]
+    switch (task.urlType) {
+      case URLType.file:
+        await fs.rename(path.join(subTask.dir, subTask.name), resolveTarget)
+        await fs.remove(subTask.dir)
+        break
+      case URLType.folder:
+        if (task.merge) {
+          // 读取目录下文件（会自动排序）
+          const files = (await fs.readdir(subTask.dir)).map(name => path.join(subTask.dir, name))
+          // 合并后删除
+          await merge(files, resolveTarget)
+          await delay(200)
+          await fs.remove(subTask.dir)
+        } else {
+          // 重命名
+          await fs.rename(subTask.dir, subTask.dir.replace(/\.downloading$/, ''))
+        }
+        break
     }
   }
 
@@ -130,23 +167,23 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
     }
   }
 
-  getList(filter: (item: DownloadTask) => boolean) {
+  getList(filter: (item: DownloadSubTask) => boolean) {
     return this.list
       .map(item => item.tasks)
       .flat()
       .filter(filter)
   }
 
-  canStart(info: DownloadInfo) {
+  canStart(task: DownloadTask) {
     return this.queue < 3 // && info.status !== InitStatus.pending
   }
 
-  abortTask = (task: DownloadTask) => {
+  abortTask = (task: DownloadSubTask) => {
     return new Promise<void>(resolve => {
       if (this.taskSignal[task.url]) {
         this.taskSignal[task.url].abort()
         delete this.taskSignal[task.url]
-        electron.ipcRenderer.once(`${IpcEvent.cancelled}${task.url}`, () => resolve())
+        // electron.ipcRenderer.once(`${IpcEvent.cancelled}${task.url}`, () => resolve())
       } else {
         resolve()
       }
@@ -185,87 +222,106 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
     this.finishList = []
   }
 
-  async start(url: string, resetAll = false) {
-    const info = this.list.find(item => item.url === url)
-    if (info && this.canStart(info)) {
-      if (resetAll) {
-        info.tasks.forEach(task => {
-          if ([TaskStatus.pause, TaskStatus.fail].includes(task.status)) {
-            task.status = TaskStatus.ready
-          }
-        })
-      }
-      const task = info.tasks.find(task => TaskStatus.ready === task.status)
-      if (task) {
-        task.status = TaskStatus.pending
-        try {
-          const {url: downloadUrl} = task.pwd ? await pwdFileDownUrl(task.url, task.pwd) : await fileDownUrl(task.url)
+  /**
+   *
+   * reset 从暂停恢复下载状态，传 true
+   */
+  async start(url: string, reset = false) {
+    const task = this.list.find(value => value.url === url)
+    if (!task) return
+    if (!this.canStart(task)) return
 
-          // const onProgress = debounce(receivedByte => {
-          //   task.resolve = receivedByte
-          // })
-          // console.log('path.resolve(task.path, task.name)', path.resolve(task.path, task.name))
-          // console.log(downloadUrl)
-          // const abort = new AbortController()
-          // downloadFile({
-          //   url: downloadUrl,
-          //   resolvePath: path.resolve(task.path, task.name),
-          //   onProgress,
-          //   signal: abort.signal,
-          // })
-          //   .then(() => {
-          //     task.status = TaskStatus.finish
-          //     this.emit('finish-task', info, task)
-          //   })
-          //   .catch(msg => {
-          //     message.error(msg)
-          //     task.status = TaskStatus.fail
-          //   })
-          //
-          // this.taskSignal[task.url] = abort
-
-          const abort = new AbortController()
-          const replyId = task.url
-          const ipcMessage: IpcDownloadMsg = {
-            replyId: task.url,
-            downUrl: downloadUrl,
-            folderPath: task.path,
-          }
-
-          await sendDownloadTask(ipcMessage)
-          const removeListener = () => {
-            electron.ipcRenderer
-              .removeAllListeners(`${IpcEvent.progressing}${replyId}`)
-              .removeAllListeners(`${IpcEvent.done}${replyId}`)
-              .removeAllListeners(`${IpcEvent.failed}${replyId}`)
-          }
-
-          electron.ipcRenderer
-            .on(`${IpcEvent.progressing}${replyId}`, (event, receivedByte) => {
-              task.resolve = receivedByte
-            })
-            .once(`${IpcEvent.done}${replyId}`, () => {
-              task.status = TaskStatus.finish
-              this.emit('finish-task', info, task)
-              removeListener()
-            })
-            .once(`${IpcEvent.failed}${replyId}`, (e, msg) => {
-              message.error(msg)
-              task.status = TaskStatus.fail
-              removeListener()
-            })
-
-          this.taskSignal[task.url] = abort
-          abort.signal.onabort = () => {
-            electron.ipcRenderer.send(IpcEvent.abort, replyId)
-            removeListener()
-          }
-        } catch (e: any) {
-          task.status = TaskStatus.fail
-          message.error(e)
+    if (!task.tasks?.length) {
+      await this.initTask(task)
+    } else if (reset) {
+      task.tasks.forEach(value => {
+        if ([TaskStatus.pause, TaskStatus.fail].includes(value.status)) {
+          value.status = TaskStatus.ready
         }
+      })
+    }
+
+    // todo: 只能查找 TaskStatus.ready 的任务？
+    const subTask = task.tasks.find(value => value.status === TaskStatus.ready)
+    if (!subTask) return
+
+    subTask.status = TaskStatus.pending
+
+    try {
+      const {url: downloadUrl} = subTask.pwd
+        ? await pwdFileDownUrl(subTask.url, subTask.pwd)
+        : await fileDownUrl(subTask.url)
+
+      await fs.ensureDir(subTask.dir)
+
+      // todo: 在这里更新 subTask 的 content-length ?
+      const stream = await this.createStream(downloadUrl)
+      stream.on('downloadProgress', (progress: Progress) => {
+        console.log(progress)
+        // TODO：限制触发频率
+        subTask.resolve = progress.transferred
+      })
+
+      const abort = new AbortController()
+      this.taskSignal[task.url] = abort
+
+      await pipeline(
+        // 流下载
+        stream,
+        fs.createWriteStream(path.join(subTask.dir, subTask.name)),
+        {signal: abort.signal}
+      )
+      subTask.status = TaskStatus.finish
+      this.emit('finish-task', task, subTask)
+    } catch (e: any) {
+      message.error(e)
+      if (this.taskSignal[task.url]?.signal?.aborted) {
+        subTask.status = TaskStatus.pause
+      } else {
+        subTask.status = TaskStatus.fail
       }
     }
+  }
+
+  createStream(down: string) {
+    return new Promise<Request>((resolve, reject) => {
+      const stream = http.share.stream(down)
+      stream
+        .once('response', response => {
+          if (response.headers['content-type'] === 'text/html') {
+            // todo: 尝试去解析一下
+            throw new Error('下载链接出错')
+          }
+          resolve(stream)
+        })
+        .once('error', err => {
+          reject(err.message)
+        })
+    })
+  }
+
+  async initTask(task: DownloadTask) {
+    if (task.tasks?.length) return
+    const {name, type, list} = await lsShare(task)
+    task.urlType = type
+    if (!task.name) {
+      task.name = name
+    }
+
+    const dir = path.join(task.dir, task.name) + '.downloading'
+    task.tasks = list.map(value => {
+      const name = !task.merge && isSpecificFile(value.name) ? restoreFileName(value.name) : value.name
+
+      return {
+        url: value.url,
+        pwd: value.pwd,
+        dir,
+        name: name,
+        size: sizeToByte(value.size),
+        resolve: 0,
+        status: TaskStatus.ready,
+      }
+    })
   }
 
   startAll() {
@@ -280,149 +336,43 @@ export class Download extends EventEmitter implements Task<DownloadInfo> {
     })
   }
 
-  getFileDir() {
-    return this.dir
+  // 下载前检查：1.是否在下载列表；2.文件是否存在
+  private async pushAndCheckList(task: DownloadTask) {
+    if (this.list.find(value => value.url === task.url)) {
+      message.info('文件已存在下载列表！')
+      throw new Error('文件已存在下载列表!')
+    }
+
+    const name = restoreFileName(path.join(task.dir, task.name))
+    if (fs.existsSync(name)) {
+      const result = confirm('文件已存在，是否删除并重新下载？')
+      if (!result) {
+        throw new Error('取消重新下载')
+      }
+
+      await fs.remove(name)
+    }
+    this.list.push(task)
   }
 
   /**
-   * 新增列表文件任务
+   * 先不解析，开始下载时再解析
+   * name, url, pwd?, merge?
    */
-  async addFileTask(options: {name: string; size: number; file_id: string}) {
-    try {
-      const folderDir = this.getFileDir()
-      const {f_id, is_newd, pwd, onof} = await fileDetail(options.file_id)
-      const url = `${is_newd}/${f_id}`
-      const info: DownloadInfo = {
-        url,
-        path: folderDir,
-        ...options,
-        tasks: [
-          {
-            url,
-            name: options.name,
-            resolve: 0,
-            status: TaskStatus.ready,
-            pwd: onof == '1' ? pwd : '',
-            path: folderDir,
-            size: options.size,
-          },
-        ],
-      }
+  addTask(options: {
+    name: string // 分享链接的下载全部没有 name
+    url: string
+    pwd?: string
+    merge?: boolean
+  }) {
+    // name 加后缀最长 104
+    const task = new DownloadTask()
+    task.name = isSpecificFile(options.name) ? restoreFileName(options.name) : options.name
+    task.url = options.url
+    task.pwd = options.pwd
+    task.merge = options.merge
+    task.dir = this.dir
 
-      makeGetterProps(info)
-      this.list.push(info)
-    } catch (e: any) {
-      message.error(e)
-    }
-  }
-
-  /**
-   * 新增分享文件任务
-   */
-  async addShareFileTask(options: {url: string; pwd?: string}) {
-    try {
-      const {url} = options
-      const folderDir = this.getFileDir()
-      const {name, size} = await lsShare(options)
-      const task: DownloadInfo = {
-        path: folderDir,
-        ...options,
-        name,
-        tasks: [
-          {
-            url,
-            name,
-            resolve: 0,
-            status: TaskStatus.ready,
-            pwd: options.pwd,
-            path: folderDir,
-            size: sizeToByte(size),
-          },
-        ],
-      }
-      makeGetterProps(task)
-      this.list.push(task)
-    } catch (e: any) {
-      message.error(e)
-    }
-  }
-
-  /**
-   * 下载列表文件夹文件
-   * @param options
-   */
-  async addFolderTask(options: {folder_id: FolderId; name: string; merge?: boolean}) {
-    try {
-      let folderDir = this.getFileDir()
-      const [detail, files] = await Promise.all([folderDetail(options.folder_id), lsFile(options.folder_id)])
-      const info: DownloadInfo = {
-        path: folderDir,
-        url: detail.new_url,
-        pwd: detail.onof === '1' ? detail.pwd : '',
-        merge: options.merge,
-        name: options.name,
-        // ...options,
-        tasks: [],
-      }
-      if (options.merge) {
-        folderDir = mkTempDirSync()
-      }
-
-      const fileInfos = await Promise.all(files.map(file => fileDetail(file.id)))
-      info.tasks.push(
-        ...fileInfos.map((info, index) => ({
-          url: `${info.is_newd}/${info.f_id}`,
-          name: files[index]?.name_all,
-          resolve: 0,
-          status: TaskStatus.ready,
-          pwd: info.onof === '1' ? info.pwd : '',
-          path: folderDir,
-          size: sizeToByte(files[index]?.size),
-        }))
-      )
-
-      makeGetterProps(info)
-      this.list.push(info)
-    } catch (e: any) {
-      message.error(e)
-    }
-  }
-
-  /**
-   * 下载分享文件夹
-   * merge: 自动合并下载文件
-   */
-  async addShareFolderTask(options: {url: string; pwd?: string; merge?: boolean}) {
-    try {
-      const {is_newd} = parseUrl(options.url)
-      let folderDir = this.getFileDir()
-      const info: DownloadInfo = {
-        path: folderDir,
-        name: '',
-        tasks: [],
-        ...options,
-      }
-      const {name, list} = await lsShareFolder(options)
-      if (options.merge) {
-        folderDir = mkTempDirSync()
-      }
-      info.name = name
-      info.tasks.push(
-        ...list.map<DownloadTask>(item => ({
-          url: `${is_newd}/${item.id}`,
-          name: item.name_all,
-          resolve: 0,
-          status: TaskStatus.ready,
-          pwd: '',
-          path: folderDir,
-          size: sizeToByte(item.size),
-        }))
-      )
-
-      makeGetterProps(info)
-      this.list.push(info)
-    } catch (e: any) {
-      message.error(e)
-    }
+    this.pushAndCheckList(task)
   }
 }

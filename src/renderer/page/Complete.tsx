@@ -38,17 +38,17 @@ const Complete = observer(() => {
             <tr key={`${item.url}${i}`}>
               <td>
                 <Icon iconName={'file'} />
-                <span title={item.path}>{item.name}</span>
+                <span title={item.dir}>{item.name}</span>
               </td>
-              <td>{`${byteToSize(item.size)}`}</td>
+              <td>{`${byteToSize(item.total)}`}</td>
               <td>
                 <Button
                   icon={'open-folder'}
                   type={'icon'}
                   onClick={() => {
                     // todo: 判断文件是否存在
-                    const file = item.tasks[0]
-                    let filePath = path.join(file.path, file.name)
+                    const task = item.tasks[0]
+                    let filePath = path.join(task.dir, task.name)
                     if (isSpecificFile(filePath)) {
                       filePath = restoreFileName(filePath)
                     }

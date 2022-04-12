@@ -1,6 +1,8 @@
 import React, {useState} from 'react'
-import './App.css'
 import {observer} from 'mobx-react'
+import {basename} from 'path'
+import electron from 'electron'
+
 import {Menu, MenuItem, MenuProvider} from './component/Menu'
 import {TabPane, Tabs} from './component/Tabs'
 import Upload from './page/Upload'
@@ -10,22 +12,11 @@ import Complete from './page/Complete'
 import Parse from './page/Parse'
 import SplitMerge from './page/SplitMerge'
 import {download, upload} from './store'
-import request from '../common/request'
-import {message} from './component/Message'
 import {Button} from './component/Button'
 import IpcEvent from '../common/IpcEvent'
 import {Icon} from './component/Icon'
-import {basename} from 'path'
-import store from '../main/store'
-// const electron = requireModule('electron')
-import electron from 'electron'
-
-request.intercepter.response = res => {
-  if (![1, 2].includes(res.zt)) {
-    message.info(typeof res.info === 'string' ? res.info : res.text)
-  }
-  return res
-}
+import store from '../common/store'
+import './App.css'
 
 const App = observer(() => {
   const [menu, setMenu] = useState('')

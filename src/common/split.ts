@@ -1,31 +1,32 @@
-import {createSpecificIndexName, mkTempDirSync, sizeToByte} from './util'
+import {createSpecificIndexName, sizeToByte} from './util'
 import config from '../project.config'
 
-import fs from 'fs-extra'
-import path from 'path'
+import type {UploadFile} from '../renderer/store/Upload'
 
-interface SplitData {
-  path: string
-  isFile: boolean
-  name: string
-  size: number
-  splitFiles: {
-    path: string
-    name: string
-    size: number
-    startByte: number
-    endByte: number
-  }[]
-}
+// interface SplitData {
+//   path: string
+//   isFile: boolean
+//   name: string
+//   size: number
+//   splitFiles: {
+//     path: string
+//     name: string
+//     size: number
+//     startByte: number
+//     endByte: number
+//   }[]
+// }
 
-interface SplitOption {
-  splitSize?: number | string
-  fileSize?: number // 如果从外部传入，则内部不用重新读取一次
-  skipSplit?: boolean // 不分割文件，仅仅获取分割数据，方便上传
-}
+// interface SplitOption {
+//   splitSize?: number | string
+//   fileSize?: number // 如果从外部传入，则内部不用重新读取一次
+//   skipSplit?: boolean // 不分割文件，仅仅获取分割数据，方便上传
+// }
 /**
  * 返回分割后的路径？
+ * @deprecated
  */
+/*
 function split(filePath, {splitSize = config.splitSize, fileSize, skipSplit} = {} as SplitOption): Promise<SplitData> {
   return new Promise((resolve, reject) => {
     if (!filePath) {
@@ -85,5 +86,55 @@ function split(filePath, {splitSize = config.splitSize, fileSize, skipSplit} = {
     }
   })
 }
+*/
 
-export default split
+export interface SplitTaskResult {
+  file: UploadFile
+  splitFiles: SplitTaskFile[]
+}
+
+export interface SplitTaskFile {
+  sourceFile: UploadFile
+  size: number
+  name: string
+  startByte?: number
+  endByte?: number
+}
+
+/**
+ * 返回文件分割信息（不进行文件分割）
+ */
+export function splitTask(file: UploadFile, splitSize = config.splitSize): SplitTaskResult {
+  const fSize = file.size
+  const splitByte = sizeToByte(splitSize)
+
+  const info: SplitTaskResult = {file, splitFiles: []}
+
+  if (fSize <= splitByte) {
+    info.splitFiles = [
+      {
+        sourceFile: file,
+        size: file.size,
+        name: file.name,
+      },
+    ]
+  } else {
+    const count = Math.ceil(fSize / splitByte)
+    info.splitFiles = Array.from({length: count}).map((_, i) => {
+      const indexName = createSpecificIndexName(file.name, i + 1)
+      const startByte = splitByte * i
+      const endByte = Math.min(fSize, splitByte * (i + 1) - 1)
+      return {
+        sourceFile: file,
+        size: endByte - startByte,
+        name: indexName,
+        startByte,
+        endByte,
+      }
+    })
+  }
+
+  return info
+}
+
+// export default split

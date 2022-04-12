@@ -2,14 +2,15 @@ import React, {useState} from 'react'
 import {ScrollView} from '../component/ScrollView'
 import {Header} from '../component/Header'
 import {Button} from '../component/Button'
-import {lsShare, LsShareObject, ShareType} from '../../common/core/ls'
+import {lsShare, LsShareObject, URLType} from '../../common/core/ls'
 import {Input} from '../component/Input'
 import {Bar} from '../component/Bar'
 import {Table} from '../component/Table'
 import {Icon} from '../component/Icon'
-import {useRequest} from '../hook/useRequest'
+import {useLoading} from '../hook/useLoading'
 import {download} from '../store'
 import {message} from '../component/Message'
+import {isFile} from '../../common/util'
 
 const regExp = /^(.+) 密码: (.+)$/
 
@@ -18,7 +19,7 @@ export default function Parse() {
 
   const [merge, setMerge] = useState(false)
 
-  const {loading, request} = useRequest()
+  const {loading, listener} = useLoading()
   const [urlForm, setUrlForm] = useState({url: '', pwd: ''})
 
   return (
@@ -55,8 +56,11 @@ export default function Parse() {
               onClick={() => {
                 if (!urlForm.url) return message.info('请输入url')
 
-                request(lsShare(urlForm), 'lsShare')
-                  .then(value => setShareFiles(value))
+                listener(lsShare(urlForm), 'lsShare')
+                  .then(value => {
+                    setShareFiles(value)
+                    setMerge(URLType.folder === value.type && isFile(value.name))
+                  })
                   .catch(e => {
                     message.error(e)
                   })
@@ -67,20 +71,28 @@ export default function Parse() {
             <Button
               disabled={!shareFiles.list?.length}
               loading={loading['addShareTask']}
-              onClick={() => {
-                if ([ShareType.folder, ShareType.pwdFolder].includes(shareFiles.type)) {
-                  request(
-                    download.addShareFolderTask({
-                      ...urlForm,
-                      merge,
-                    }),
-                    'addShareTask'
-                  ).then(() => message.success('下载任务添加成功'))
-                } else {
-                  request(download.addShareFileTask(urlForm), 'addShareTask').then(() =>
-                    message.success('下载任务添加成功')
-                  )
-                }
+              onClick={async () => {
+                // await listener(download.addShareTask({...urlForm, merge}), 'addShareTask')
+                await download.addTask({
+                  name: shareFiles.name,
+                  url: urlForm.url,
+                  pwd: urlForm.pwd,
+                  merge: merge,
+                })
+                message.success('下载任务添加成功')
+                // if ([ShareType.folder, ShareType.pwdFolder].includes(shareFiles.type)) {
+                //   listener(
+                //     download.addShareFolderTask({
+                //       ...urlForm,
+                //       merge,
+                //     }),
+                //     'addShareTask'
+                //   ).then(() => message.success('下载任务添加成功'))
+                // } else {
+                //   listener(download.addShareFileTask(urlForm), 'addShareTask').then(() =>
+                //     message.success('下载任务添加成功')
+                //   )
+                // }
               }}
             >
               下载全部
@@ -109,10 +121,16 @@ export default function Parse() {
               <td>
                 <Icon
                   iconName={'download'}
-                  onClick={() => {
-                    download.addShareFileTask({
+                  onClick={async () => {
+                    // download.addShareTask({
+                    //   url: item.url,
+                    //   pwd: item.pwd,
+                    // })
+                    await download.addTask({
+                      name: item.name,
                       url: item.url,
                       pwd: item.pwd,
+                      merge: false,
                     })
                   }}
                 />

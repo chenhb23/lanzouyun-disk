@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<!-- saved from url=(0145)https://wwn.lanzouf.com/fn?B2FbMQBuDmMBY1YzAGdWY1Y_aADQHflAmVmwANwdtUWRQaQJjDGgBZARiUDYHZlVyByVVbQJvBSEEdFU2V2kHdQduW2sAMw4xATJWeQBpVjVWSQAxByA_c -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<script type="text/javascript" src="./ajax-websign_files/jquery.js"></script>
+<link href="./ajax-websign_files/tf.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<div id="outime">地址超时，请刷新</div>
+
+<div class="load" id="go"><a href="https://developer.lanzoug.com/file/?BWMFOwEwADEACQY+V2JcMFtkAztfYVMwVTNSNQI/A2NQMVBmWilXaQYgATADeVInADsDdAV8VjICbABqVm9RDwVsBTYBYQBnAG8GZFcwXG5bNQM1XzFTd1U0UicCYwM2UGlQN1oxVzsGdgEnAydSbgBoAzYFaFZlAioANlY5UX8FNQVhAXMAZwBlBmJXYlxlWzUDNV9kU2JVNlIyAj8DZFBpUDRaM1cwBjUBMQNkUmMAOQNgBW5WNgJhAGJWOVFjBTcFYgFtAHoAIgYxV3Fce1t0A3VfZVMjVTtSMAJjAzNQZ1A3WjVXMwZmAWQDcVInADMDawU/VjICOAA3VjxRZAU8BWQBZQBlAGIGZFczXHNbLwMgX2ZTPVUlUmkCbwM0UGRQPloxVzoGYAFjA2VSagB8A3MFKlYjAjgAN1Y8UWEFMQVlAWQAYQBiBmJXNlx7W3QDb19wU2xVY1JlAmgDLFBiUDRaN1ctBmEBbwNkUn0AawM0BW0=" target="_blank" rel="noreferrer"><span class="txt">电信下载</span><span class="txt txtc">联通下载</span><span class="txt">普通下载</span></a></div>
+<script type="text/javascript">
+		var ajaxdata = '?ctdf';
+		//var ispostdowns = '';
+		var websignkey = 'bE4x';
+		var websign = '2';
+		$.ajax({
+			type : 'post',
+			url : '/ajaxm.php',
+			data : { 'action':'downprocess','signs':ajaxdata,'sign':'VDJaZAAxVWRSWwI9ATFTbwRtBTlROgQ1VWEDMVE_bUWFTdVBzCWkCZ1MzA2EEaVJlVTYANVA6V2VVYg_c_c','ves':1,'websign':websign,'websignkey':websignkey },
+			//data : { 'action':'downprocess','sign':sign,'sign':sign,'ves':1},
+			dataType : 'json',
+			success:function(msg){
+				var date = msg;
+				if(date.zt == '1'){
+										$("#go").html("<a href="+date.dom+"/file/"+ date.url +" target=_blank rel=noreferrer><span class=txt>电信下载</span><span class='txt txtc'>联通下载</span><span class=txt>普通下载</span></a>");
+					setTimeout('$("#outime").css("display","block");',1800000);
+									}else{
+					$("#go").html("网页超时，请刷新");
+				};
+				
+			},
+			error:function(){
+				$("#go").html("获取失败，请刷新");
+			}
+	
+		});
+</script>
+
+
+</body></html>

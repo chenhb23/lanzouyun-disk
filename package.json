@@ -8,21 +8,26 @@
     "cheerio": "^1.0.0-rc.10",
     "electron-is-dev": "^2.0.0",
     "electron-store": "^8.0.1",
-    "form-data": "^4.0.0",
+    "form-data-encoder": "^1.7.2",
+    "formdata-node": "^4.3.2",
     "fs-extra": "^10.0.1",
     "got": "^12.0.3",
-    "mobx": "^6.0.1",
+    "mobx": "^6.5.0",
     "mobx-persist": "^0.4.1",
-    "mobx-react": "^7.0.0",
-    "prettier": "^2.6.1",
+    "mobx-react": "^7.3.0",
+    "prettier": "^2.6.2",
     "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react-dom": "^18.0.0",
+    "tough-cookie": "^4.0.0"
   },
   "scripts": {
     "react-start": "cross-env BROWSER=none react-app-rewired start",
     "react-build": "react-app-rewired build",
     "electron-start": "yarn tsc-electron-build && electron .",
-    "electron-build": "yarn tsc-electron-build && electron-builder -mw",
+    "electron-debug": "yarn tsc-electron-build && electron --inspect-brk=8889 .",
+    "electron-build": "yarn tsc-electron-build && yarn electron-build:mac && yarn electron-build:win",
+    "electron-build:mac": "electron-builder -m --x64",
+    "electron-build:win": "electron-builder -w",
     "release": "yarn react-build && electron-builder --publish=always",
     "build": "yarn react-build && yarn electron-build",
     "start": "concurrently \"cross-env BROWSER=none yarn react-start\" \"wait-on http://localhost:3000 && yarn electron-start\"",
@@ -55,21 +60,22 @@
     ]
   },
   "devDependencies": {
-    "@babel/generator": "^7.17.7",
-    "@babel/parser": "^7.17.8",
-    "@babel/traverse": "^7.17.3",
+    "@babel/generator": "^7.17.9",
+    "@babel/parser": "^7.17.9",
+    "@babel/traverse": "^7.17.9",
     "@babel/types": "^7.17.0",
-    "@testing-library/jest-dom": "^5.16.3",
+    "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.0.0",
-    "@testing-library/user-event": "^14.0.0",
+    "@testing-library/user-event": "^14.0.4",
     "@types/node": "^17.0.23",
     "@types/prettier": "2.4.4",
-    "@typescript-eslint/eslint-plugin": "^5.17.0",
-    "@typescript-eslint/parser": "^5.17.0",
-    "concurrently": "^7.0.0",
+    "@types/tough-cookie": "^4.0.1",
+    "@typescript-eslint/eslint-plugin": "^5.18.0",
+    "@typescript-eslint/parser": "^5.18.0",
+    "concurrently": "^7.1.0",
     "cross-env": "^7.0.3",
     "customize-cra": "^1.0.0",
-    "electron": "^18.0.1",
+    "electron": "^18.0.3",
     "electron-builder": "^22.14.13",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.0",
@@ -88,12 +94,21 @@
     "productName": "蓝奏云盘",
     "copyright": "更多内容到 https://github.com/chenhb23/lanzouyun-disk",
     "appId": "org.chenhb23.lanzou",
-    "asar": true,
     "files": [
       "build"
     ],
     "mac": {
-      "category": "org.chenhb23.lanzou.client"
+      "category": "org.chenhb23.lanzou.client",
+      "target": {
+        "target": "default",
+        "arch": [
+          "arm64",
+          "x64"
+        ]
+      }
+    },
+    "win": {
+      "target": "zip"
     }
   }
 }

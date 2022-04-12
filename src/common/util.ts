@@ -51,9 +51,16 @@ export function byteToSize(byte: number) {
 
 /**
  * 判断是否是分割的文件夹
+ * 特殊文件名（不带 index）
+ * todo: 优化
  */
 export function isSpecificFile(name: string) {
   return new RegExp(`^.*${config.signSuffix}$`).test(name)
+}
+
+export function isSpecificIndexFile(name: string) {
+  // TODO：
+  return false
 }
 
 export function restoreFileName(name: string) {
@@ -63,6 +70,10 @@ export function restoreFileName(name: string) {
   return name
 }
 
+/**
+ * todo: 优化
+ * .[index].[随机].zip
+ */
 export function createSpecificIndexName(fileName: string, index) {
   return `${fileName}.${`${index}`.padStart(3, '0')}.${config.ext}`
 }
@@ -75,11 +86,11 @@ export function createSpecificName(fileName: string) {
  * 创建临时文件夹
  * todo: async
  */
-export function mkTempDirSync() {
-  const lanzouDir = path.resolve(os.homedir(), config.homeTempDir)
-  fs.ensureDirSync(lanzouDir)
-  return fs.mkdtempSync(lanzouDir + '/')
-}
+// export function mkTempDirSync() {
+//   const lanzouDir = path.resolve(os.homedir(), config.homeTempDir)
+//   fs.ensureDirSync(lanzouDir)
+//   return fs.mkdtempSync(lanzouDir + '/')
+// }
 
 export function isFile(name: string) {
   return /\.[0-9a-zA-Z]+$/.test(name)

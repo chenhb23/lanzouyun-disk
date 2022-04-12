@@ -1,7 +1,8 @@
-type Bool = '0' | '1' // 是否需要访问密码
+type Bool = '0' | '1' // 是否需要访问密码，0：不需要，1：需要
 type ZT =
   | 0
-  | 1 // 成功
+  | 1 // 成功（返回了 text）
+  | 2 // 仅返回 info，无 text（或者空数组）
   | 9 // login not
 type FileId = string | number
 type FolderId = string | number
@@ -59,7 +60,7 @@ interface FileUploadRes {
   id: string
   name: string
   name_all: string
-  onof: string
+  onof: Bool
   size: string
   time: string
 }
@@ -74,12 +75,12 @@ interface FolderShareInfo {
 }
 ///////////////////////////////////////////////////////////////////
 // 列举文件夹
-interface Do47 {
+interface Task47 {
   task: 47
   folder_id: FolderId
 }
 
-interface Do47Res {
+interface Task47Res {
   info: CrumbsInfo[]
   text: FolderInfo[]
   zt: ZT
@@ -87,13 +88,13 @@ interface Do47Res {
 
 ///////////////////////////////////////////////////////////////////
 // 文件列表请求体
-interface Do5 {
+interface Task5 {
   task: 5 // 列举目录下的文件
   folder_id: FolderId
   pg: number
 }
 
-interface Do5Res {
+interface Task5Res {
   info: 1
   text: FileInfo[]
   zt: ZT
@@ -101,12 +102,12 @@ interface Do5Res {
 
 ///////////////////////////////////////////////////////////////////
 // 文件详情请求体（分享id）
-interface Do22 {
+interface Task22 {
   task: 22
   file_id: FileId
 }
 
-interface Do22Res {
+interface Task22Res {
   info: FileDownloadInfo
   text: string | null
   zt: ZT
@@ -114,14 +115,14 @@ interface Do22Res {
 
 ///////////////////////////////////////////////////////////////////
 // 创建文件夹
-interface Do2 {
+interface Task2 {
   task: 2
   parent_id: FolderId // 2498513
   folder_name: string // 上传文件夹
   folder_description: string // 文件夹描述
 }
 
-interface Do2Res {
+interface Task2Res {
   info: string // "创建成功"
   text: FolderId // "2514952"
   zt: 1
@@ -139,12 +140,12 @@ interface Do1Res {
 
 ///////////////////////////////////////////////////////////////////
 // 删除文件
-interface Do6 {
+interface Task6 {
   task: 6
   file_id: FileId
 }
 
-interface Do6Res {
+interface Task6Res {
   info: string // '已删除'
   text: null
   zt: 1
@@ -152,23 +153,23 @@ interface Do6Res {
 
 ///////////////////////////////////////////////////////////////////
 // 删除文件夹
-interface Do3 {
+interface Task3 {
   task: 3
   folder_id: FolderId
 }
 
-interface Do3Res {
+interface Task3Res {
   info: string // "删除成功"
   text: null
   zt: 1
 }
 
 ///////////////////////////////////////////////////////////////////
-interface Do18 {
+interface Task18 {
   task: 18
   folder_id: FolderId
 }
-interface Do18Res {
+interface Task18Res {
   info: FolderShareInfo
   text: null
   zt: 1
@@ -191,7 +192,7 @@ interface ShareFileReq {
 interface ShareFile {
   duan: string // "ihyz5a"
   icon: string // "zip"
-  id: string // "iNHbWhyz5ab"
+  id: string // 文件id，如果带有 ?webpage=xxxx 的查询参数，代表是密码文件
   name_all: string // "cn_windows_10_business_editions_version_1803_updated_march_2018_x64_dvd_12063730.iso.009.lzy.zip"
   p_ico: number // 0
   size: string // '69.0 M'

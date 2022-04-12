@@ -1,15 +1,9 @@
-export enum InitStatus {
-  notInit,
-  pending,
-  finish,
-}
-
 export enum TaskStatus {
-  ready,
-  pause,
-  pending,
-  finish,
-  fail,
+  ready, // 等待中
+  pause, // 已经暂停
+  pending, // 进行中
+  finish, // 已完成
+  fail, // 下载失败
 }
 
 export default interface Task<Info> {
@@ -29,37 +23,3 @@ export default interface Task<Info> {
 
   removeAll()
 }
-
-export type TaskBase = {tasks: {size: number; resolve: number; status: TaskStatus}[]}
-
-export function makeGetterProps<T extends {tasks: {size: number; resolve: number; status: TaskStatus}[]}>(info: T) {
-  Object.defineProperties(info, {
-    size: {
-      get() {
-        return this.tasks.reduce((total, item) => total + (item.size ?? 0), 0)
-      },
-    },
-    resolve: {
-      get() {
-        return this.tasks.reduce((total, item) => total + (item.resolve ?? 0), 0)
-      },
-    },
-    status: {
-      get() {
-        if (this.tasks.some(item => item.status === TaskStatus.pending)) return TaskStatus.pending
-        return TaskStatus.ready
-      },
-    },
-  })
-}
-
-// export function getInfoSize(info: TaskBase) {
-//   return info.tasks.reduce((total, item) => total + (item.size ?? 0), 0)
-// }
-// export function getInfoResolve(info: TaskBase) {
-//   return info.tasks.reduce((total, item) => total + (item.resolve ?? 0), 0)
-// }
-// export function getInfoStatus(info: TaskBase) {
-//   if (info.tasks.some(item => item.status === TaskStatus.pending)) return TaskStatus.pending
-//   return TaskStatus.ready
-// }

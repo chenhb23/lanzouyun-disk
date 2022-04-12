@@ -2,6 +2,7 @@ import React from 'react'
 import {ScrollView} from '../component/ScrollView'
 import {Icon} from '../component/Icon'
 
+// todo: 准备开发
 export default function SplitMerge() {
   return (
     <ScrollView>

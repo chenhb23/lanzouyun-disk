@@ -1,15 +1,16 @@
 import {app, BrowserWindow, session} from 'electron'
 import path from 'path'
-import * as querystring from 'querystring'
-import store from './main/store'
+import store from './common/store'
 import {loadLogin, setup} from './main/handle'
 import config from './project.config'
 import isDev from 'electron-is-dev'
 
+import {Cookie} from 'tough-cookie'
+
 const loadURL = isDev ? 'http://localhost:3000' : `file://${path.join(__dirname, 'index.html')}`
 let mainWindow: BrowserWindow
 
-function createWindow() {
+async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 800,
@@ -25,54 +26,50 @@ function createWindow() {
     },
   })
 
-  setup(mainWindow)
+  setup()
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
     mainWindow = null
   })
 
-  function setCookies(filter) {
-    session.defaultSession.cookies.get(filter).then(value => {
-      const cookie = value.map(item => `${item.name}=${item.value}`).join('; ')
-      store.set('cookie', cookie)
-      loadMain(mainWindow)
-    })
+  async function goToApp() {
+    // const cookies = await session.defaultSession.cookies.get({url: config.lanzouUrl})
+    const cookies = await session.defaultSession.cookies.get({url: config.lanzouUrl + config.api.task})
+    const jarCookies = cookies.map(
+      cookie =>
+        new Cookie({
+          key: cookie.name,
+          value: cookie.value,
+          ...(cookie.expirationDate ? {expires: new Date(cookie.expirationDate * 1000)} : {}),
+          domain: cookie.domain,
+          path: cookie.path,
+          hostOnly: cookie.hostOnly,
+          secure: cookie.secure,
+          httpOnly: cookie.httpOnly,
+          sameSite: cookie.sameSite,
+        })
+    )
+
+    // await Promise.all(jarCookies.map(cookie => cookieJar.setCookie(cookie, config.lanzouUrl)))
+    store.set('cookies', jarCookies)
+    loadMain(mainWindow)
   }
 
-  session.defaultSession.webRequest.onResponseStarted({urls: [config.lanzouUrl + config.api.task]}, details => {
-    if (details.responseHeaders['Set-Cookie']?.length) {
-      const cookieStr = details.responseHeaders['Set-Cookie']?.join('; ')
-      const cookieObj = querystring.parse(cookieStr, '; ')
-      if (cookieObj.domaim) {
-        // 按照域名设置 cookie
-        setCookies({domain: cookieObj.domaim})
-        return
-      }
-    }
+  session.defaultSession.webRequest.onResponseStarted({urls: [config.lanzouUrl + config.page.home]}, goToApp)
 
-    // 按url
-    setCookies({url: config.lanzouUrl})
-
-    if (details.referrer) store.set('referrer', details.referrer)
-  })
-
-  const cookie = store.get('cookie')
   if (!store.get('downloads')) {
     store.set('downloads', app.getPath('downloads'))
   }
-  // const cookie = false
-  // mainWindow.webContents.session.clearStorageData()
 
-  if (cookie) {
-    const parseCookie = querystring.parse(cookie, '; ')
-    if (parseCookie?.phpdisk_info) {
-      loadMain(mainWindow)
-      return
-    }
+  const cookies = store.get('cookies', [])
+  const token = cookies?.find(value => value.key === 'phpdisk_info')
+  if (token && Cookie.fromJSON(token).validate()) {
+    loadMain(mainWindow)
+  } else {
+    store.delete('cookies')
+    await loadLogin(mainWindow)
   }
-
-  loadLogin(mainWindow)
 }
 
 app.on('ready', createWindow)
@@ -90,18 +87,19 @@ app.on('activate', function () {
 // code. You can also put them in separate files and require them here.
 
 function loadMain(win: BrowserWindow) {
-  session.defaultSession.webRequest.onBeforeSendHeaders({urls: ['http://*/*', 'https://*/*']}, (details, callback) => {
-    // 解决下载链接请求头部的校验问题
-    if (details.requestHeaders['custom-referer']) {
-      details.requestHeaders['Referer'] = details.requestHeaders['custom-referer']
-      delete details.requestHeaders['custom-referer']
-    }
-    callback({requestHeaders: details.requestHeaders})
-  })
+  // 解决下载链接请求头部的校验问题（使用 got，直接定义 referer）
+  // session.defaultSession.webRequest.onBeforeSendHeaders({urls: ['http://*/*', 'https://*/*']}, (details, callback) => {
+  //   if (details.requestHeaders['custom-referer']) {
+  //     details.requestHeaders['Referer'] = details.requestHeaders['custom-referer']
+  //     delete details.requestHeaders['custom-referer']
+  //   }
+  //   callback({requestHeaders: details.requestHeaders})
+  // })
   win.loadURL(loadURL, {
-    httpReferrer: 'https://lanzoui.com/',
-    // 设置全局 userAgent，包括页面的 fetch 请求
     userAgent:
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36',
   })
+  if (isDev) {
+    win.webContents.openDevTools()
+  }
 }

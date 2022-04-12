@@ -3,7 +3,7 @@
   left: 50%;
   transition: transform 0.5s;
   top: 0;
-  transform: translateY(-100%);
+  transform: translate(-50%, -100%);
   padding: 6px 16px;
   user-select: none;
   border-radius: 5px;
@@ -15,7 +15,7 @@
 }
 
 .Message.show {
-  transform: translateY(10px);
+  transform: translate(-50%, 10px);
 }
 
 .Message.info {

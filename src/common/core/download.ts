@@ -1,8 +1,5 @@
-import {autorun, observable} from 'mobx'
-import electron from 'electron'
-import {baseHeaders} from '../request'
-import IpcEvent from '../IpcEvent'
 import {Matcher} from './matcher'
+import * as http from '../http'
 
 /**
  * 生成 is_newd, f_id
@@ -20,19 +17,22 @@ export function parseUrl(url: string) {
  * script
  */
 export async function pwdFileDownUrl(url: string, pwd: string) {
-  const response = await fetch(url)
+  const instance = http.share.get(url)
+  const response = await instance
   url = response.url
-  const html = await response.text()
+  const html = await instance.text()
 
   const {is_newd} = parseUrl(url)
 
   const ajaxData = Matcher.parsePwdAjax(html, pwd)
 
-  const value = await fetch(`${is_newd}${ajaxData.url}`, {
-    method: ajaxData.type,
-    headers: {...baseHeaders, 'custom-referer': url},
-    body: new URLSearchParams(ajaxData.data),
-  }).then<DownloadUrlRes>(value => value.json())
+  const value = await http
+    .share(`${is_newd}${ajaxData.url}`, {
+      method: ajaxData.type,
+      headers: {referer: url},
+      form: ajaxData.data,
+    })
+    .json<DownloadUrlRes>()
 
   return {
     name: value.inf,
@@ -45,9 +45,10 @@ export async function pwdFileDownUrl(url: string, pwd: string) {
  * iframe
  */
 export async function fileDownUrl(url: string) {
-  const response = await fetch(url)
+  const instance = http.share.get(url)
+  const response = await instance
   url = response.url
-  const html = await response.text()
+  const html = await instance.text()
 
   const {is_newd} = parseUrl(url)
   const iframe = Matcher.matchIframe(html)
@@ -55,54 +56,19 @@ export async function fileDownUrl(url: string) {
     throw new Error('文件页面解析出错')
   }
 
-  const downHtml = await fetch(is_newd + iframe).then(value => value.text())
+  const downHtml = await http.share.get(is_newd + iframe).text()
 
   const ajaxData = Matcher.parseAjax(downHtml)
-  const value = await fetch(`${is_newd}${ajaxData.url}`, {
-    method: ajaxData.type,
-    headers: {...baseHeaders, 'custom-referer': is_newd + iframe},
-    body: new URLSearchParams(ajaxData.data),
-  }).then<DownloadUrlRes>(value => value.json())
+  const value = await http
+    .share(`${is_newd}${ajaxData.url}`, {
+      method: ajaxData.type,
+      headers: {referer: is_newd + iframe},
+      form: ajaxData.data,
+    })
+    .json<DownloadUrlRes>()
 
   return {
     name: value.inf,
     url: `${value.dom}/file/${value.url}`,
   }
 }
-
-/**
- * 等待状态的返回
- */
-const waitStatus = (observableQueue, sign) => {
-  return new Promise<void>(resolve => {
-    autorun(
-      r => {
-        if (!observableQueue.length || observableQueue[0] === sign) {
-          r.dispose()
-          resolve()
-        }
-      }
-      // ,{delay: 100}
-    )
-  })
-}
-/**
- * 向主线程发送下载任务
- */
-const downloadTaskFactory = () => {
-  const queue = observable([])
-  return (ipcMessage: IpcDownloadMsg) =>
-    new Promise<void>(async resolve => {
-      const sign = ipcMessage.replyId
-      queue.push(sign)
-      await waitStatus(queue, sign)
-
-      electron.ipcRenderer.send(IpcEvent.download, ipcMessage)
-      electron.ipcRenderer.once(`${IpcEvent.start}${ipcMessage.replyId}`, () => {
-        queue.shift()
-        resolve()
-      })
-      // todo: 超时时间？
-    })
-}
-export const sendDownloadTask = downloadTaskFactory()

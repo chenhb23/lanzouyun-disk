@@ -31,7 +31,7 @@ export const Modal: React.FC<ModalProps> = props => {
         return () => div.remove()
       }
     }
-  }, [props.visible])
+  }, [div, props.animated, props.visible])
 
   return ReactDOM.createPortal(props.children, div)
 }
