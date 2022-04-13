@@ -1,16 +1,16 @@
 import React from 'react'
+import {observer} from 'mobx-react'
+import path from 'path'
+import electron from 'electron'
 import {ScrollView} from '../component/ScrollView'
 import {Header} from '../component/Header'
 import {Button} from '../component/Button'
 import {Bar} from '../component/Bar'
 import {Icon} from '../component/Icon'
-import {byteToSize, isSpecificFile, restoreFileName} from '../../common/util'
+import {byteToSize} from '../../common/util'
 import {Table} from '../component/Table'
 import {download} from '../store'
 import IpcEvent from '../../common/IpcEvent'
-import {observer} from 'mobx-react'
-import * as path from 'path'
-import * as electron from 'electron'
 
 const Complete = observer(() => {
   return (
@@ -46,12 +46,7 @@ const Complete = observer(() => {
                   icon={'open-folder'}
                   type={'icon'}
                   onClick={() => {
-                    // todo: 判断文件是否存在
-                    const task = item.tasks[0]
-                    let filePath = path.join(task.dir, task.name)
-                    if (isSpecificFile(filePath)) {
-                      filePath = restoreFileName(filePath)
-                    }
+                    const filePath = path.join(item.dir, item.name)
                     electron.ipcRenderer.invoke(IpcEvent.shell, 'showItemInFolder', filePath)
                   }}
                 />

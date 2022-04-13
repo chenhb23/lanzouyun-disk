@@ -6,6 +6,90 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "17403034",
+      "name": "锁定",
+      "font_class": "lock",
+      "unicode": "e609",
+      "unicode_decimal": 58889
+    },
+    {
+      "icon_id": "1388141",
+      "name": "txt",
+      "font_class": "txt",
+      "unicode": "e620",
+      "unicode_decimal": 58912
+    },
+    {
+      "icon_id": "2295990",
+      "name": "mp3",
+      "font_class": "mp3",
+      "unicode": "e616",
+      "unicode_decimal": 58902
+    },
+    {
+      "icon_id": "6145818",
+      "name": "database",
+      "font_class": "db",
+      "unicode": "e6cb",
+      "unicode_decimal": 59083
+    },
+    {
+      "icon_id": "10566291",
+      "name": "pptx",
+      "font_class": "ppt",
+      "unicode": "e608",
+      "unicode_decimal": 58888
+    },
+    {
+      "icon_id": "10566307",
+      "name": "docx",
+      "font_class": "doc",
+      "unicode": "e606",
+      "unicode_decimal": 58886
+    },
+    {
+      "icon_id": "10566310",
+      "name": "xlsx",
+      "font_class": "xls",
+      "unicode": "e60a",
+      "unicode_decimal": 58890
+    },
+    {
+      "icon_id": "12600673",
+      "name": "dmg",
+      "font_class": "dmg",
+      "unicode": "e623",
+      "unicode_decimal": 58915
+    },
+    {
+      "icon_id": "12904099",
+      "name": "ISO",
+      "font_class": "iso",
+      "unicode": "e614",
+      "unicode_decimal": 58900
+    },
+    {
+      "icon_id": "17326786",
+      "name": "CAD",
+      "font_class": "cad",
+      "unicode": "e6ac",
+      "unicode_decimal": 59052
+    },
+    {
+      "icon_id": "19649318",
+      "name": "exe",
+      "font_class": "exe",
+      "unicode": "e643",
+      "unicode_decimal": 58947
+    },
+    {
+      "icon_id": "22015051",
+      "name": "apk",
+      "font_class": "apk",
+      "unicode": "e6f8",
+      "unicode_decimal": 59128
+    },
+    {
       "icon_id": "200856",
       "name": "3.1关闭",
       "font_class": "clear",
@@ -106,7 +190,7 @@
     {
       "icon_id": "7226336",
       "name": "压缩包",
-      "font_class": "package",
+      "font_class": "zip",
       "unicode": "e61a",
       "unicode_decimal": 58906
     },

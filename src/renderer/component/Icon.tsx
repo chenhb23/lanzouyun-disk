@@ -1,20 +1,42 @@
-import React from 'react'
+import React, {useMemo} from 'react'
 import './Icon.css'
+
+import iconfont from '../libs/iconfont.json'
+
+// 所有图标名称
+export const icons = iconfont.glyphs.map(value => value.font_class)
+const iconMap: {[key: string]: IconName} = {
+  pptx: 'ppt',
+  xlsx: 'xls',
+  docx: 'doc',
+  tar: 'zip',
+  '7z': 'zip',
+  rar: 'zip',
+}
 
 export type IconProps = {
   iconName: IconName
+  defaultIcon?: IconName
   gutter?: number
 } & JSX.IntrinsicElements['svg']
 
-export const Icon: React.FC<IconProps> = ({iconName, className = '', gutter, ...props}) => {
+export const Icon: React.FC<IconProps> = ({iconName, className = '', defaultIcon, gutter, ...props}) => {
+  iconName = iconMap[iconName] ?? iconName
+  const name = useMemo(() => {
+    if (!icons.includes(iconName)) {
+      return defaultIcon
+    }
+    return iconName
+  }, [defaultIcon, iconName])
+
   return (
     <svg
-      className={`icon ${iconName === 'loading' ? iconName : ''} ${className}`}
+      className={`icon ${name === 'loading' ? name : ''} ${className}`}
       style={{marginRight: gutter}}
       aria-hidden='true'
       {...props}
     >
-      <use href={`#icon-${iconName}`} />
+      <use href={`#icon-${name}`} />
     </svg>
   )
 }
@@ -24,6 +46,25 @@ Icon.defaultProps = {
 }
 
 export type IconName =
+  | 'lock'
+  | 'txt'
+  | 'mp3'
+  | 'db'
+  | 'ppt'
+  | 'doc'
+  | 'xls'
+  | 'dmg'
+  | 'iso'
+  | 'cad'
+  | 'exe'
+  | 'apk'
+  | 'clear'
+  | 'split'
+  | 'open-folder'
+  | 'pause'
+  | 'start'
+  | 'loading'
+  | 'delete'
   | 'file'
   | 'empty'
   | 'right'
@@ -31,7 +72,7 @@ export type IconName =
   | 'folder'
   | 'refresh'
   | 'upload'
-  | 'package'
+  | 'zip'
   | 'share'
   | 'finish'
   | 'download'
@@ -39,11 +80,4 @@ export type IconName =
   | 'new-folder'
   | 'video'
   | 'img'
-  | 'delete'
-  | 'loading'
-  | 'pause'
-  | 'start'
-  | 'open-folder'
-  | 'split'
-  | 'clear'
-// | string
+  | string

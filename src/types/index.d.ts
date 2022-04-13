@@ -28,13 +28,13 @@ interface FolderInfo {
 
 // 列表文件
 interface FileInfo {
-  filelock: '0'
-  is_des: 0
-  is_ico: 0
-  is_lock: '0'
+  filelock: string // '0'
+  is_des: number // 0
+  is_ico: number // 0
+  is_lock: string // '0'
   downs: string // 下载次数
   id: FileId // 文件id
-  icon: 'dmg'
+  icon: string // 'dmg'
   name: string // 文件名, 省略
   name_all: string // 文件名, 全部
   onof: Bool

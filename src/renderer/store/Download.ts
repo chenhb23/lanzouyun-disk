@@ -380,7 +380,7 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
    * 先不解析，开始下载时再解析
    * name, url, pwd?, merge?
    */
-  addTask(options: {
+  async addTask(options: {
     name: string // 分享链接的下载全部没有 name
     url: string
     pwd?: string
@@ -394,6 +394,6 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
     task.merge = options.merge
     task.dir = this.dir
 
-    this.pushAndCheckList(task)
+    await this.pushAndCheckList(task)
   }
 }

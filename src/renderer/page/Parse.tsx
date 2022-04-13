@@ -72,27 +72,16 @@ export default function Parse() {
               disabled={!shareFiles.list?.length}
               loading={loading['addShareTask']}
               onClick={async () => {
-                // await listener(download.addShareTask({...urlForm, merge}), 'addShareTask')
-                await download.addTask({
-                  name: shareFiles.name,
-                  url: urlForm.url,
-                  pwd: urlForm.pwd,
-                  merge: merge,
-                })
+                await listener(
+                  download.addTask({
+                    name: shareFiles.name,
+                    url: urlForm.url,
+                    pwd: urlForm.pwd,
+                    merge: merge,
+                  }),
+                  'addShareTask'
+                )
                 message.success('下载任务添加成功')
-                // if ([ShareType.folder, ShareType.pwdFolder].includes(shareFiles.type)) {
-                //   listener(
-                //     download.addShareFolderTask({
-                //       ...urlForm,
-                //       merge,
-                //     }),
-                //     'addShareTask'
-                //   ).then(() => message.success('下载任务添加成功'))
-                // } else {
-                //   listener(download.addShareFileTask(urlForm), 'addShareTask').then(() =>
-                //     message.success('下载任务添加成功')
-                //   )
-                // }
               }}
             >
               下载全部

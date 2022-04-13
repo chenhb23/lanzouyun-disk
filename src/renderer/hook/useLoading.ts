@@ -9,6 +9,10 @@ export function useLoading() {
       setLoading(prevState => ({...prevState, [loadingKey]: false}))
     })
   }, [])
+  const listenerFn = useCallback(async (asyncFn: () => Promise<any>, loadingKey: string) => {
+    setLoading(prevState => ({...prevState, [loadingKey]: true}))
+    await asyncFn().finally(() => setLoading(prevState => ({...prevState, [loadingKey]: false})))
+  }, [])
 
-  return {loading, listener}
+  return {loading, listener, listenerFn}
 }

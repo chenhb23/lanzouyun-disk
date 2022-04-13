@@ -27,7 +27,7 @@ interface FolderForm {
 
 export default function Files() {
   const [visible, setVisible] = useState(false)
-  const {loading, listener} = useLoading()
+  const {loading, listener, listenerFn} = useLoading()
   const [form, setForm] = useState({} as FolderForm)
 
   const [list, setList] = useState({text: [], info: []} as AsyncReturnType<typeof ls>)
@@ -132,7 +132,13 @@ export default function Files() {
       }
     >
       <Table
-        header={[`文件名${renderList.text?.length ? ` (共${renderList.text?.length}项)` : ''}`, '大小', '时间', '下载']}
+        header={[
+          //
+          `文件名${renderList.text?.length ? ` (共${renderList.text?.length}项)` : ''}`,
+          '大小',
+          '时间',
+          '下载',
+        ]}
       >
         {renderList.text?.map(item => {
           const size = 'id' in item ? item.size : '-'
@@ -146,8 +152,11 @@ export default function Files() {
                 {'id' in item ? (
                   // 文件
                   <>
-                    <Icon iconName={'file'} />
-                    <span title={item.name_all}>{item.name_all}</span>
+                    <Icon iconName={item.icon} defaultIcon={'file'} />
+                    <span title={item.name_all}>
+                      {item.name_all}
+                      {`${item.onof}` === '1' && <Icon iconName={'lock'} style={{marginLeft: 5}} />}
+                    </span>
                     <div className='handle'>
                       <Button
                         icon={'share'}
@@ -166,28 +175,17 @@ export default function Files() {
                         icon={'download'}
                         type={'icon'}
                         loading={loading['download']}
-                        onClick={async () => {
-                          /*
-                          const {f_id, is_newd, pwd, onof} = await fileDetail(item.id)
-                          const url = `${is_newd}/${f_id}`
-                          const password = onof == '1' ? pwd : undefined
-                          await download.addFiTask({
-                            url,
-                            name: item.name,
-                            size: item.size,
-                            pwd: password,
-                          })
-                          */
-
-                          // todo: 1.监听函数改造; 2.loading
-                          const {f_id, is_newd, pwd, onof} = await fileDetail(item.id)
-                          await download.addTask({
-                            url: `${is_newd}/${f_id}`,
-                            pwd: `${onof}` === '1' ? pwd : undefined,
-                            name: item.name,
-                            merge: false,
-                          })
-                        }}
+                        onClick={() =>
+                          listenerFn(async () => {
+                            const {f_id, is_newd, pwd, onof} = await fileDetail(item.id)
+                            await download.addTask({
+                              url: `${is_newd}/${f_id}`,
+                              pwd: `${onof}` === '1' ? pwd : undefined,
+                              name: item.name,
+                              merge: false,
+                            })
+                          }, 'download')
+                        }
                       />
                       <Button
                         icon={'delete'}
@@ -208,6 +206,7 @@ export default function Files() {
                     <Icon iconName='folder' />
                     <span title={item.name} onClick={() => listFile(item.fol_id).then(() => setSearch(''))}>
                       {item.name}
+                      {`${item.onof}` === '1' && <Icon iconName={'lock'} style={{marginLeft: 5}} />}
                     </span>
                     <div className='handle'>
                       <Button
@@ -225,17 +224,17 @@ export default function Files() {
                         icon={'download'}
                         type={'icon'}
                         loading={loading['addFolderTask']}
-                        onClick={async () => {
-                          // listener(download.addFolderTask({folder_id: item.fol_id}), 'addFolderTask')
-
-                          const {new_url, onof, pwd, name} = await folderDetail(item.fol_id)
-                          await download.addTask({
-                            name: name,
-                            url: new_url,
-                            pwd: `${onof}` === '1' ? pwd : undefined,
-                            merge: isFile(name),
-                          })
-                        }}
+                        onClick={() =>
+                          listenerFn(async () => {
+                            const {new_url, onof, pwd, name} = await folderDetail(item.fol_id)
+                            await download.addTask({
+                              name: name,
+                              url: new_url,
+                              pwd: `${onof}` === '1' ? pwd : undefined,
+                              merge: isFile(name),
+                            })
+                          }, 'addFolderTask')
+                        }
                       />
                       <Button
                         icon={'delete'}

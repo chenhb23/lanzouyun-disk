@@ -7,6 +7,7 @@ import {loadLogin, setup} from './main/handle'
 import config from './project.config'
 
 store.set('isDev', isDev)
+console.log('process.platform', process.platform) // darwin, win32
 
 const loadURL = isDev ? 'http://localhost:3000' : `file://${path.join(__dirname, 'index.html')}`
 let mainWindow: BrowserWindow
