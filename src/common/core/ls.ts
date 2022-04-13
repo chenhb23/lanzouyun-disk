@@ -1,6 +1,5 @@
 import cheerio from 'cheerio'
 import {byteToSize, delay, isFile, sizeToByte} from '../util'
-import {parseUrl} from './download'
 import {Matcher} from './matcher'
 import * as http from '../http'
 
@@ -83,11 +82,9 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
   // 覆盖原url（防url重定向）
   url = response.url
 
-  // 根据html区分哪种解析类型
-  const {is_newd} = parseUrl(url)
-
   const $ = cheerio.load(html)
 
+  // 根据html区分哪种解析类型
   const isFile = !!$('iframe').length
   const isPwdFile = !!$('#passwddiv').length
   const isPwdFolder = !!$('#pwdload').length
@@ -109,7 +106,7 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
     const ajaxData = Matcher.parsePwdAjax(html, pwd)
 
     const {inf} = await http
-      .share(`${is_newd}${ajaxData.url}`, {
+      .share(new URL(ajaxData.url, url), {
         method: ajaxData.type,
         headers: {referer: url},
         form: ajaxData.data,
@@ -126,7 +123,7 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
       type: URLType.folder,
       size: byteToSize(value.list?.reduce((total, item) => total + sizeToByte(item.size), 0)),
       list: value.list?.map(item => ({
-        url: `${is_newd}/${item.id}`,
+        url: new URL(item.id, url).toString(),
         name: item.name_all,
         size: item.size,
         time: item.time,
@@ -149,7 +146,6 @@ export async function lsShareFolder({url, pwd, html}: {url: string; pwd?: string
     url = response.url
     html = await instance.text()
   }
-  const {is_newd} = parseUrl(url)
 
   const $ = cheerio.load(html)
   const title = $('title').text()
@@ -161,7 +157,7 @@ export async function lsShareFolder({url, pwd, html}: {url: string; pwd?: string
 
   while (true) {
     const {text} = await http
-      .share(`${is_newd}${ajaxData.url}`, {
+      .share(new URL(ajaxData.url, url), {
         method: ajaxData.type,
         headers: {referer: url},
         form: {...ajaxData.data, pg: pg++, pwd},

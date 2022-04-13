@@ -1,6 +1,6 @@
 import {EventEmitter} from 'events'
 import {resolve} from 'path'
-import {autorun, makeAutoObservable, makeObservable} from 'mobx'
+import {autorun, makeAutoObservable, makeObservable, observable} from 'mobx'
 import Task, {TaskStatus} from './AbstractTask'
 import config from '../../project.config'
 import {createSpecificName, debounce, sizeToByte} from '../../common/util'
@@ -11,7 +11,7 @@ import {message} from '../component/Message'
 import {persist} from 'mobx-persist'
 import * as http from '../../common/http'
 import {FormData} from 'formdata-node'
-import {FormDataEncoder} from 'form-data-encoder'
+// import {FormDataEncoder} from 'form-data-encoder'
 
 import fs from 'fs-extra'
 // import FormData from 'form-data'
@@ -20,33 +20,11 @@ import type {Progress} from 'got/dist/source/core'
 
 export type UploadFile = Pick<File, 'size' | 'name' | 'type' | 'path' | 'lastModified'>
 
-/*
-export interface UploadInfo {
-  readonly size?: TaskStatus
-  readonly resolve?: TaskStatus
-  readonly status?: TaskStatus
-
-  folderId: FolderId
-
-  // size: number
-  path: string // 文件路径, 作为id
-  name: string
-  type: string // 文件类型 mime
-  lastModified: number
-
-  tasks: UploadTask[]
-}
-*/
-
 export interface UploadSubTask {
-  name: string // todo: 名字自定义
-  size: number // todo: 自定义
+  name: string // 自定义
+  size: number // 自定义
 
   sourceFile: UploadFile
-  // type: string
-  // path: string
-
-  // file: UploadFile
 
   folderId: FolderId // 小文件为当前目录id，大文件为新建文件的id
   status: TaskStatus
@@ -58,17 +36,14 @@ export interface UploadSubTask {
 export class UploadTask {
   folderId: FolderId // = null
   file: UploadFile // = null
-  tasks: UploadSubTask[]
+  tasks: UploadSubTask[] = []
 
   constructor(props: Partial<UploadTask> = {}) {
     makeAutoObservable(this)
-    Object.assign(this, {tasks: []}, props)
-    // this.folderId = props.folderId
-    // this.file = props.file
-    // this.tasks = []
+    Object.assign(this, props)
   }
 
-  // 使用 file.size
+  // 使用 file.size 代替
   // get size() {
   //   return this.tasks.reduce((total, item) => total + (item.size ?? 0), 0)
   // }
@@ -82,21 +57,6 @@ export class UploadTask {
     return TaskStatus.ready
   }
 }
-
-/*export interface UploadTask {
-  type: string
-  path: string
-
-  size: number // todo: 自定义
-  name: string // todo: 名字自定义
-  // file: UploadFile
-
-  folderId: FolderId // todo: 使用父路径的 folderId
-  status: TaskStatus
-  resolve: number
-  startByte?: number
-  endByte?: number
-}*/
 
 export interface Upload {
   on(event: 'finish', listener: (info: UploadTask) => void): this
@@ -120,10 +80,8 @@ export interface Upload {
 
 export class Upload extends EventEmitter implements Task<UploadTask> {
   handler: ReturnType<typeof autorun>
-  // taskSignal: {[resolvePathName: string]: AbortController} = {}
   taskSignal: {[resolvePathName: string]: CancelableRequest} = {}
 
-  // @persist('list') list: UploadInfo[] = []
   @persist('list') list: UploadTask[] = []
 
   private taskSignalId(task: Pick<UploadSubTask, 'sourceFile'>) {
@@ -137,7 +95,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
   constructor() {
     super()
     makeObservable(this, {
-      list: true,
+      list: observable,
     })
 
     process.nextTick(this.init)
@@ -196,29 +154,12 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
         folderId: options.folderId,
       })
 
-      // const info: UploadInfo = {
-      //   name: file.name,
-      //   path: file.path,
-      //   folderId: options.folderId,
-      //   type: file.type,
-      //   lastModified: file.lastModified,
-      //   tasks: [],
-      // }
       if (file.size <= sizeToByte(config.maxSize)) {
         let supportName = file.name
         if (config.supportList.every(ext => !file.path.endsWith(`.${ext}`))) {
           // info.type = ''
           supportName = createSpecificName(supportName)
         }
-        // info.tasks.push({
-        //   name: supportName,
-        //   path: info.path,
-        //   folderId: info.folderId,
-        //   resolve: 0,
-        //   size: file.size,
-        //   status: TaskStatus.ready,
-        //   type: info.type,
-        // })
         task.tasks.push({
           name: supportName,
           size: file.size,
@@ -245,26 +186,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
             endByte: value.endByte,
           }))
         )
-
-        // const splitData = await split(info.path, {fileSize: file.size, skipSplit: true})
-        // info.tasks.push(
-        //   ...splitData.splitFiles.map<UploadTask>(file => ({
-        //     name: file.name,
-        //     status: TaskStatus.ready,
-        //     size: file.size,
-        //     startByte: file.startByte,
-        //     endByte: file.endByte,
-        //
-        //     path: info.path,
-        //     folderId: subFolderId,
-        //     resolve: 0,
-        //     type: info.type,
-        //   }))
-        // )
       }
-
-      // makeGetterProps(info)
-      // this.list.push(info)
       this.list.push(task)
     } catch (e: any) {
       message.error(e)
@@ -294,12 +216,6 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
       }
       delete this.taskSignal[id]
     }
-    // if (this.taskSignal[path]) {
-    //   if (!this.taskSignal[path].signal?.aborted) {
-    //     this.taskSignal[path].abort()
-    //   }
-    //   delete this.taskSignal[path]
-    // }
   }
 
   remove(path: string) {
@@ -328,35 +244,9 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
         const task = info.tasks[taskIndex]
         task.status = TaskStatus.pending
         try {
-          // const fr = task.endByte
-          //   ? fs.createReadStream(task.sourceFile.path, {start: task.startByte, end: task.endByte})
-          //   : fs.createReadStream(task.sourceFile.path)
-
-          /*const form = createUploadForm({
-            fr,
-            size: task.size,
-            name: task.name,
-            folderId: task.folderId,
-            id: task.name,
-            type: task.type,
-            lastModified: info.lastModified,
-            taskIndex,
-          })*/
-          // const form = createUploadForm({
-          //   fr,
-          //   size: task.size,
-          //   name: task.name,
-          //   folderId: task.folderId,
-          //   id: task.name,
-          //   type: task.type,
-          //   lastModified: info.lastModified,
-          //   taskIndex,
-          // })
           const form = createUploadForm(task, taskIndex)
-          const encoder = new FormDataEncoder(form)
-          console.log('encoder', encoder)
+          // const encoder = new FormDataEncoder(form)
 
-          // const updateResolve = debounce(bytes => (task.resolve = bytes), {time: 1000})
           const updateResolve = debounce(
             (progress: Progress) => {
               console.log('progress', progress)
@@ -365,18 +255,14 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
             {time: 1000}
           )
 
-          // const abort = new AbortController()
-          // this.taskSignal[resolve(task.path, task.name)] = abort
-
           const req = http.request.post('fileup.php', {
-            // isStream: true,
             // body: Readable.from(form),
             body: form,
           })
           this.taskSignal[this.taskSignalId(task)] = req
           req
-            // .on('uploadProgress', updateResolve)
             .on('uploadProgress', progress => {
+              // TODO： 限制触发频率
               console.log('progress', progress)
               task.resolve = progress.transferred
             })
@@ -385,28 +271,8 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
               this.emit('finish-task', info, task)
             })
             .catch(reason => {
-              console.log('http.request.post: fileup.php', reason)
               task.status = TaskStatus.fail
             })
-
-          // request<Do1Res, any>({
-          //   path: '/fileup.php',
-          //   body: form,
-          //   onData: updateResolve,
-          //   signal: abort.signal,
-          // })
-          //   .then(value => {
-          //     if (value.zt === 1) {
-          //       task.status = TaskStatus.finish
-          //       this.emit('finish-task', info, task)
-          //     } else {
-          //       task.status = TaskStatus.fail
-          //       console.log(value)
-          //     }
-          //   })
-          //   .catch(reason => {
-          //     task.status = TaskStatus.fail
-          //   })
         } catch (e: any) {
           task.status = TaskStatus.fail
           message.error(e)
@@ -432,16 +298,16 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
   }
 }
 
-interface FormOptions {
-  fr: ReturnType<typeof fs.createReadStream>
-  size: number
-  name: string
-  folderId: FolderId
-  id?: string
-  type?: string
-  lastModified: number
-  taskIndex: number
-}
+// interface FormOptions {
+//   fr: ReturnType<typeof fs.createReadStream>
+//   size: number
+//   name: string
+//   folderId: FolderId
+//   id?: string
+//   type?: string
+//   lastModified: number
+//   taskIndex: number
+// }
 
 // export function createUploadForm(options: FormOptions) {
 //   const form = new FormData()
@@ -459,7 +325,6 @@ interface FormOptions {
 //   return form
 // }
 
-// function createUploadForm(options: FormOptions) {
 function createUploadForm(options: UploadSubTask, taskIndex: number) {
   const form = new FormData()
   const sourceFile = options.sourceFile

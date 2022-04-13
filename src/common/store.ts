@@ -2,6 +2,7 @@ import Store from 'electron-store'
 import {Cookie} from 'tough-cookie'
 
 export interface StoreValues {
+  isDev: boolean
   cookies: Cookie[]
   downloads: string // 下载路径
   // referrer: string

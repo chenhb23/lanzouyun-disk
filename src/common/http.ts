@@ -3,10 +3,11 @@ import got from 'got'
 import {cookieJar, shareCookieJar} from './cookie'
 import config from '../project.config'
 import {message} from '../renderer/component/Message'
+import store from './store'
 
 const base = got.extend({
   headers: {
-    'accept-language': 'zh-CN,zh;q=0.9',
+    'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8',
     pragma: 'no-cache',
     'sec-fetch-dest': 'empty',
     'sec-fetch-mode': 'cors',
@@ -36,18 +37,22 @@ const base = got.extend({
       },
     ],
   },
-  // 开发用
-  // agent: {
-  //   https: new HttpsProxyAgent({
-  //     // keepAlive: true,
-  //     // keepAliveMsecs: 1000,
-  //     // maxSockets: 256,
-  //     // maxFreeSockets: 256,
-  //     // scheduling: 'lifo',
-  //     rejectUnauthorized: false,
-  //     proxy: 'http://127.0.0.1:9091',
-  //   }),
-  // },
+  ...(store.get('isDev')
+    ? {
+        // 开发用
+        agent: {
+          https: new (require('hpagent').HttpsProxyAgent)({
+            // keepAlive: true,
+            // keepAliveMsecs: 1000,
+            // maxSockets: 256,
+            // maxFreeSockets: 256,
+            // scheduling: 'lifo',
+            rejectUnauthorized: false,
+            proxy: 'http://127.0.0.1:9091',
+          }),
+        },
+      }
+    : {}),
 })
 
 export const request = got.extend(base, {

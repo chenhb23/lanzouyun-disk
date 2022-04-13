@@ -3,12 +3,15 @@ import prettier from 'prettier/standalone'
 import parserBabel from 'prettier/parser-babel'
 import queryString from 'querystring'
 import type {Method} from 'got/dist/source/core/options'
+import {CheerioAPI} from 'cheerio/lib/load'
 
 interface AjaxData {
   type: Method
   url: string
   data: any
 }
+
+type ParseInput = string | CheerioAPI
 
 /**
  * 获取页面各种元素
@@ -21,8 +24,9 @@ export class Matcher {
   /**
    * 规范化获取 script
    */
-  private static formatScript(html: string) {
-    const scripts = cheerio.load(html)('html script:not([src])')
+  static formatScript(html: ParseInput) {
+    const $ = typeof html === 'string' ? cheerio.load(html) : html
+    const scripts = $('html script:not([src])')
     const script = scripts.eq(0).html()
     if (!script) throw new Error('script 获取失败')
 
@@ -39,8 +43,8 @@ export class Matcher {
   /**
    * script -> ajaxData
    */
-  private static parseAjaxData(
-    html: string,
+  static parseAjaxData(
+    html: ParseInput,
     getVariable: (script: string) => string,
     getData: (script: string) => string
   ): AjaxData {
@@ -91,6 +95,26 @@ export class Matcher {
       html,
       _ => `var pwd = "${password}";`,
       script => script.match(/\$\.ajax\(({[\s\S]+?})\);/)?.[1]
+    )
+  }
+
+  /**
+   * 下载验证页面的参数
+   */
+  static parseValidateAjax(html: string) {
+    const $ = cheerio.load(html)
+    const format = this.formatScript($)
+    const elKey = format.match(/function .+?\((.+?)\)/)?.[1]
+    const id = format.match(/\$\("(.+)"\).+提交中/)?.[1]
+    if (!id) return null
+    const fn = $(`${id} div`).attr('onclick')
+    if (!fn) return null
+
+    const elValue = fn.match(/\((.+)\)/)?.[1]
+    return this.parseAjaxData(
+      $,
+      _ => `var ${elKey} = ${elValue};`,
+      script => script.match(/\$\.ajax\(({[\s\S]+})\);/)?.[1]
     )
   }
 }

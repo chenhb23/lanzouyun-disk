@@ -1,11 +1,12 @@
 import {app, BrowserWindow, session} from 'electron'
 import path from 'path'
+import isDev from 'electron-is-dev'
+import {Cookie} from 'tough-cookie'
 import store from './common/store'
 import {loadLogin, setup} from './main/handle'
 import config from './project.config'
-import isDev from 'electron-is-dev'
 
-import {Cookie} from 'tough-cookie'
+store.set('isDev', isDev)
 
 const loadURL = isDev ? 'http://localhost:3000' : `file://${path.join(__dirname, 'index.html')}`
 let mainWindow: BrowserWindow

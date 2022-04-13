@@ -1,40 +1,34 @@
-import fs from 'fs-extra'
-import path from 'path'
-import os from 'os'
 import config from '../project.config'
+import {Request} from 'got'
 
 export const delay = (ms = 1000) => new Promise(resolve => setTimeout(resolve, ms))
 
 // 95.0 M
-export function sizeToByte(size: string | number) {
-  if (typeof size === 'string') {
-    const getUnit = unit =>
-      ({
-        get b() {
-          return 1
-        },
-        get k() {
-          return 1024
-        },
-        get m() {
-          return this.k * 1024
-        },
-        get g() {
-          return this.m * 1024
-        },
-        get t() {
-          return this.g * 1024
-        },
-      }[unit] || 1) // todo: 1 是有问题的
-    const [_, num, unit] = size
-      .toLowerCase()
-      .replace(' ', '')
-      .match(/^(\d+\.?\d*)([bkmgt]?)$/)
+export function sizeToByte(size: string) {
+  const getUnit = unit =>
+    ({
+      get b() {
+        return 1
+      },
+      get k() {
+        return 1024
+      },
+      get m() {
+        return this.k * 1024
+      },
+      get g() {
+        return this.m * 1024
+      },
+      get t() {
+        return this.g * 1024
+      },
+    }[unit] || 1) // todo: 1 是有问题的
+  const [_, num, unit] = size
+    .toLowerCase()
+    .replace(' ', '')
+    .match(/^(\d+\.?\d*)([bkmgt]?)$/)
 
-    return +num * getUnit(unit)
-  }
-
-  return size
+  return +num * getUnit(unit)
 }
 
 export function byteToSize(byte: number) {
@@ -105,4 +99,16 @@ export const debounce = (fn, {time = 200} = {}) => {
       return fn(...args)
     }
   }
+}
+
+export function streamToText(stream: Request) {
+  return new Promise<string>((resolve, reject) => {
+    stream.setEncoding('utf-8')
+    let data = ''
+    stream.on('data', chunk => {
+      data += chunk.toString()
+    })
+    stream.once('end', () => resolve(data))
+    stream.once('error', err => reject(err))
+  })
 }

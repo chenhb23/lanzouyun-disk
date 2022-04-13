@@ -4,7 +4,7 @@ import {persist} from 'mobx-persist'
 import path from 'path'
 import Task, {TaskStatus} from './AbstractTask'
 import {fileDownUrl, pwdFileDownUrl} from '../../common/core/download'
-import {delay, isSpecificFile, restoreFileName, sizeToByte} from '../../common/util'
+import {delay, isSpecificFile, restoreFileName, sizeToByte, streamToText} from '../../common/util'
 import {lsShare, URLType} from '../../common/core/ls'
 import merge from '../../common/merge'
 import store from '../../common/store'
@@ -15,6 +15,7 @@ import fs from 'fs-extra'
 import {Progress} from 'got/dist/source/core'
 import {pipeline} from 'stream/promises'
 import {Request} from 'got'
+import {Matcher} from '../../common/core/matcher'
 
 export interface DownloadSubTask {
   url: string
@@ -254,11 +255,15 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
 
       await fs.ensureDir(subTask.dir)
 
-      // todo: 在这里更新 subTask 的 content-length ?
       const stream = await this.createStream(downloadUrl)
+      const headers = stream.response.headers
+      if (headers['content-disposition']) {
+        // todo: 在这里更新 subTask 的 content-length ?
+        subTask.size = Number(headers['content-length'])
+      }
       stream.on('downloadProgress', (progress: Progress) => {
-        console.log(progress)
         // TODO：限制触发频率
+        console.log(progress)
         subTask.resolve = progress.transferred
       })
 
@@ -283,16 +288,32 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
     }
   }
 
-  createStream(down: string) {
+  createStream(downloadUrl: string) {
     return new Promise<Request>((resolve, reject) => {
-      const stream = http.share.stream(down)
+      const stream = http.share.stream(downloadUrl)
       stream
-        .once('response', response => {
+        .once('response', async (response: typeof stream.response) => {
+          // 下载环境异常会跳转到验证页面
           if (response.headers['content-type'] === 'text/html') {
-            // todo: 尝试去解析一下
-            throw new Error('下载链接出错')
+            // 解析下载验证页面
+            const html = await streamToText(stream)
+            const ajaxData = Matcher.parseValidateAjax(html)
+            if (ajaxData) {
+              await delay(2000) // important! 模拟验证页面的延时，去掉会导致验证失败！
+              const {url} = await http
+                .share(new URL(ajaxData.url, downloadUrl), {
+                  method: ajaxData.type,
+                  headers: {referer: downloadUrl},
+                  form: ajaxData.data,
+                })
+                .json<{url: string}>()
+              resolve(this.createStream(url))
+            } else {
+              reject('下载验证页面解析出错')
+            }
+          } else {
+            resolve(stream)
           }
-          resolve(stream)
         })
         .once('error', err => {
           reject(err.message)
