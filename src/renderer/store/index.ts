@@ -8,7 +8,7 @@ configure({
   enforceActions: 'never',
 })
 
-const hydrate = create({
+export const hydrate = create({
   storage: localStorage,
   debounce: 200,
 })
@@ -26,6 +26,7 @@ function makePause<T extends {tasks: {status: TaskStatus}[]}>(task: T) {
   return task
 }
 
+// 正确做法：合并完再初始化的，但目前没遇到什么问题
 hydrate('download', download, (window as any).__STATE__?.download).then(value => {
   value.list = value.list.map(item => {
     const task = makePause(item)

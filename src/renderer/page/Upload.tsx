@@ -5,12 +5,13 @@ import {Button} from '../component/Button'
 import {Bar} from '../component/Bar'
 import {Icon} from '../component/Icon'
 import {byteToSize} from '../../common/util'
-import {Table} from '../component/Table'
 import {UploadTask} from '../store/Upload'
 import {upload} from '../store'
 import {Modal} from '../component/Modal'
-import {observer} from 'mobx-react'
+import {Observer, observer} from 'mobx-react'
 import {TaskStatus} from '../store/AbstractTask'
+import Table from '../component/Table'
+import path from 'path'
 
 const Upload = observer(() => {
   const [showItem, setShowItem] = useState<UploadTask>(null)
@@ -30,39 +31,60 @@ const Upload = observer(() => {
         </>
       }
     >
-      <Table header={['文件名', '大小', '操作']}>
-        {upload.list.map(item => {
-          return (
-            <tr key={item.file.path}>
-              <td
-                onClick={() => {
-                  setShowItem(item)
-                }}
-              >
-                <Icon iconName={'file'} />
-                <span>{item.file.name}</span>
-                {item.tasks.length > 1 && <span>{` | ${item.tasks.length} 个子任务`}</span>}
-              </td>
-              <td>{`${byteToSize(item.resolve)} / ${byteToSize(item.file.size)}`}</td>
-              <td>
-                <Button
-                  icon={item.status === TaskStatus.pending ? 'pause' : 'start'}
-                  type={'icon'}
-                  onClick={() => {
-                    if (item.status === TaskStatus.pending) {
-                      upload.pause(item.file.path)
-                    } else {
-                      upload.start(item.file.path, true)
-                    }
-                  }}
-                />
+      <Table
+        rowKey={record => record.file.path}
+        dataSource={[...upload.list]}
+        columns={[
+          {
+            title: '文件名',
+            render: item => {
+              const extname = path.extname(item.file.name).replace(/^\./, '')
+              return (
+                <span onClick={() => setShowItem(item)}>
+                  <Icon iconName={extname} defaultIcon={'file'} />
+                  <span>{item.file.name}</span>
+                  {item.tasks.length > 1 && <span>{` | ${item.tasks.length} 个子任务`}</span>}
+                </span>
+              )
+            },
+          },
+          {
+            title: '大小',
+            render: item => (
+              <Observer>
+                {() => (
+                  <span>
+                    ${byteToSize(item.resolve)} / ${byteToSize(item.file.size)}
+                  </span>
+                )}
+              </Observer>
+            ),
+          },
+          {
+            title: '操作',
+            render: item => (
+              <>
+                <Observer>
+                  {() => (
+                    <Button
+                      icon={item.status === TaskStatus.pending ? 'pause' : 'start'}
+                      type={'icon'}
+                      onClick={() => {
+                        if (item.status === TaskStatus.pending) {
+                          upload.pause(item.file.path)
+                        } else {
+                          upload.start(item.file.path, true)
+                        }
+                      }}
+                    />
+                  )}
+                </Observer>
                 <Button icon={'delete'} type={'icon'} onClick={() => upload.remove(item.file.path)} />
-              </td>
-              <td />
-            </tr>
-          )
-        })}
-      </Table>
+              </>
+            ),
+          },
+        ]}
+      />
 
       <Modal visible={!!showItem}>
         <div className='dialog'>

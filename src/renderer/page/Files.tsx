@@ -4,11 +4,10 @@ import {Header} from '../component/Header'
 import {Button} from '../component/Button'
 import {message} from '../component/Message'
 import {Crumbs} from '../component/Crumbs'
-import {Table, Tr} from '../component/Table'
 import {Icon} from '../component/Icon'
-import {isFile} from '../../common/util'
+import {isFile, sizeToByte} from '../../common/util'
 import {rmFile, rmFolder} from '../../common/core/rm'
-import {ls} from '../../common/core/ls'
+import {ls, LsFiles, URLType} from '../../common/core/ls'
 import {Bar} from '../component/Bar'
 import {useLoading} from '../hook/useLoading'
 import {ScrollView} from '../component/ScrollView'
@@ -19,11 +18,15 @@ import {download, upload} from '../store'
 import {fileDetail, folderDetail} from '../../common/core/detail'
 
 import './Files.css'
+import Table from '../component/Table'
 
 interface FolderForm {
   name: string
   folderDesc: string
 }
+
+// const getRowKey = (record: AsyncReturnType<typeof ls>['text'][number]) =>
+//   `${'id' in record ? record.id : record.id}`
 
 export default function Files() {
   const [visible, setVisible] = useState(false)
@@ -38,7 +41,7 @@ export default function Files() {
         ? {
             ...list,
             text: list.text?.filter(item => {
-              const name = ('id' in item ? item.name_all : item.name).toLowerCase()
+              const name = item.name.toLowerCase()
               return name.includes(search.toLowerCase())
             }),
           }
@@ -73,6 +76,32 @@ export default function Files() {
     cancel()
     listFile(currentFolder)
   }
+
+  const [selectedRows, setSelectedRows] = useState<AsyncReturnType<typeof ls>['text']>([])
+  const downloadFile = useCallback(
+    async (item: LsFiles) => {
+      await listenerFn(async () => {
+        if (item.type === URLType.file) {
+          const {f_id, is_newd, pwd, onof} = await fileDetail(item.id)
+          await download.addTask({
+            url: `${is_newd}/${f_id}`,
+            pwd: `${onof}` === '1' ? pwd : undefined,
+            name: item.name,
+            merge: false,
+          })
+        } else {
+          const {new_url, onof, pwd, name} = await folderDetail(item.id)
+          await download.addTask({
+            name: name,
+            url: new_url,
+            pwd: `${onof}` === '1' ? pwd : undefined,
+            merge: isFile(name),
+          })
+        }
+      }, 'download')
+    },
+    [listenerFn]
+  )
 
   return (
     <ScrollView
@@ -120,6 +149,25 @@ export default function Files() {
             >
               新建文件夹
             </Button>
+            {!!selectedRows.length && (
+              <>
+                <Button type={'primary'} onClick={() => setSelectedRows([])}>
+                  取消选择
+                </Button>
+                <Button
+                  type={'primary'}
+                  onClick={async () => {
+                    for (const item of selectedRows) {
+                      await downloadFile(item)
+                    }
+                    message.success('已经添加到下载列表！')
+                    setSelectedRows([])
+                  }}
+                >
+                  下载所选 ({selectedRows.length} 项)
+                </Button>
+              </>
+            )}
           </Header>
           <Bar>
             <Crumbs
@@ -132,133 +180,104 @@ export default function Files() {
       }
     >
       <Table
-        header={[
-          //
-          `文件名${renderList.text?.length ? ` (共${renderList.text?.length}项)` : ''}`,
-          '大小',
-          '时间',
-          '下载',
-        ]}
-      >
-        {renderList.text?.map(item => {
-          const size = 'id' in item ? item.size : '-'
-          const time = 'id' in item ? item.time : ''
-          const downs = 'id' in item ? item.downs : ''
-          const id = 'id' in item ? item.id : item.fol_id
+        rowSelection={{
+          selectedRowKeys: selectedRows.map(value => value.id),
+          onSelect: (record, checked) => {
+            setSelectedRows(prev => (checked ? [...prev, record] : prev.filter(value => value.id !== record.id)))
+          },
+          onSelectAll: (checked, selectedRows1, changeRows) => {
+            setSelectedRows(prev =>
+              checked
+                ? [...prev, ...changeRows.filter(value => prev.every(item => item.id !== value.id))]
+                : prev.filter(value => changeRows.every(item => item.id !== value.id))
+            )
+          },
+        }}
+        rowKey={'id'}
+        dataSource={renderList.text}
+        columns={[
+          {
+            title: `文件名${renderList.text?.length ? ` (共${renderList.text?.length}项)` : ''}`,
+            sorter: (a, b) => (a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1),
+            render: item => {
+              return (
+                <div className='table-file'>
+                  <span>
+                    {item.type === URLType.folder ? (
+                      <Icon iconName={'folder'} />
+                    ) : (
+                      <Icon iconName={item.icon} defaultIcon={'file'} />
+                    )}
 
-          return (
-            <Tr key={id}>
-              <td className='table-file'>
-                {'id' in item ? (
-                  // 文件
-                  <>
-                    <Icon iconName={item.icon} defaultIcon={'file'} />
-                    <span title={item.name_all}>
-                      {item.name_all}
-                      {`${item.onof}` === '1' && <Icon iconName={'lock'} style={{marginLeft: 5}} />}
-                    </span>
-                    <div className='handle'>
-                      <Button
-                        icon={'share'}
-                        type={'icon'}
-                        loading={loading['fileDetail']}
-                        onClick={async () => {
-                          const info = await listener(fileDetail(item.id), 'fileDetail')
-                          const shareUrl = `${info.is_newd}/${info.f_id}${
-                            info.onof === '1' ? `\n密码: ${info.pwd}` : ''
-                          }`
-                          electron.clipboard.writeText(shareUrl)
-                          message.success(`分享链接已复制：\n${shareUrl}`)
-                        }}
-                      />
-                      <Button
-                        icon={'download'}
-                        type={'icon'}
-                        loading={loading['download']}
-                        onClick={() =>
-                          listenerFn(async () => {
-                            const {f_id, is_newd, pwd, onof} = await fileDetail(item.id)
-                            await download.addTask({
-                              url: `${is_newd}/${f_id}`,
-                              pwd: `${onof}` === '1' ? pwd : undefined,
-                              name: item.name,
-                              merge: false,
-                            })
-                          }, 'download')
+                    <span
+                      title={item.name}
+                      onClick={() => {
+                        if (item.type === URLType.folder) {
+                          listFile(item.id).then(() => setSearch(''))
                         }
-                      />
-                      <Button
-                        icon={'delete'}
-                        type={'icon'}
-                        loading={loading['rmFile']}
-                        onClick={async () => {
-                          const {zt, info} = await listener(rmFile(id), 'rmFile')
-                          if (zt !== 1) return message.error(info)
-                          message.success('已删除')
-                          listFile(currentFolder)
-                        }}
-                      />
-                    </div>
-                  </>
-                ) : (
-                  // 文件夹
-                  <>
-                    <Icon iconName='folder' />
-                    <span title={item.name} onClick={() => listFile(item.fol_id).then(() => setSearch(''))}>
+                      }}
+                    >
                       {item.name}
-                      {`${item.onof}` === '1' && <Icon iconName={'lock'} style={{marginLeft: 5}} />}
+                      {`${item.source.onof}` === '1' && <Icon iconName={'lock'} style={{marginLeft: 5}} />}
                     </span>
-                    <div className='handle'>
-                      <Button
-                        icon={'share'}
-                        type={'icon'}
-                        loading={loading['folderDetail']}
-                        onClick={async () => {
-                          const info = await listener(folderDetail(item.fol_id), 'folderDetail')
-                          const shareUrl = `${info.new_url}${info.onof === '1' ? `\n密码: ${info.pwd}` : ''}`
-                          electron.clipboard.writeText(shareUrl)
-                          message.success(`分享链接已复制：\n${shareUrl}`)
-                        }}
-                      />
-                      <Button
-                        icon={'download'}
-                        type={'icon'}
-                        loading={loading['addFolderTask']}
-                        onClick={() =>
-                          listenerFn(async () => {
-                            const {new_url, onof, pwd, name} = await folderDetail(item.fol_id)
-                            await download.addTask({
-                              name: name,
-                              url: new_url,
-                              pwd: `${onof}` === '1' ? pwd : undefined,
-                              merge: isFile(name),
-                            })
-                          }, 'addFolderTask')
+                  </span>
+                  <div className='handle'>
+                    <Button
+                      icon={'share'}
+                      type={'icon'}
+                      loading={loading['fileDetail']}
+                      onClick={async () => {
+                        let shareUrl = ''
+                        if (item.type === URLType.file) {
+                          const info = await listener(fileDetail(item.id), 'fileDetail')
+                          shareUrl = `${info.is_newd}/${info.f_id}${info.onof === '1' ? `\n密码:${info.pwd}` : ''}`
+                        } else {
+                          const info = await listener(folderDetail(item.id), 'fileDetail')
+                          shareUrl = `${info.new_url}${info.onof === '1' ? `\n密码:${info.pwd}` : ''}`
                         }
-                      />
-                      <Button
-                        icon={'delete'}
-                        type={'icon'}
-                        loading={loading['rmFolder']}
-                        onClick={async () => {
-                          const {zt, info} = await listener(rmFolder(item.fol_id), 'rmFolder')
-                          if (zt !== 1) return message.error(info)
-                          message.success('已删除')
-                          listFile(currentFolder)
-                        }}
-                      />
-                    </div>
-                  </>
-                )}
-              </td>
-              <td>{size}</td>
-              <td>{time}</td>
-              <td>{downs}</td>
-              <td />
-            </Tr>
-          )
-        })}
-      </Table>
+                        electron.clipboard.writeText(shareUrl)
+                        message.success(`分享链接已复制：\n${shareUrl}`)
+                      }}
+                    />
+                    <Button
+                      icon={'download'}
+                      type={'icon'}
+                      loading={loading['download']}
+                      onClick={() => downloadFile(item)}
+                    />
+                    <Button
+                      icon={'delete'}
+                      type={'icon'}
+                      loading={loading['rmFile']}
+                      onClick={async () => {
+                        if (item.type === URLType.file) {
+                          await listener(rmFile(item.id), 'rmFile')
+                        } else {
+                          await listener(rmFolder(item.id), 'rmFile')
+                        }
+                        message.success('已删除')
+                        listFile(currentFolder)
+                      }}
+                    />
+                  </div>
+                </div>
+              )
+            },
+          },
+          {
+            title: '大小',
+            sorter: (a, b) => {
+              if ('size' in a && 'size' in b) {
+                return sizeToByte(a.size) - sizeToByte(b.size)
+              }
+              return 0
+            },
+            render: item => ('id' in item ? item.size : '-'),
+          },
+          {title: '时间', render: item => ('id' in item ? item.time : '')},
+          {title: '下载', render: item => ('id' in item ? item.downs : '')},
+        ]}
+      />
 
       <Modal visible={visible}>
         <div className='dialog'>

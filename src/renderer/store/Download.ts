@@ -263,7 +263,6 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
       }
       stream.on('downloadProgress', (progress: Progress) => {
         // TODO：限制触发频率
-        console.log(progress)
         subTask.resolve = progress.transferred
       })
 
@@ -279,11 +278,11 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
       subTask.status = TaskStatus.finish
       this.emit('finish-task', task, subTask)
     } catch (e: any) {
-      message.error(e)
       if (this.taskSignal[task.url]?.signal?.aborted) {
         subTask.status = TaskStatus.pause
       } else {
         subTask.status = TaskStatus.fail
+        message.error(e)
       }
     }
   }
@@ -360,13 +359,13 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
   // 下载前检查：1.是否在下载列表；2.文件是否存在
   private async pushAndCheckList(task: DownloadTask) {
     if (this.list.find(value => value.url === task.url)) {
-      message.info('文件已存在下载列表！')
-      throw new Error('文件已存在下载列表!')
+      message.info(`"${task.name}"已存在下载列表！`)
+      throw new Error(`"${task.name}"已存在下载列表！`)
     }
 
     const name = restoreFileName(path.join(task.dir, task.name))
     if (fs.existsSync(name)) {
-      const result = confirm('文件已存在，是否删除并重新下载？')
+      const result = confirm(`"${task.name}"已存在，是否删除并重新下载？`)
       if (!result) {
         throw new Error('取消重新下载')
       }

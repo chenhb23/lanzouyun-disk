@@ -1,5 +1,5 @@
 import cheerio from 'cheerio'
-import {byteToSize, delay, isFile, sizeToByte} from '../util'
+import {byteToSize, delay, sizeToByte} from '../util'
 import {Matcher} from './matcher'
 import * as http from '../http'
 
@@ -10,13 +10,46 @@ import * as http from '../http'
  * ls // folder_id
  * ls https://xxxx/xxxx --pwd 123 // url, pwd
  */
-export async function ls(folder_id = -1) {
+export interface LsFiles {
+  name: string
+  type: URLType
+  id: string // 文件id 或者 文件夹id
+
+  icon?: string // 从 source 里面拿
+  size?: string
+  time?: string
+  downs?: string
+  source: FileInfo | FolderInfo
+}
+
+export interface LsResult {
+  info: CrumbsInfo[]
+  text: LsFiles[]
+}
+
+export async function ls(folder_id = -1): Promise<LsResult> {
   const [res1, res2] = await Promise.all([lsDir(folder_id), lsFile(folder_id)])
 
-  const sortFile = a => (isFile(a.name) ? 1 : -1)
   return {
-    ...res1,
-    text: [...res1.text.sort(sortFile), ...res2],
+    info: res1.info,
+    text: [
+      ...res1.text.map(value => ({
+        name: value.name,
+        type: URLType.folder,
+        id: `${value.fol_id}`,
+        source: value,
+      })),
+      ...res2.map(value => ({
+        name: value.name_all,
+        type: URLType.file,
+        id: `${value.id}`,
+        icon: value.icon,
+        size: value.size,
+        time: value.time,
+        downs: value.downs,
+        source: value,
+      })),
+    ],
   }
 }
 

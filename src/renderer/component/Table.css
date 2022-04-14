@@ -1,16 +1,35 @@
+::-webkit-scrollbar {
+  display: none;
+  background-color: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: transparent;
+}
+
 .Table {
   text-align: left;
-  background-color: #ffffff;
-  position: relative;
+  /*table-layout: fixed;*/
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
 }
 
 .Table th {
   user-select: none;
 }
 
-.Table td:first-child span {
-  cursor: pointer;
-  font-size: 13px;
+/*.Table td:first-child span {*/
+/*  cursor: pointer;*/
+/*  font-size: 13px;*/
+/*}*/
+
+.Table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: #ffffff;
+
+  max-width: 680px;
 }
 
 .Table th, .Table td {
@@ -24,7 +43,9 @@
 }
 
 .Table .table-file {
-  padding-right: 80px;
+  /*padding-right: 8px;*/
+  cursor: pointer;
+  font-size: 13px;
 }
 
 .Table tr:nth-child(even) {
@@ -67,13 +88,23 @@
   background-color: rgb(242, 242, 242);
 }
 
+.table-file {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
 /*//////////////////////////////*/
 .handle {
+  /*background: rgba(255,255,255,0.95);*/
+  /*border-radius: 15px;*/
   visibility: hidden;
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+
+  /*position: absolute;*/
+  /*right: 0;*/
+  /*top: 50%;*/
+  /*transform: translateY(-50%);*/
 }
 
 /*.handle svg {*/

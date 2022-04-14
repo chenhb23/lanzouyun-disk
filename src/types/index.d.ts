@@ -81,8 +81,8 @@ interface Task47 {
 }
 
 interface Task47Res {
-  info: CrumbsInfo[]
-  text: FolderInfo[]
+  info: CrumbsInfo[] // 面包屑
+  text: FolderInfo[] // 文件夹
   zt: ZT
 }
 

@@ -1,18 +1,19 @@
 import React, {useState} from 'react'
+import path from 'path'
 import {ScrollView} from '../component/ScrollView'
 import {Header} from '../component/Header'
 import {Button} from '../component/Button'
 import {lsShare, LsShareObject, URLType} from '../../common/core/ls'
 import {Input} from '../component/Input'
 import {Bar} from '../component/Bar'
-import {Table} from '../component/Table'
 import {Icon} from '../component/Icon'
 import {useLoading} from '../hook/useLoading'
 import {download} from '../store'
 import {message} from '../component/Message'
 import {isFile} from '../../common/util'
+import Table from '../component/Table'
 
-const regExp = /^(.+) 密码: (.+)$/
+const regExp = /^(.+) 密码: ?(.+)$/
 
 export default function Parse() {
   const [shareFiles, setShareFiles] = useState({} as LsShareObject)
@@ -89,7 +90,7 @@ export default function Parse() {
           </Header>
           <Bar>
             <span>{shareFiles.name ? `${shareFiles.name}（${shareFiles.size}）` : '文件列表'}</span>
-            <label>
+            <label style={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
               <input checked={merge} type='checkbox' onChange={event => setMerge(event.target.checked)} />
               自动合并
             </label>
@@ -97,38 +98,42 @@ export default function Parse() {
         </>
       }
     >
-      <Table header={['文件名', '时间', '大小', '操作']}>
-        {shareFiles.list?.map(item => {
-          return (
-            <tr key={item.name}>
-              <td>
-                <Icon iconName={'file'} />
-                <span>{item.name}</span>
-              </td>
-              <td>{item.time}</td>
-              <td>{item.size}</td>
-              <td>
-                <Icon
-                  iconName={'download'}
-                  onClick={async () => {
-                    // download.addShareTask({
-                    //   url: item.url,
-                    //   pwd: item.pwd,
-                    // })
-                    await download.addTask({
-                      name: item.name,
-                      url: item.url,
-                      pwd: item.pwd,
-                      merge: false,
-                    })
-                  }}
-                />
-              </td>
-              <td></td>
-            </tr>
-          )
-        })}
-      </Table>
+      <Table
+        rowKey={'name'}
+        dataSource={shareFiles.list}
+        columns={[
+          {
+            title: '文件名',
+            render: item => {
+              const extname = path.extname(item.name).replace(/^\./, '')
+              return (
+                <>
+                  <Icon iconName={extname} defaultIcon={'file'} />
+                  <span>{item.name}</span>
+                </>
+              )
+            },
+          },
+          {title: '时间', dataIndex: 'time'},
+          {title: '大小', dataIndex: 'size'},
+          {
+            title: '操作',
+            render: item => (
+              <Icon
+                iconName={'download'}
+                onClick={async () => {
+                  await download.addTask({
+                    name: item.name,
+                    url: item.url,
+                    pwd: item.pwd,
+                    merge: false,
+                  })
+                }}
+              />
+            ),
+          },
+        ]}
+      />
     </ScrollView>
   )
 }

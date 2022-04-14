@@ -3,7 +3,7 @@ import {resolve} from 'path'
 import {autorun, makeAutoObservable, makeObservable, observable} from 'mobx'
 import Task, {TaskStatus} from './AbstractTask'
 import config from '../../project.config'
-import {createSpecificName, debounce, sizeToByte} from '../../common/util'
+import {createSpecificName, debounce, delay, sizeToByte} from '../../common/util'
 import {isExistByName} from '../../common/core/isExist'
 import {mkdir} from '../../common/core/mkdir'
 import {splitTask} from '../../common/split'
@@ -17,6 +17,9 @@ import fs from 'fs-extra'
 // import FormData from 'form-data'
 import type {CancelableRequest} from 'got'
 import type {Progress} from 'got/dist/source/core'
+import {PassThrough, Readable} from 'stream'
+import {pipeline} from 'stream/promises'
+import {FormDataEncoder} from 'form-data-encoder'
 
 export type UploadFile = Pick<File, 'size' | 'name' | 'type' | 'path' | 'lastModified'>
 
@@ -148,7 +151,13 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
 
   async addTask(options: {folderId: FolderId; file: UploadFile}) {
     try {
-      const file = options.file
+      const file: UploadFile = {
+        size: options.file.size,
+        name: options.file.name,
+        type: options.file.type,
+        path: options.file.path,
+        lastModified: options.file.lastModified,
+      }
       const task = new UploadTask({
         file,
         folderId: options.folderId,
@@ -228,7 +237,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
     this.list = []
   }
 
-  start(path: string, resetAll = false) {
+  async start(path: string, resetAll = false) {
     const info = this.list.find(item => item.file.path === path)
     if (info && this.canStart()) {
       if (resetAll) {
@@ -249,14 +258,38 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
 
           const updateResolve = debounce(
             (progress: Progress) => {
+              // TODO：限制触发频率
               console.log('progress', progress)
               task.resolve = progress.transferred
             },
             {time: 1000}
           )
 
+          // const encoder = new FormDataEncoder(form)
+          // const stream = http.request.stream.post('fileup.php', {
+          //   headers: encoder.headers,
+          // })
+          // stream.on('uploadProgress', progress => {
+          //   // TODO： 限制触发频率
+          //   console.log('progress', progress)
+          //   task.resolve = progress.transferred
+          // })
+          //
+          // const abort = new AbortController()
+          // await pipeline(
+          //   //
+          //   // Buffer.from(form),
+          //   Readable.from(encoder),
+          //   stream,
+          //   new PassThrough(),
+          //   {signal: abort.signal}
+          // )
+          // task.status = TaskStatus.finish
+          // this.emit('finish-task', info, task)
+
+          // const encoder = new FormDataEncoder(form)
           const req = http.request.post('fileup.php', {
-            // body: Readable.from(form),
+            // body: Readable.from(encoder),
             body: form,
           })
           this.taskSignal[this.taskSignalId(task)] = req
