@@ -3,7 +3,7 @@ import {resolve} from 'path'
 import {autorun, makeAutoObservable, makeObservable, observable} from 'mobx'
 import Task, {TaskStatus} from './AbstractTask'
 import config from '../../project.config'
-import {createSpecificName, debounce, delay, sizeToByte} from '../../common/util'
+import {createSpecificName, debounce, sizeToByte} from '../../common/util'
 import {isExistByName} from '../../common/core/isExist'
 import {mkdir} from '../../common/core/mkdir'
 import {splitTask} from '../../common/split'
@@ -12,13 +12,11 @@ import {persist} from 'mobx-persist'
 import * as http from '../../common/http'
 import {FormData} from 'formdata-node'
 // import {FormDataEncoder} from 'form-data-encoder'
-
 import fs from 'fs-extra'
 // import FormData from 'form-data'
 import type {CancelableRequest} from 'got'
 import type {Progress} from 'got/dist/source/core'
-import {PassThrough, Readable} from 'stream'
-import {pipeline} from 'stream/promises'
+import {Readable} from 'stream'
 import {FormDataEncoder} from 'form-data-encoder'
 
 export type UploadFile = Pick<File, 'size' | 'name' | 'type' | 'path' | 'lastModified'>
@@ -56,7 +54,11 @@ export class UploadTask {
   }
 
   get status() {
+    // 上传状态
+    if (this.tasks.some(item => item.status === TaskStatus.fail)) return TaskStatus.fail
+    if (this.tasks.some(item => item.status === TaskStatus.pause)) return TaskStatus.pause
     if (this.tasks.some(item => item.status === TaskStatus.pending)) return TaskStatus.pending
+    if (this.tasks.every(item => item.status === TaskStatus.finish)) return TaskStatus.finish
     return TaskStatus.ready
   }
 }
@@ -129,11 +131,9 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
   }
 
   checkTask() {
-    const filePath = this.list.find(item =>
-      item.tasks.some(task => [TaskStatus.ready, TaskStatus.fail].includes(task.status))
-    )?.file?.path
-    if (filePath) {
-      this.start(filePath)
+    const task = this.list.find(value => value.status === TaskStatus.ready)
+    if (task) {
+      this.start(task.file.path)
     }
   }
 
@@ -207,6 +207,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
       .find(item => item.file.path === path)
       ?.tasks?.forEach(task => {
         if ([TaskStatus.ready, TaskStatus.pending].includes(task.status)) {
+          // todo: 让状态自动变为 TaskStatus.pause 而不是手动控制
           task.status = TaskStatus.pause
           this.abortTask(task)
         }
@@ -217,8 +218,8 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
     this.list.forEach(item => this.pause(item.file.path))
   }
 
-  private abortTask = (task: UploadSubTask) => {
-    const id = this.taskSignalId(task)
+  private abortTask = (subTask: UploadSubTask) => {
+    const id = this.taskSignalId(subTask)
     if (this.taskSignal[id]) {
       if (!this.taskSignal[id].isCanceled) {
         this.taskSignal[id].cancel('用户取消上传')
@@ -237,81 +238,186 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
     this.list = []
   }
 
-  async start(path: string, resetAll = false) {
-    const info = this.list.find(item => item.file.path === path)
-    if (info && this.canStart()) {
-      if (resetAll) {
-        info.tasks.forEach(task => {
-          if ([TaskStatus.pause, TaskStatus.fail].includes(task.status)) {
-            task.status = TaskStatus.ready
-          }
-        })
-      }
+  async start(path: string, reset = false) {
+    const task = this.list.find(item => item.file.path === path)
+    if (!task) return
+    if (!this.canStart()) return
 
-      const taskIndex = info.tasks.findIndex(item => TaskStatus.ready === item.status)
-      if (taskIndex !== -1) {
-        const task = info.tasks[taskIndex]
-        task.status = TaskStatus.pending
-        try {
-          const form = createUploadForm(task, taskIndex)
-          // const encoder = new FormDataEncoder(form)
-
-          const updateResolve = debounce(
-            (progress: Progress) => {
-              // TODO：限制触发频率
-              console.log('progress', progress)
-              task.resolve = progress.transferred
-            },
-            {time: 1000}
-          )
-
-          // const encoder = new FormDataEncoder(form)
-          // const stream = http.request.stream.post('fileup.php', {
-          //   headers: encoder.headers,
-          // })
-          // stream.on('uploadProgress', progress => {
-          //   // TODO： 限制触发频率
-          //   console.log('progress', progress)
-          //   task.resolve = progress.transferred
-          // })
-          //
-          // const abort = new AbortController()
-          // await pipeline(
-          //   //
-          //   // Buffer.from(form),
-          //   Readable.from(encoder),
-          //   stream,
-          //   new PassThrough(),
-          //   {signal: abort.signal}
-          // )
-          // task.status = TaskStatus.finish
-          // this.emit('finish-task', info, task)
-
-          // const encoder = new FormDataEncoder(form)
-          const req = http.request.post('fileup.php', {
-            // body: Readable.from(encoder),
-            body: form,
-          })
-          this.taskSignal[this.taskSignalId(task)] = req
-          req
-            .on('uploadProgress', progress => {
-              // TODO： 限制触发频率
-              console.log('progress', progress)
-              task.resolve = progress.transferred
-            })
-            .then(() => {
-              task.status = TaskStatus.finish
-              this.emit('finish-task', info, task)
-            })
-            .catch(reason => {
-              task.status = TaskStatus.fail
-            })
-        } catch (e: any) {
-          task.status = TaskStatus.fail
-          message.error(e)
+    if (reset) {
+      task.tasks.forEach(task => {
+        if ([TaskStatus.pause, TaskStatus.fail].includes(task.status)) {
+          task.status = TaskStatus.ready
         }
-      }
+      })
     }
+
+    console.log('task.status', task.status, task.tasks.map(value => value.status).join(','))
+    if ([TaskStatus.pause, TaskStatus.fail].includes(task.status)) return
+
+    const taskIndex = task.tasks.findIndex(item => TaskStatus.ready === item.status)
+    if (taskIndex === -1) return
+
+    const subTask = task.tasks[taskIndex]
+    subTask.status = TaskStatus.pending
+    try {
+      const form = createUploadForm(subTask, taskIndex)
+
+      const updateResolve = debounce(
+        (progress: Progress) => {
+          // TODO：限制触发频率
+          console.log('progress', progress)
+          subTask.resolve = progress.transferred
+        },
+        {time: 1000}
+      )
+
+      // =======================================
+      // const encoder = new FormDataEncoder(form)
+      // const stream = http.request.stream.post('fileup.php', {
+      //   headers: encoder.headers,
+      //   throwHttpErrors: true,
+      // })
+      // stream.on('error', err => {
+      //   console.log('err', err)
+      // })
+      // stream.on('uploadProgress', progress => {
+      //   // TODO： 限制触发频率
+      //   // console.log('progress', progress)
+      //   subTask.resolve = progress.transferred
+      // })
+      //
+      // const abort = new AbortController()
+      // // setTimeout(() => {
+      // //   abort.abort()
+      // // }, 200)
+      // await pipeline(
+      //   //
+      //   Readable.from(encoder),
+      //   stream,
+      //   new PassThrough(),
+      //   {signal: abort.signal}
+      // )
+      // subTask.status = TaskStatus.finish
+      // this.emit('finish-task', task, subTask)
+      // =======================================
+      const encoder = new FormDataEncoder(form)
+      const req = http.request.post('fileup.php', {
+        body: Readable.from(encoder),
+        headers: encoder.headers,
+        // body: form,
+      })
+      this.taskSignal[this.taskSignalId(subTask)] = req
+      req.on('uploadProgress', progress => {
+        // TODO： 限制触发频率
+        // console.log('progress', progress)
+        subTask.resolve = progress.transferred
+      })
+      // req.on('uploadProgress', updateResolve)
+      await req
+      subTask.status = TaskStatus.finish
+      this.emit('finish-task', task, subTask)
+      // =======================================
+
+      // // const encoder = new FormDataEncoder(form)
+      // const req = http.request.post('fileup.php', {
+      //   // body: Readable.from(encoder),
+      //   body: form,
+      // })
+      // this.taskSignal[this.taskSignalId(subTask)] = req
+      // req
+      //   .on('uploadProgress', progress => {
+      //     // TODO： 限制触发频率
+      //     console.log('progress', progress)
+      //     subTask.resolve = progress.transferred
+      //   })
+      //   .then(() => {
+      //     subTask.status = TaskStatus.finish
+      //     this.emit('finish-task', task, subTask)
+      //   })
+      //   .catch(reason => {
+      //     subTask.status = TaskStatus.fail
+      //   })
+    } catch (e: any) {
+      // console.log('eeeeeeeeeeeeeeeeee', e)
+      subTask.status = TaskStatus.fail
+      // message.error(e)
+    }
+
+    // if (task && this.canStart()) {
+    //   if (reset) {
+    //     task.tasks.forEach(task => {
+    //       if ([TaskStatus.pause, TaskStatus.fail].includes(task.status)) {
+    //         task.status = TaskStatus.ready
+    //       }
+    //     })
+    //   }
+    //
+    //   const taskIndex = task.tasks.findIndex(item => TaskStatus.ready === item.status)
+    //   if (taskIndex !== -1) {
+    //     const subTask = task.tasks[taskIndex]
+    //     subTask.status = TaskStatus.pending
+    //     try {
+    //       const form = createUploadForm(subTask, taskIndex)
+    //       // const encoder = new FormDataEncoder(form)
+    //
+    //       const updateResolve = debounce(
+    //         (progress: Progress) => {
+    //           // TODO：限制触发频率
+    //           console.log('progress', progress)
+    //           subTask.resolve = progress.transferred
+    //         },
+    //         {time: 1000}
+    //       )
+    //
+    //       // =======================================
+    //       // const encoder = new FormDataEncoder(form)
+    //       // const stream = http.request.stream.post('fileup.php', {
+    //       //   headers: encoder.headers,
+    //       // })
+    //       // stream.on('uploadProgress', progress => {
+    //       //   // TODO： 限制触发频率
+    //       //   console.log('progress', progress)
+    //       //   subTask.resolve = progress.transferred
+    //       // })
+    //       //
+    //       // const abort = new AbortController()
+    //       // await pipeline(
+    //       //   //
+    //       //   // Buffer.from(form),
+    //       //   Readable.from(encoder),
+    //       //   stream,
+    //       //   new PassThrough(),
+    //       //   {signal: abort.signal}
+    //       // )
+    //       // subTask.status = TaskStatus.finish
+    //       // this.emit('finish-task', task, subTask)
+    //       // =======================================
+    //
+    //       // const encoder = new FormDataEncoder(form)
+    //       const req = http.request.post('fileup.php', {
+    //         // body: Readable.from(encoder),
+    //         body: form,
+    //       })
+    //       this.taskSignal[this.taskSignalId(subTask)] = req
+    //       req
+    //         .on('uploadProgress', progress => {
+    //           // TODO： 限制触发频率
+    //           console.log('progress', progress)
+    //           subTask.resolve = progress.transferred
+    //         })
+    //         .then(() => {
+    //           subTask.status = TaskStatus.finish
+    //           this.emit('finish-task', task, subTask)
+    //         })
+    //         .catch(reason => {
+    //           subTask.status = TaskStatus.fail
+    //         })
+    //     } catch (e: any) {
+    //       subTask.status = TaskStatus.fail
+    //       message.error(e)
+    //     }
+    //   }
+    // }
   }
 
   canStart() {

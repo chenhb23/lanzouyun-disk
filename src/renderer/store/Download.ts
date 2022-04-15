@@ -61,7 +61,11 @@ export class DownloadTask {
   }
 
   get status() {
+    // 下载状态
+    if (this.tasks.some(item => item.status === TaskStatus.fail)) return TaskStatus.fail
+    if (this.tasks.some(item => item.status === TaskStatus.pause)) return TaskStatus.pause
     if (this.tasks.some(item => item.status === TaskStatus.pending)) return TaskStatus.pending
+    if (this.tasks.every(item => item.status === TaskStatus.finish)) return TaskStatus.finish
     return TaskStatus.ready
   }
 }
@@ -162,9 +166,9 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
   }
 
   checkTask() {
-    const url = this.list.find(item => item.status === TaskStatus.ready)?.url
-    if (url) {
-      this.start(url)
+    const task = this.list.find(item => item.status === TaskStatus.ready)
+    if (task) {
+      this.start(task.url)
     }
   }
 
@@ -225,7 +229,7 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
 
   /**
    *
-   * reset 从暂停恢复下载状态，传 true
+   * 如果要从 reset 暂停恢复到下载状态，传 true
    */
   async start(url: string, reset = false) {
     const task = this.list.find(value => value.url === url)
@@ -242,7 +246,6 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
       })
     }
 
-    // todo: 只能查找 TaskStatus.ready 的任务？
     const subTask = task.tasks.find(value => value.status === TaskStatus.ready)
     if (!subTask) return
 
@@ -258,7 +261,7 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
       const stream = await this.createStream(downloadUrl)
       const headers = stream.response.headers
       if (headers['content-disposition']) {
-        // todo: 在这里更新 subTask 的 content-length ?
+        // 将精确的 content-length 覆盖原 subTask 的 size
         subTask.size = Number(headers['content-length'])
       }
       stream.on('downloadProgress', (progress: Progress) => {

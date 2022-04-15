@@ -9,7 +9,7 @@ import {UploadTask} from '../store/Upload'
 import {upload} from '../store'
 import {Modal} from '../component/Modal'
 import {Observer, observer} from 'mobx-react'
-import {TaskStatus} from '../store/AbstractTask'
+import {TaskStatus, TaskStatusName} from '../store/AbstractTask'
 import Table from '../component/Table'
 import path from 'path'
 
@@ -54,7 +54,7 @@ const Upload = observer(() => {
               <Observer>
                 {() => (
                   <span>
-                    ${byteToSize(item.resolve)} / ${byteToSize(item.file.size)}
+                    {byteToSize(item.resolve)} / {byteToSize(item.file.size)}
                   </span>
                 )}
               </Observer>
@@ -90,7 +90,7 @@ const Upload = observer(() => {
         <div className='dialog'>
           <ScrollView style={{maxHeight: 400, minHeight: 200, width: 600}}>
             {showItem?.tasks?.map(item => (
-              <p key={item.name}>{`${item.name}  |  ${item.status}`}</p>
+              <p key={item.name}>{`${item.name}  |  ${TaskStatusName[item.status]}`}</p>
             ))}
           </ScrollView>
           <div style={{textAlign: 'right', paddingTop: 16}}>

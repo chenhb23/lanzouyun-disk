@@ -4,6 +4,8 @@ import {cookieJar, shareCookieJar} from './cookie'
 import config from '../project.config'
 import {message} from '../renderer/component/Message'
 import store from './store'
+import {delay} from './util'
+import electronApi from '../renderer/electronApi'
 
 const base = got.extend({
   headers: {
@@ -18,11 +20,21 @@ const base = got.extend({
   hooks: {
     afterResponse: [
       async response => {
-        // 返回值状态判断，1,2 成功
+        // 返回值状态判断
         if (response.headers['content-type']?.includes('text/json')) {
           const body = JSON.parse(response.body as string)
-          if (![1, 2].includes(body.zt)) {
-            throw new Error(typeof body.info === 'string' ? body.info : body.text)
+          switch (body.zt) {
+            // 1,2 成功
+            case 1:
+            case 2:
+              return response
+            case 9:
+              message.error('登录信息失效，请重新登录')
+              await delay()
+              electronApi.logout()
+              return response
+            default:
+              throw new Error(typeof body.info === 'string' ? body.info : body.text)
           }
         }
         return response
@@ -32,7 +44,7 @@ const base = got.extend({
       error => {
         // todo: 记录
         console.error(error)
-        message.info(error.message)
+        message.error(error.message)
         return error
       },
     ],
@@ -42,7 +54,7 @@ const base = got.extend({
         // 开发用
         agent: {
           https: new (require('hpagent').HttpsProxyAgent)({
-            // keepAlive: true,
+            keepAlive: true,
             // keepAliveMsecs: 1000,
             // maxSockets: 256,
             // maxFreeSockets: 256,

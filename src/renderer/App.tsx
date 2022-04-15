@@ -17,6 +17,7 @@ import {Button} from './component/Button'
 import IpcEvent from '../common/IpcEvent'
 import {Icon} from './component/Icon'
 import store from '../common/store'
+import electronApi from './electronApi'
 import './App.css'
 
 const App = observer(() => {
@@ -82,7 +83,7 @@ const App = observer(() => {
             <Button
               style={{width: '100%'}}
               onClick={() => {
-                electron.ipcRenderer.send(IpcEvent.logout)
+                electronApi.logout()
               }}
             >
               退出登录

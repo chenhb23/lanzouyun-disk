@@ -1,9 +1,9 @@
 type Bool = '0' | '1' // 是否需要访问密码，0：不需要，1：需要
 type ZT =
-  | 0
+  | 0 // 错误 {"zt": 0, "info": "错误7072", "text": null}
   | 1 // 成功（返回了 text）
   | 2 // 仅返回 info，无 text（或者空数组）
-  | 9 // login not
+  | 9 // {"zt": 9, "info": "login not", "text": "error"}
 type FileId = string | number
 type FolderId = string | number
 

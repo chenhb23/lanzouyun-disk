@@ -72,7 +72,17 @@ export default function Table<T>(props: TableProps<T>) {
     !!dataSource.length && dataSource.every((value, i) => selectedRowKeys.includes(rowValue(props.rowKey, value, i)))
 
   return (
-    <table className={'Table'}>
+    <table
+      className={'Table'}
+      onDragEnter={event => {
+        event.preventDefault()
+        event.stopPropagation()
+      }}
+      onDragLeave={event => {
+        event.preventDefault()
+        event.stopPropagation()
+      }}
+    >
       <thead>
         <tr>
           {selection && (
