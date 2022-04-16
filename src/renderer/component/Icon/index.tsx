@@ -1,7 +1,7 @@
 import React, {useMemo} from 'react'
 import './Icon.css'
 
-import iconfont from '../libs/iconfont.json'
+import iconfont from './lib/iconfont.json'
 
 // 所有图标名称
 export const icons = iconfont.glyphs.map(value => value.font_class)
@@ -44,40 +44,3 @@ export const Icon: React.FC<IconProps> = ({iconName, className = '', defaultIcon
 Icon.defaultProps = {
   gutter: 5,
 }
-
-export type IconName =
-  | 'lock'
-  | 'txt'
-  | 'mp3'
-  | 'db'
-  | 'ppt'
-  | 'doc'
-  | 'xls'
-  | 'dmg'
-  | 'iso'
-  | 'cad'
-  | 'exe'
-  | 'apk'
-  | 'clear'
-  | 'split'
-  | 'open-folder'
-  | 'pause'
-  | 'start'
-  | 'loading'
-  | 'delete'
-  | 'file'
-  | 'empty'
-  | 'right'
-  | 'more'
-  | 'folder'
-  | 'refresh'
-  | 'upload'
-  | 'zip'
-  | 'share'
-  | 'finish'
-  | 'download'
-  | 'pdf'
-  | 'new-folder'
-  | 'video'
-  | 'img'
-  | string

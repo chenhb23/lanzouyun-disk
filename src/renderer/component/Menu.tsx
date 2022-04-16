@@ -1,6 +1,6 @@
 import React, {createContext, useContext, useEffect, useState} from 'react'
 import './Menu.css'
-import {Icon, IconName} from './Icon'
+import {Icon} from './Icon'
 
 export const MenuContext = createContext({
   key: '',

@@ -90,16 +90,16 @@ export function isFile(name: string) {
   return /\.[0-9a-zA-Z]+$/.test(name)
 }
 
-export const debounce = (fn, {time = 200} = {}) => {
-  let isEnable = true
-  return (...args) => {
-    if (isEnable) {
-      isEnable = false
-      setTimeout(() => (isEnable = true), time)
-      return fn(...args)
-    }
-  }
-}
+// export const debounce = (fn, {time = 200} = {}) => {
+//   let isEnable = true
+//   return (...args) => {
+//     if (isEnable) {
+//       isEnable = false
+//       setTimeout(() => (isEnable = true), time)
+//       return fn(...args)
+//     }
+//   }
+// }
 
 export function streamToText(stream: Request) {
   return new Promise<string>((resolve, reject) => {

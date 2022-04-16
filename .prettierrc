@@ -7,6 +7,5 @@
   "semi": false,
   "trailingComma": "es5",
   "arrowParens": "avoid",
-  "jsxBracketSameLine": false,
   "jsxSingleQuote": true
 }

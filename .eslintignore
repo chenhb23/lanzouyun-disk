@@ -1,2 +1,2 @@
 .eslintrc.js
-src/renderer/libs
+src/renderer/component/Icon/lib

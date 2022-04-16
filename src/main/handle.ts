@@ -1,10 +1,7 @@
-import {BrowserWindow, dialog, DownloadItem, ipcMain, shell, session} from 'electron'
-import path from 'path'
-import {debounce, delay} from '../common/util'
+import {BrowserWindow, dialog, ipcMain, shell, session} from 'electron'
 import store from '../common/store'
 import config from '../project.config'
 import IpcEvent from '../common/IpcEvent'
-import * as querystring from 'querystring'
 
 function setupStore() {
   ipcMain.on(IpcEvent.logout, async event => {

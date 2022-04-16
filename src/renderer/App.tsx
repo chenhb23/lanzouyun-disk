@@ -3,7 +3,7 @@ import {observer} from 'mobx-react'
 import {basename} from 'path'
 import electron from 'electron'
 
-import './libs/iconfont.js'
+import './component/Icon/lib/iconfont.js'
 import {Menu, MenuItem, MenuProvider} from './component/Menu'
 import {TabPane, Tabs} from './component/Tabs'
 import Upload from './page/Upload'

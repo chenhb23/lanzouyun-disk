@@ -1,23 +1,21 @@
 import {EventEmitter} from 'events'
 import {resolve} from 'path'
 import {autorun, makeAutoObservable, makeObservable, observable} from 'mobx'
+import {persist} from 'mobx-persist'
+import {FormData} from 'formdata-node'
+import fs from 'fs-extra'
+import type {CancelableRequest} from 'got'
+import type {Progress} from 'got/dist/source/core'
+import throttle from 'lodash.throttle'
+
 import Task, {TaskStatus} from './AbstractTask'
 import config from '../../project.config'
-import {createSpecificName, debounce, sizeToByte} from '../../common/util'
+import {createSpecificName, sizeToByte} from '../../common/util'
 import {isExistByName} from '../../common/core/isExist'
 import {mkdir} from '../../common/core/mkdir'
 import {splitTask} from '../../common/split'
 import {message} from '../component/Message'
-import {persist} from 'mobx-persist'
 import * as http from '../../common/http'
-import {FormData} from 'formdata-node'
-// import {FormDataEncoder} from 'form-data-encoder'
-import fs from 'fs-extra'
-// import FormData from 'form-data'
-import type {CancelableRequest} from 'got'
-import type {Progress} from 'got/dist/source/core'
-import {Readable} from 'stream'
-import {FormDataEncoder} from 'form-data-encoder'
 
 export type UploadFile = Pick<File, 'size' | 'name' | 'type' | 'path' | 'lastModified'>
 
@@ -58,7 +56,7 @@ export class UploadTask {
     if (this.tasks.some(item => item.status === TaskStatus.fail)) return TaskStatus.fail
     if (this.tasks.some(item => item.status === TaskStatus.pause)) return TaskStatus.pause
     if (this.tasks.some(item => item.status === TaskStatus.pending)) return TaskStatus.pending
-    if (this.tasks.every(item => item.status === TaskStatus.finish)) return TaskStatus.finish
+    if (this.tasks.length && this.tasks.every(item => item.status === TaskStatus.finish)) return TaskStatus.finish
     return TaskStatus.ready
   }
 }
@@ -68,6 +66,7 @@ export interface Upload {
   on(event: 'finish-task', listener: (info: UploadTask, task: UploadSubTask) => void): this
   // on(event: 'error', listener: (msg: string) => void): this
 
+  // todo: 使用 off?
   removeListener(event: 'finish', listener: (info: UploadTask) => void): this
   removeListener(event: 'finish-task', listener: (info: UploadTask, task: UploadSubTask) => void): this
   // removeListener(event: 'error', listener: (msg: string) => void): this
@@ -251,7 +250,6 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
       })
     }
 
-    console.log('task.status', task.status, task.tasks.map(value => value.status).join(','))
     if ([TaskStatus.pause, TaskStatus.fail].includes(task.status)) return
 
     const taskIndex = task.tasks.findIndex(item => TaskStatus.ready === item.status)
@@ -262,162 +260,23 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
     try {
       const form = createUploadForm(subTask, taskIndex)
 
-      const updateResolve = debounce(
-        (progress: Progress) => {
-          // TODO：限制触发频率
-          console.log('progress', progress)
-          subTask.resolve = progress.transferred
-        },
-        {time: 1000}
-      )
-
-      // =======================================
-      // const encoder = new FormDataEncoder(form)
-      // const stream = http.request.stream.post('fileup.php', {
-      //   headers: encoder.headers,
-      //   throwHttpErrors: true,
-      // })
-      // stream.on('error', err => {
-      //   console.log('err', err)
-      // })
-      // stream.on('uploadProgress', progress => {
-      //   // TODO： 限制触发频率
-      //   // console.log('progress', progress)
-      //   subTask.resolve = progress.transferred
-      // })
-      //
-      // const abort = new AbortController()
-      // // setTimeout(() => {
-      // //   abort.abort()
-      // // }, 200)
-      // await pipeline(
-      //   //
-      //   Readable.from(encoder),
-      //   stream,
-      //   new PassThrough(),
-      //   {signal: abort.signal}
-      // )
-      // subTask.status = TaskStatus.finish
-      // this.emit('finish-task', task, subTask)
-      // =======================================
-      const encoder = new FormDataEncoder(form)
-      const req = http.request.post('fileup.php', {
-        body: Readable.from(encoder),
-        headers: encoder.headers,
-        // body: form,
-      })
-      this.taskSignal[this.taskSignalId(subTask)] = req
-      req.on('uploadProgress', progress => {
-        // TODO： 限制触发频率
-        // console.log('progress', progress)
+      const onProgress = throttle((progress: Progress) => {
         subTask.resolve = progress.transferred
-      })
-      // req.on('uploadProgress', updateResolve)
+      }, 1000)
+      const req = http.request
+        .post('fileup.php', {
+          body: form,
+        })
+        .on('uploadProgress', onProgress)
+
+      this.taskSignal[this.taskSignalId(subTask)] = req
       await req
+      console.log('finish')
       subTask.status = TaskStatus.finish
       this.emit('finish-task', task, subTask)
-      // =======================================
-
-      // // const encoder = new FormDataEncoder(form)
-      // const req = http.request.post('fileup.php', {
-      //   // body: Readable.from(encoder),
-      //   body: form,
-      // })
-      // this.taskSignal[this.taskSignalId(subTask)] = req
-      // req
-      //   .on('uploadProgress', progress => {
-      //     // TODO： 限制触发频率
-      //     console.log('progress', progress)
-      //     subTask.resolve = progress.transferred
-      //   })
-      //   .then(() => {
-      //     subTask.status = TaskStatus.finish
-      //     this.emit('finish-task', task, subTask)
-      //   })
-      //   .catch(reason => {
-      //     subTask.status = TaskStatus.fail
-      //   })
     } catch (e: any) {
-      // console.log('eeeeeeeeeeeeeeeeee', e)
       subTask.status = TaskStatus.fail
-      // message.error(e)
     }
-
-    // if (task && this.canStart()) {
-    //   if (reset) {
-    //     task.tasks.forEach(task => {
-    //       if ([TaskStatus.pause, TaskStatus.fail].includes(task.status)) {
-    //         task.status = TaskStatus.ready
-    //       }
-    //     })
-    //   }
-    //
-    //   const taskIndex = task.tasks.findIndex(item => TaskStatus.ready === item.status)
-    //   if (taskIndex !== -1) {
-    //     const subTask = task.tasks[taskIndex]
-    //     subTask.status = TaskStatus.pending
-    //     try {
-    //       const form = createUploadForm(subTask, taskIndex)
-    //       // const encoder = new FormDataEncoder(form)
-    //
-    //       const updateResolve = debounce(
-    //         (progress: Progress) => {
-    //           // TODO：限制触发频率
-    //           console.log('progress', progress)
-    //           subTask.resolve = progress.transferred
-    //         },
-    //         {time: 1000}
-    //       )
-    //
-    //       // =======================================
-    //       // const encoder = new FormDataEncoder(form)
-    //       // const stream = http.request.stream.post('fileup.php', {
-    //       //   headers: encoder.headers,
-    //       // })
-    //       // stream.on('uploadProgress', progress => {
-    //       //   // TODO： 限制触发频率
-    //       //   console.log('progress', progress)
-    //       //   subTask.resolve = progress.transferred
-    //       // })
-    //       //
-    //       // const abort = new AbortController()
-    //       // await pipeline(
-    //       //   //
-    //       //   // Buffer.from(form),
-    //       //   Readable.from(encoder),
-    //       //   stream,
-    //       //   new PassThrough(),
-    //       //   {signal: abort.signal}
-    //       // )
-    //       // subTask.status = TaskStatus.finish
-    //       // this.emit('finish-task', task, subTask)
-    //       // =======================================
-    //
-    //       // const encoder = new FormDataEncoder(form)
-    //       const req = http.request.post('fileup.php', {
-    //         // body: Readable.from(encoder),
-    //         body: form,
-    //       })
-    //       this.taskSignal[this.taskSignalId(subTask)] = req
-    //       req
-    //         .on('uploadProgress', progress => {
-    //           // TODO： 限制触发频率
-    //           console.log('progress', progress)
-    //           subTask.resolve = progress.transferred
-    //         })
-    //         .then(() => {
-    //           subTask.status = TaskStatus.finish
-    //           this.emit('finish-task', task, subTask)
-    //         })
-    //         .catch(reason => {
-    //           subTask.status = TaskStatus.fail
-    //         })
-    //     } catch (e: any) {
-    //       subTask.status = TaskStatus.fail
-    //       message.error(e)
-    //     }
-    //   }
-    // }
   }
 
   canStart() {
@@ -464,13 +323,13 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
 //   return form
 // }
 
-function createUploadForm(options: UploadSubTask, taskIndex: number) {
+function createUploadForm(subTask: UploadSubTask, taskIndex: number) {
   const form = new FormData()
-  const sourceFile = options.sourceFile
+  const sourceFile = subTask.sourceFile
   const type = sourceFile.type || 'application/octet-stream'
 
-  const fr = options.endByte
-    ? fs.createReadStream(sourceFile.path, {start: options.startByte, end: options.endByte})
+  const fr = subTask.endByte
+    ? fs.createReadStream(sourceFile.path, {start: subTask.startByte, end: subTask.endByte})
     : fs.createReadStream(sourceFile.path)
 
   form.append('task', 1)
@@ -478,21 +337,21 @@ function createUploadForm(options: UploadSubTask, taskIndex: number) {
   form.append('lastModifiedDate', new Date(sourceFile.lastModified))
   form.append('type', type)
   form.append('id', `WU_FILE_${taskIndex}`)
-  form.append('folder_id_bb_n', options.folderId)
-  form.append('size', options.size)
-  form.append('name', options.name)
+  form.append('folder_id_bb_n', subTask.folderId)
+  form.append('size', subTask.size)
+  form.append('name', subTask.name)
   form.append(
     'upload_file',
     {
       [Symbol.toStringTag]: 'File',
-      size: options.size,
-      name: options.name,
+      size: subTask.size,
+      name: subTask.name,
       type,
       stream() {
         return fr
       },
     },
-    options.name
+    subTask.name
   )
   return form
 }

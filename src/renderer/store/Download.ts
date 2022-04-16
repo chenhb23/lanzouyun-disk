@@ -16,6 +16,7 @@ import {Progress} from 'got/dist/source/core'
 import {pipeline} from 'stream/promises'
 import {Request} from 'got'
 import {Matcher} from '../../common/core/matcher'
+import throttle from 'lodash.throttle'
 
 export interface DownloadSubTask {
   url: string
@@ -60,12 +61,12 @@ export class DownloadTask {
     return this.tasks.reduce((total, item) => total + item.resolve, 0)
   }
 
+  // 下载状态
   get status() {
-    // 下载状态
     if (this.tasks.some(item => item.status === TaskStatus.fail)) return TaskStatus.fail
     if (this.tasks.some(item => item.status === TaskStatus.pause)) return TaskStatus.pause
     if (this.tasks.some(item => item.status === TaskStatus.pending)) return TaskStatus.pending
-    if (this.tasks.every(item => item.status === TaskStatus.finish)) return TaskStatus.finish
+    if (this.tasks.length && this.tasks.every(item => item.status === TaskStatus.finish)) return TaskStatus.finish
     return TaskStatus.ready
   }
 }
@@ -166,7 +167,8 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
   }
 
   checkTask() {
-    const task = this.list.find(item => item.status === TaskStatus.ready)
+    // const task = this.list.find(item => [TaskStatus.ready, TaskStatus.pending].includes(item.status))
+    const task = this.list.find(item => TaskStatus.ready === item.status)
     if (task) {
       this.start(task.url)
     }
@@ -264,10 +266,11 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
         // 将精确的 content-length 覆盖原 subTask 的 size
         subTask.size = Number(headers['content-length'])
       }
-      stream.on('downloadProgress', (progress: Progress) => {
-        // TODO：限制触发频率
+      const onProgress = throttle((progress: Progress) => {
         subTask.resolve = progress.transferred
-      })
+      }, 1000)
+
+      stream.on('downloadProgress', onProgress)
 
       const abort = new AbortController()
       this.taskSignal[task.url] = abort

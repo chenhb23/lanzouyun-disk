@@ -19,8 +19,10 @@ import {fileDetail, folderDetail} from '../../common/core/detail'
 
 import './Files.css'
 import Table from '../component/Table'
+import {editFile, editFileInfo, editFolder, editFolderInfo} from '../../common/core/edit'
 
 interface FolderForm {
+  folder_id?: FolderId // 如果有 folder_id 则是编辑
   name: string
   folderDesc: string
 }
@@ -32,6 +34,7 @@ export default function Files() {
   const [visible, setVisible] = useState(false)
   const {loading, listener, listenerFn} = useLoading()
   const [form, setForm] = useState({} as FolderForm)
+  const [fileForm, setFileForm] = useState({} as {file_id: FileId; name: string})
 
   const [list, setList] = useState({text: [], info: []} as AsyncReturnType<typeof ls>)
   const [search, setSearch] = useState('')
@@ -70,9 +73,16 @@ export default function Files() {
     setForm({} as FolderForm)
   }
 
-  async function makeDir() {
-    await listener(mkdir(currentFolder, form.name, form.folderDesc), 'mkdir')
-    message.success('创建成功')
+  // 创建 / 修改 文件夹
+  async function saveDir() {
+    if (form.folder_id) {
+      const value = await listener(editFolder(form.folder_id, form.name, form.folderDesc), 'saveDir')
+      message.success(value.info)
+    } else {
+      await listener(mkdir(currentFolder, form.name, form.folderDesc), 'saveDir')
+      message.success('创建成功')
+    }
+
     cancel()
     listFile(currentFolder)
   }
@@ -223,6 +233,26 @@ export default function Files() {
                   </span>
                   <div className='handle'>
                     <Button
+                      title={'编辑'}
+                      type={'icon'}
+                      icon={'edit'}
+                      onClick={async () => {
+                        if (item.type === URLType.file) {
+                          const value = await editFileInfo(item.id)
+                          setFileForm({file_id: item.id, name: value.info})
+                        } else {
+                          const value = await editFolderInfo(item.id)
+                          setForm({
+                            folder_id: item.id,
+                            name: value.info.name,
+                            folderDesc: value.info.des,
+                          })
+                          setVisible(true)
+                        }
+                      }}
+                    />
+                    <Button
+                      title={'分享'}
                       icon={'share'}
                       type={'icon'}
                       loading={loading['fileDetail']}
@@ -240,12 +270,14 @@ export default function Files() {
                       }}
                     />
                     <Button
+                      title={'下载'}
                       icon={'download'}
                       type={'icon'}
                       loading={loading['download']}
                       onClick={() => downloadFile(item)}
                     />
                     <Button
+                      title={'删除'}
                       icon={'delete'}
                       type={'icon'}
                       loading={loading['rmFile']}
@@ -297,7 +329,35 @@ export default function Files() {
             />
             <div style={{textAlign: 'right', marginTop: 10}}>
               <Button onClick={cancel}>取消</Button>
-              <Button loading={loading['mkdir']} type={'primary'} onClick={makeDir}>
+              <Button loading={loading['saveDir']} type={'primary'} onClick={saveDir}>
+                保存
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal visible={!!fileForm.file_id}>
+        <div className='dialog'>
+          <div style={{width: 400}}>
+            <h3>文件名</h3>
+            <Input
+              value={fileForm.name}
+              placeholder={'不能包含特殊字符，如：空格，括号'}
+              onChange={event => setFileForm(prevState => ({...prevState, name: event.target.value}))}
+            />
+            <div style={{textAlign: 'right', marginTop: 10}}>
+              <Button onClick={() => setFileForm({} as typeof fileForm)}>取消</Button>
+              <Button
+                loading={loading['saveFile']}
+                type={'primary'}
+                onClick={async () => {
+                  if (!fileForm.name) return message.error('请输入文件名')
+                  await listener(editFile(fileForm.file_id, fileForm.name), 'saveFile')
+                  setFileForm({} as typeof fileForm)
+                  listFile(currentFolder)
+                }}
+              >
                 保存
               </Button>
             </div>

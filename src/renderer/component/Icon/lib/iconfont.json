@@ -6,11 +6,18 @@
   "description": "",
   "glyphs": [
     {
-      "icon_id": "17403034",
-      "name": "锁定",
+      "icon_id": "201638",
+      "name": "编辑",
+      "font_class": "edit",
+      "unicode": "e601",
+      "unicode_decimal": 58881
+    },
+    {
+      "icon_id": "26489592",
+      "name": "锁",
       "font_class": "lock",
-      "unicode": "e609",
-      "unicode_decimal": 58889
+      "unicode": "e6e1",
+      "unicode_decimal": 59105
     },
     {
       "icon_id": "1388141",

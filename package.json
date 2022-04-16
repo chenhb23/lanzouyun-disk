@@ -12,6 +12,7 @@
     "formdata-node": "^4.3.2",
     "fs-extra": "^10.0.1",
     "got": "^12.0.3",
+    "lodash.throttle": "^4.1.1",
     "mobx": "^6.5.0",
     "mobx-persist": "^0.4.1",
     "mobx-react": "^7.3.0",
