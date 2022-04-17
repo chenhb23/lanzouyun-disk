@@ -1,7 +1,9 @@
 import fs from 'fs-extra'
 import {pipeline} from 'stream/promises'
+import {SplitTaskFile} from './split'
+import path from 'path'
 
-async function merge(files: string[], target: string) {
+export async function merge(files: string[], target: string) {
   for (const [index, file] of files.entries()) {
     await pipeline(
       // pipeline 会自动释放文件的引用
@@ -11,4 +13,17 @@ async function merge(files: string[], target: string) {
   }
 }
 
-export default merge
+export async function split(tasks: SplitTaskFile[], dir: string) {
+  await fs.ensureDir(dir)
+  for (const [index, task] of tasks.entries()) {
+    const fr = task.endByte
+      ? fs.createReadStream(task.sourceFile.path, {start: task.startByte, end: task.endByte})
+      : fs.createReadStream(task.sourceFile.path)
+
+    await pipeline(
+      //
+      fr,
+      fs.createWriteStream(path.join(dir, task.name), {flags: index === 0 ? 'w' : 'a'})
+    )
+  }
+}

@@ -1,4 +1,4 @@
-import {createSpecificIndexName, sizeToByte} from './util'
+import {createSpecificIndexName, getSuffix, sizeToByte} from './util'
 import config from '../project.config'
 
 import type {UploadFile} from '../renderer/store/Upload'
@@ -120,8 +120,9 @@ export function splitTask(file: UploadFile, splitSize = config.splitSize): Split
     ]
   } else {
     const count = Math.ceil(fSize / splitByte)
+    const suffix = getSuffix()
     info.splitFiles = Array.from({length: count}).map((_, i) => {
-      const indexName = createSpecificIndexName(file.name, i + 1)
+      const indexName = createSpecificIndexName(file.name, suffix, i + 1, count)
       const startByte = splitByte * i
       const endByte = Math.min(fSize, splitByte * (i + 1) - 1)
       return {

@@ -8,13 +8,11 @@ export default {
     task: '/doupload.php',
   },
   // 大于 maxSize 按 splitSize 分割
-  splitSize: '47m', // 错误7079 - Math.floor(50000000 / 1024 / 1024)
+  // splitSize: '47m', // 错误7079 - Math.floor(50000000 / 1024 / 1024)
+  splitSize: '95m', // Math.floor(100000000 / 1024 / 1024)
   maxSize: '95m', // Math.floor(100000000 / 1024 / 1024)
   // splitSize: '2m', // 测试
   // maxSize: '5m', // 测试
-  signSuffix: '.lzy.zip',
-  sign: 'lzy',
-  ext: 'zip',
   supportList: [
     'doc',
     'docx',
@@ -24,7 +22,7 @@ export default {
     'ipa',
     'txt',
     'exe',
-    // '7z', // 上传 7z 文件导致：错误7072（切片不压缩导致文件不完整？，但改了 zip 的名字 就可以上传）
+    '7z', // 上传 7z 文件导致：错误7072（切片不压缩导致文件不完整？，但改了 zip 的名字 就可以上传）
     'e',
     'z',
     'ct',

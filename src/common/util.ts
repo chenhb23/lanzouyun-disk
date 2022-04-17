@@ -38,18 +38,51 @@ export function byteToSize(byte: number) {
   }
 
   if (byte < sizeToByte('1k')) return `0`
-  if (byte < sizeToByte('1m')) return `${formatSize(byte, sizeToByte('1k'))} k`
+  if (byte < sizeToByte('1m')) return `${formatSize(byte, sizeToByte('1k'))} K`
   if (byte < sizeToByte('1g')) return `${formatSize(byte, sizeToByte('1m'))} M`
   if (byte < sizeToByte('1t')) return `${formatSize(byte, sizeToByte('1g'))} G`
 }
 
+const suffix = ['zip', 'tar', 'rar']
+const suffixTypeMap = {
+  zip: 'application/zip',
+  tar: 'application/x-tar',
+  rar: 'application/x-rar',
+}
+function getRandomItem(list: string[]) {
+  return list[Math.round(Math.random() * (list.length - 1))]
+}
+// 前面不带 .
+export function getSuffix() {
+  const shortList = config.supportList.filter(value => value.length <= 3)
+  return `${getRandomItem(shortList)}.${getRandomItem(suffix)}`
+}
+
+export function getFileType(filename: string, defaultType = 'application/octet-stream') {
+  const ext = filename.replace(/.+\.(\w+)$/, '$1')
+  return suffixTypeMap[ext] || defaultType
+}
+
 /**
- * 判断是否是分割的文件夹
- * 特殊文件名（不带 index）
- * todo: 优化
+ * whether it is special file
+ * 未命名.png.epub.zip
  */
 export function isSpecificFile(name: string) {
-  return new RegExp(`^.*${config.signSuffix}$`).test(name)
+  // 兼容老版本
+  if (name.endsWith('.lzy.zip')) {
+    name = name.replace(/\.lzy\.zip$/, '')
+    return !/\d$/.test(name)
+  }
+
+  if (suffix.some(value => name.endsWith(`.${value}`))) {
+    name = name.replace(/\.\w+?$/, '')
+    const ends = config.supportList.find(value => name.endsWith(value))
+    if (ends) {
+      name = name.replace(new RegExp(`${ends}$`), '')
+      return !/\d$/.test(name)
+    }
+  }
+  return false
 }
 
 export function isSpecificIndexFile(name: string) {
@@ -59,21 +92,23 @@ export function isSpecificIndexFile(name: string) {
 
 export function restoreFileName(name: string) {
   if (isSpecificFile(name)) {
-    return name.replace(config.signSuffix, '')
+    return name.replace(/\.\w+?\.\w+$/, '')
   }
   return name
 }
 
 /**
- * todo: 优化
- * .[index].[随机].zip
+ * 1.22.3.dmg.t4iso.tar
+ * suffix 无需带 .
  */
-export function createSpecificIndexName(fileName: string, index) {
-  return `${fileName}.${`${index}`.padStart(3, '0')}.${config.ext}`
+export function createSpecificIndexName(fileName: string, suffix: string, index: number, total: number) {
+  const sign = suffix[suffix.length - 1 - 2]
+  const padLength = `${total}`.length
+  return `${fileName}.${sign}${`${index}`.padStart(padLength, '0')}${suffix}`
 }
 
 export function createSpecificName(fileName: string) {
-  return `${fileName}${config.signSuffix}`
+  return `${fileName}.${getSuffix()}`
 }
 
 /**
@@ -89,17 +124,6 @@ export function createSpecificName(fileName: string) {
 export function isFile(name: string) {
   return /\.[0-9a-zA-Z]+$/.test(name)
 }
-
-// export const debounce = (fn, {time = 200} = {}) => {
-//   let isEnable = true
-//   return (...args) => {
-//     if (isEnable) {
-//       isEnable = false
-//       setTimeout(() => (isEnable = true), time)
-//       return fn(...args)
-//     }
-//   }
-// }
 
 export function streamToText(stream: Request) {
   return new Promise<string>((resolve, reject) => {

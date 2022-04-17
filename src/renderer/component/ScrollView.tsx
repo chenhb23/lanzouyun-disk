@@ -6,6 +6,7 @@ export type ScrollViewProps = {
   FooterComponent?: React.ReactNode
 } & JSX.IntrinsicElements['div']
 
+// 外层需要 overflow: hidden
 export const ScrollView: React.FC<ScrollViewProps> = ({HeaderComponent, FooterComponent, className = '', ...props}) => {
   return (
     <div className={`ScrollView ${className}`} {...props}>

@@ -6,7 +6,7 @@ import Task, {TaskStatus} from './AbstractTask'
 import {fileDownUrl, pwdFileDownUrl} from '../../common/core/download'
 import {delay, isSpecificFile, restoreFileName, sizeToByte, streamToText} from '../../common/util'
 import {lsShare, URLType} from '../../common/core/ls'
-import merge from '../../common/merge'
+import {merge} from '../../common/merge'
 import store from '../../common/store'
 import {message} from '../component/Message'
 import * as http from '../../common/http'
@@ -118,12 +118,11 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
       this.remove(info.url)
       this.finishList.push(info)
     })
-    this.on('finish-task', (info, task) => {
-      delete this.taskSignal[task.url]
-      if (info.tasks.every(item => item.status === TaskStatus.finish)) {
-        this.emit('finish', info)
+    this.on('finish-task', (task, subTask) => {
+      if (task.tasks.every(item => item.status === TaskStatus.finish)) {
+        this.emit('finish', task)
       } else {
-        this.start(info.url)
+        this.start(task.url)
       }
     })
   }
@@ -185,30 +184,22 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
     return this.queue < 3 // && info.status !== InitStatus.pending
   }
 
-  abortTask = (task: DownloadSubTask) => {
-    return new Promise<void>(resolve => {
-      if (this.taskSignal[task.url]) {
-        this.taskSignal[task.url].abort()
-        delete this.taskSignal[task.url]
-        // electron.ipcRenderer.once(`${IpcEvent.cancelled}${task.url}`, () => resolve())
-      } else {
-        resolve()
-      }
-    })
+  abortTask = (subTask: DownloadSubTask) => {
+    if (this.taskSignal[subTask.url]) {
+      this.taskSignal[subTask.url].abort()
+      delete this.taskSignal[subTask.url] // todo:
+    }
   }
 
-  async pause(url: string) {
-    await Promise.all(
-      this.list
-        .find(item => item.url === url)
-        ?.tasks?.map(task => {
-          if ([TaskStatus.ready, TaskStatus.pending].includes(task.status)) {
-            task.status = TaskStatus.pause
-            return this.abortTask(task)
-          }
-          return Promise.resolve()
-        }) ?? []
-    )
+  pause(url: string) {
+    const task = this.list.find(value => value.url === url)
+    if (task) {
+      task.tasks.forEach(subTask => {
+        if (TaskStatus.pending === subTask.status) {
+          this.abortTask(subTask)
+        }
+      })
+    }
   }
 
   pauseAll() {
@@ -216,8 +207,11 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
   }
 
   remove(url: string) {
-    this.list.find(item => item.url === url)?.tasks?.forEach(this.abortTask)
-    this.list = this.list.filter(item => item.url !== url)
+    const task = this.list.find(item => item.url === url)
+    if (task) {
+      task.tasks.forEach(this.abortTask)
+      this.list = this.list.filter(item => item.url !== url)
+    }
   }
 
   removeAll() {
@@ -252,6 +246,7 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
     if (!subTask) return
 
     subTask.status = TaskStatus.pending
+    const abort = new AbortController()
 
     try {
       const {url: downloadUrl} = subTask.pwd
@@ -272,8 +267,7 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
 
       stream.on('downloadProgress', onProgress)
 
-      const abort = new AbortController()
-      this.taskSignal[task.url] = abort
+      this.taskSignal[subTask.url] = abort
 
       await pipeline(
         // 流下载
@@ -284,12 +278,14 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
       subTask.status = TaskStatus.finish
       this.emit('finish-task', task, subTask)
     } catch (e: any) {
-      if (this.taskSignal[task.url]?.signal?.aborted) {
+      if (abort.signal.aborted) {
         subTask.status = TaskStatus.pause
       } else {
         subTask.status = TaskStatus.fail
         message.error(e)
       }
+    } finally {
+      delete this.taskSignal[subTask.url]
     }
   }
 

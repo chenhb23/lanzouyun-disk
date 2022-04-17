@@ -25,10 +25,11 @@ export type TabPaneProps = {
   id: string
 } & JSX.IntrinsicElements['div']
 
-export const TabPane: React.FC<TabPaneProps> = ({className = '', ...props}) => {
-  return (
-    <div className={`TabPane ${className}`} {...props}>
-      {props.children}
-    </div>
-  )
+export const TabPane: React.FC<TabPaneProps> = props => {
+  return <>{props.children}</>
+  // return (
+  //   <div className={`TabPane ${className}`} {...props}>
+  //     {props.children}
+  //   </div>
+  // )
 }

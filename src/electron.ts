@@ -59,7 +59,10 @@ async function createWindow() {
     loadMain(mainWindow)
   }
 
-  session.defaultSession.webRequest.onResponseStarted({urls: [config.lanzouUrl + config.page.home]}, goToApp)
+  session.defaultSession.webRequest.onResponseStarted({urls: [config.lanzouUrl + config.page.home]}, details => {
+    // todo: referer: details.url
+    goToApp()
+  })
 
   if (!store.get('downloads')) {
     store.set('downloads', app.getPath('downloads'))

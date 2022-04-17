@@ -55,7 +55,8 @@ const App = observer(() => {
                   解析Url
                 </MenuItem>
                 <MenuItem id={'6'} icon={'split'}>
-                  文件分割 / 合并
+                  文件分割
+                  {/*/ 合并*/}
                 </MenuItem>
               </Menu>
             </MenuProvider>

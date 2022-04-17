@@ -10,18 +10,25 @@ import throttle from 'lodash.throttle'
 
 import Task, {TaskStatus} from './AbstractTask'
 import config from '../../project.config'
-import {createSpecificName, sizeToByte} from '../../common/util'
+import {createSpecificName, getFileType, sizeToByte} from '../../common/util'
 import {isExistByName} from '../../common/core/isExist'
 import {mkdir} from '../../common/core/mkdir'
 import {splitTask} from '../../common/split'
 import {message} from '../component/Message'
 import * as http from '../../common/http'
 
-export type UploadFile = Pick<File, 'size' | 'name' | 'type' | 'path' | 'lastModified'>
+export type UploadFile = {
+  size: File['size']
+  name: File['name']
+  type: File['type']
+  path: File['path']
+  lastModified: File['lastModified']
+}
 
 export interface UploadSubTask {
   name: string // 自定义
   size: number // 自定义
+  type: string // 自定义 // todo: delete
 
   sourceFile: UploadFile
 
@@ -77,8 +84,8 @@ export interface Upload {
 }
 
 /**
- * 分割完再上传
- * 上传进度 status update
+ * 说明
+ * 文件尽量放到文件夹压缩后再上传！
  * 上传速度： todo
  * */
 
@@ -110,12 +117,12 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
     this.on('finish', info => {
       this.remove(info.file.path)
     })
-    this.on('finish-task', (info, task) => {
-      delete this.taskSignal[resolve(info.file.path, task.name)]
-      if (info.tasks.every(item => item.status === TaskStatus.finish)) {
-        this.emit('finish', info)
+    this.on('finish-task', (task, subTask) => {
+      // delete this.taskSignal[resolve(info.file.path, task.name)]
+      if (task.tasks.every(item => item.status === TaskStatus.finish)) {
+        this.emit('finish', task)
       } else {
-        this.start(info.file.path)
+        this.start(task.file.path)
       }
     })
   }
@@ -164,12 +171,14 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
 
       if (file.size <= sizeToByte(config.maxSize)) {
         let supportName = file.name
+        let type = file.type
         if (config.supportList.every(ext => !file.path.endsWith(`.${ext}`))) {
-          // info.type = ''
           supportName = createSpecificName(supportName)
+          type = getFileType(supportName)
         }
         task.tasks.push({
           name: supportName,
+          type: type,
           size: file.size,
           sourceFile: file,
           folderId: options.folderId,
@@ -186,6 +195,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
           ...result.splitFiles.map(value => ({
             name: value.name,
             size: value.size,
+            type: getFileType(value.name),
             sourceFile: value.sourceFile,
             status: TaskStatus.ready,
             folderId: subFolderId,
@@ -220,10 +230,8 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
   private abortTask = (subTask: UploadSubTask) => {
     const id = this.taskSignalId(subTask)
     if (this.taskSignal[id]) {
-      if (!this.taskSignal[id].isCanceled) {
-        this.taskSignal[id].cancel('用户取消上传')
-      }
-      delete this.taskSignal[id]
+      this.taskSignal[id].cancel('用户取消上传')
+      delete this.taskSignal[id] // todo
     }
   }
 
@@ -257,25 +265,31 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
 
     const subTask = task.tasks[taskIndex]
     subTask.status = TaskStatus.pending
+    const signalId = this.taskSignalId(subTask)
+    const form = createUploadForm(subTask, taskIndex)
+
+    const onProgress = throttle((progress: Progress) => {
+      subTask.resolve = progress.transferred
+    }, 1000)
+    const req = http.request
+      .post('fileup.php', {
+        body: form,
+      })
+      .on('uploadProgress', onProgress)
     try {
-      const form = createUploadForm(subTask, taskIndex)
-
-      const onProgress = throttle((progress: Progress) => {
-        subTask.resolve = progress.transferred
-      }, 1000)
-      const req = http.request
-        .post('fileup.php', {
-          body: form,
-        })
-        .on('uploadProgress', onProgress)
-
-      this.taskSignal[this.taskSignalId(subTask)] = req
+      this.taskSignal[signalId] = req
       await req
-      console.log('finish')
       subTask.status = TaskStatus.finish
       this.emit('finish-task', task, subTask)
     } catch (e: any) {
-      subTask.status = TaskStatus.fail
+      if (req.isCanceled) {
+        subTask.status = TaskStatus.pause
+      } else {
+        subTask.status = TaskStatus.fail
+        message.error(e)
+      }
+    } finally {
+      delete this.taskSignal[signalId]
     }
   }
 
@@ -326,7 +340,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
 function createUploadForm(subTask: UploadSubTask, taskIndex: number) {
   const form = new FormData()
   const sourceFile = subTask.sourceFile
-  const type = sourceFile.type || 'application/octet-stream'
+  const type = subTask.type || 'application/octet-stream'
 
   const fr = subTask.endByte
     ? fs.createReadStream(sourceFile.path, {start: subTask.startByte, end: subTask.endByte})

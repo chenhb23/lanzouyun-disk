@@ -2,7 +2,6 @@
   display: flex;
   flex: 1;
   overflow: hidden;
-  /*overflow-y: hidden;*/
 }
 .TabsWrapper {
   display: flex;
@@ -10,10 +9,9 @@
   flex-direction: column;
 }
 
-.TabPane {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  overflow-y: scroll;
-  /*overflow-y: hidden;*/
-}
+/*.TabPane {*/
+/*  display: flex;*/
+/*  flex: 1;*/
+/*  flex-direction: column;*/
+/*  overflow: hidden;*/
+/*}*/

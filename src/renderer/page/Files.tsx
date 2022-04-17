@@ -288,6 +288,7 @@ export default function Files() {
                           await listener(rmFolder(item.id), 'rmFile')
                         }
                         message.success('已删除')
+                        setSelectedRows(prev => prev.filter(value => value.id !== item.id))
                         listFile(currentFolder)
                       }}
                     />

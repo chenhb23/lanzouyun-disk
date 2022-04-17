@@ -12,7 +12,7 @@ import {useLoading} from '../hook/useLoading'
 import Table from '../component/Table'
 import path from 'path'
 
-const Download = observer(props => {
+const Download = observer(() => {
   const {loading, listener} = useLoading()
 
   return (
@@ -63,10 +63,13 @@ const Download = observer(props => {
                     <Button
                       icon={item.status === TaskStatus.pending ? 'pause' : 'start'}
                       type={'icon'}
-                      loading={loading['download.pause'] || loading['download.start']}
+                      loading={
+                        // loading['download.pause'] ||
+                        loading['download.start']
+                      }
                       onClick={() => {
                         if (item.status === TaskStatus.pending) {
-                          listener(download.pause(item.url), 'download.pause')
+                          download.pause(item.url)
                         } else {
                           listener(download.start(item.url, true), 'download.start')
                         }

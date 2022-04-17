@@ -14,6 +14,7 @@ const base = got.extend({
     'sec-fetch-dest': 'empty',
     'sec-fetch-mode': 'cors',
     'sec-fetch-site': 'same-origin',
+    // referer: 'https://pc.woozooo.com/mydisk.php?item=files&action=index',
     'user-agent':
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36',
   },
