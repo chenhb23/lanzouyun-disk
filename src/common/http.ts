@@ -52,18 +52,18 @@ const base = got.extend({
   },
   ...(store.get('isDev')
     ? {
-        // 开发用
-        agent: {
-          https: new (require('hpagent').HttpsProxyAgent)({
-            keepAlive: true,
-            // keepAliveMsecs: 1000,
-            // maxSockets: 256,
-            // maxFreeSockets: 256,
-            // scheduling: 'lifo',
-            rejectUnauthorized: false,
-            proxy: 'http://127.0.0.1:9091',
-          }),
-        },
+        // // 开发用
+        // agent: {
+        //   https: new (require('hpagent').HttpsProxyAgent)({
+        //     keepAlive: true,
+        //     // keepAliveMsecs: 1000,
+        //     // maxSockets: 256,
+        //     // maxFreeSockets: 256,
+        //     // scheduling: 'lifo',
+        //     rejectUnauthorized: false,
+        //     proxy: 'http://127.0.0.1:9091',
+        //   }),
+        // },
       }
     : {}),
 })

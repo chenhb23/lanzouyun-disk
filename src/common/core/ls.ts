@@ -67,7 +67,9 @@ export async function lsFile(folder_id: FolderId) {
       .json<Task5Res>()
     // todo: 蓝奏分页数量：api：18，分享页：50
     next = Array.isArray(text) && text.length >= 18
-    fileList.push(...text)
+    if (Array.isArray(text)) {
+      fileList.push(...text)
+    }
   } while (next)
 
   return fileList
