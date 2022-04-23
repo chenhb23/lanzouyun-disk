@@ -97,6 +97,7 @@
     "files": [
       "build"
     ],
+    "extends": null,
     "mac": {
       "category": "org.chenhb23.lanzou.client",
       "artifactName": "lanzouyun-${version}-${arch}-${os}.${ext}",
