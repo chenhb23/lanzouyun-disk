@@ -11,6 +11,7 @@ import {byteToSize} from '../../common/util'
 import {download} from '../store'
 import IpcEvent from '../../common/IpcEvent'
 import Table from '../component/Table'
+import electronApi from '../electronApi'
 
 const Complete = observer(() => {
   return (
@@ -59,9 +60,9 @@ const Complete = observer(() => {
               <Button
                 icon={'open-folder'}
                 type={'icon'}
-                onClick={() => {
+                onClick={async () => {
                   const filePath = path.join(item.dir, item.name)
-                  electron.ipcRenderer.invoke(IpcEvent.shell, 'showItemInFolder', filePath)
+                  await electronApi.showItemInFolder(filePath)
                 }}
               />
             ),

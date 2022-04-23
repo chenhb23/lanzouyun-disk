@@ -1,25 +1,25 @@
-import {app, ipcMain, session, BrowserWindow} from 'electron'
+import {app, session, BrowserWindow} from 'electron'
 import config from '../project.config'
-import IpcEvent from '../common/IpcEvent'
 import store from '../common/store'
 import {Cookie} from 'tough-cookie'
 import {safeUserAgent} from '../common/util'
+import {Extension} from './extension'
 
 export abstract class Application {
   // app 准备事件
-  protected ready() {}
+  ready() {}
   // 窗口激活事件（在 app.ready 之后）
-  protected activate() {}
+  activate() {}
   // 窗口创建事件（未加载 URL，需要自己手动加载）
-  protected windowReady(win: BrowserWindow) {}
+  windowReady(win: BrowserWindow) {}
   // 窗口关闭事件
-  protected closed() {}
+  closed() {}
   // 登录后触发该事件(已设置 cookie)
-  protected onLogin(win: BrowserWindow, detail: Electron.OnResponseStartedListenerDetails) {}
+  onLogin(win: BrowserWindow, detail: Electron.OnResponseStartedListenerDetails) {}
   // 登出后触发该事件(已删除 cookie)
-  protected onLogout(win: BrowserWindow) {}
+  onLogout(win: BrowserWindow) {}
 
-  protected constructor() {
+  constructor() {
     this._init()
   }
 
@@ -54,7 +54,6 @@ export abstract class Application {
       {urls: [config.lanzouUrl + config.page.home]},
       this._login.bind(this)
     )
-    ipcMain.on(IpcEvent.logout, this._logout.bind(this))
   }
 
   private _initUA() {
@@ -78,12 +77,7 @@ export abstract class Application {
     this.onLogin(this.mainWindow, detail)
   }
 
-  private async _logout(event: Electron.IpcMainEvent) {
-    await this.clearAuth()
-    this.onLogout(BrowserWindow.fromWebContents(event.sender))
-  }
-
-  public async clearAuth() {
+  async clearAuth() {
     const cookies = await session.defaultSession.cookies.get({})
     const cookieNames = ['phpdisk_info']
     const cookie = cookies.filter(value => cookieNames.includes(value.name))
@@ -111,7 +105,7 @@ export abstract class Application {
     // store.delete('cookies')
   }
 
-  protected createWindow() {
+  createWindow() {
     this.mainWindow = new BrowserWindow({
       width: 1400,
       // height: 800,
@@ -128,5 +122,10 @@ export abstract class Application {
         // nativeWindowOpen: true,
       },
     })
+  }
+
+  install<T extends Extension>(extension: T) {
+    app.whenReady().then(() => extension.install(this))
+    return this
   }
 }

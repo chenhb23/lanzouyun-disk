@@ -1,5 +1,4 @@
 import {createSpecificIndexName, getSuffix, sizeToByte} from './util'
-import config from '../project.config'
 
 import type {UploadFile} from '../renderer/store/Upload'
 
@@ -104,7 +103,7 @@ export interface SplitTaskFile {
 /**
  * 返回文件分割信息（不进行文件分割）
  */
-export function splitTask(file: UploadFile, splitSize = config.splitSize): SplitTaskResult {
+export function splitTask(file: UploadFile, splitSize: string): SplitTaskResult {
   const fSize = file.size
   const splitByte = sizeToByte(splitSize)
 
@@ -137,5 +136,3 @@ export function splitTask(file: UploadFile, splitSize = config.splitSize): Split
 
   return info
 }
-
-// export default split

@@ -25,7 +25,7 @@ const store = new Store<StoreValues>({
     '2.0.0': s => {
       s.delete('cookie' as any)
     },
-    '2.0.1': s => {
+    '2.1.0': s => {
       s.delete('cookies') // 重新登录
     },
   },

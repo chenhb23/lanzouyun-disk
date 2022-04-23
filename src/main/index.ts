@@ -5,18 +5,12 @@ import {Cookie} from 'tough-cookie'
 import store from '../common/store'
 import config from '../project.config'
 import {Application} from './application'
+import {Ipc} from './ipc'
 
 // todo: 根据 platform 显示不同外观
-// console.log('process.platform', process.platform) // darwin, win32
+console.log('process.platform', process.platform) // darwin, win32
 
 const loadURL = isDev ? 'http://localhost:3000' : `file://${path.join(__dirname, '..', 'index.html')}`
-
-type PickEvent<T> = Pick<
-  T,
-  {
-    [P in keyof T]: T[P] extends (event: infer E) => any ? (E extends Electron.IpcMainEvent ? P : never) : never
-  }[keyof T]
->
 
 class App extends Application {
   constructor() {
@@ -26,7 +20,7 @@ class App extends Application {
     })
   }
 
-  protected async ready() {
+  async ready() {
     store.set('isDev', isDev)
     if (!store.get('downloads')) {
       store.set('downloads', app.getPath('downloads'))
@@ -34,15 +28,15 @@ class App extends Application {
     this.createWindow()
   }
 
-  protected closed() {
+  closed() {
     this.mainWindow = null
   }
 
-  protected activate() {
+  activate() {
     if (!this.mainWindow) this.createWindow()
   }
 
-  protected async windowReady(win: Electron.BrowserWindow) {
+  async windowReady(win: Electron.BrowserWindow) {
     const cookie = store.get('cookies', [])?.find(value => value.key === 'phpdisk_info')
     if (cookie && Cookie.fromJSON(cookie).validate()) {
       await this.loadMain(win)
@@ -52,11 +46,11 @@ class App extends Application {
     }
   }
 
-  protected async onLogin(win, detail) {
+  async onLogin(win, detail) {
     await this.loadMain(win)
   }
 
-  protected async onLogout(win: Electron.CrossProcessExports.BrowserWindow) {
+  async onLogout(win: Electron.CrossProcessExports.BrowserWindow) {
     await this.loadAuth(win)
   }
 
@@ -73,4 +67,5 @@ class App extends Application {
   }
 }
 
-new App()
+const electronApp = new App()
+electronApp.install(new Ipc())

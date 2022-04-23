@@ -9,13 +9,14 @@ import type {Progress} from 'got/dist/source/core'
 import throttle from 'lodash.throttle'
 
 import Task, {TaskStatus} from './AbstractTask'
-import config from '../../project.config'
+import project from '../../project.config'
 import {createSpecificName, getFileType, sizeToByte} from '../../common/util'
 import {isExistByName} from '../../common/core/isExist'
 import {mkdir} from '../../common/core/mkdir'
 import {splitTask} from '../../common/split'
 import {message} from '../component/Message'
 import * as http from '../../common/http'
+import {config} from './Config'
 
 export type UploadFile = {
   size: File['size']
@@ -117,7 +118,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
     this.on('finish', info => {
       this.remove(info.file.path)
     })
-    this.on('finish-task', (task, subTask) => {
+    this.on('finish-task', task => {
       // delete this.taskSignal[resolve(info.file.path, task.name)]
       if (task.tasks.every(item => item.status === TaskStatus.finish)) {
         this.emit('finish', task)
@@ -172,7 +173,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
       if (file.size <= sizeToByte(config.maxSize)) {
         let supportName = file.name
         let type = file.type
-        if (config.supportList.every(ext => !file.path.endsWith(`.${ext}`))) {
+        if (project.supportList.every(ext => !file.path.endsWith(`.${ext}`))) {
           supportName = createSpecificName(supportName)
           type = getFileType(supportName)
         }
@@ -190,7 +191,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
         if (!subFolderId) {
           subFolderId = await mkdir(options.folderId, file.name)
         }
-        const result = splitTask(file)
+        const result = splitTask(file, config.splitSize)
         task.tasks.push(
           ...result.splitFiles.map(value => ({
             name: value.name,

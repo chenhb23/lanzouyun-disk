@@ -3,7 +3,6 @@ import {ScrollView} from '../component/ScrollView'
 import {Icon} from '../component/Icon'
 import {Button} from '../component/Button'
 import {splitTask} from '../../common/split'
-import projectConfig from '../../project.config'
 import {useLoading} from '../hook/useLoading'
 import {split} from '../../common/merge'
 import './SplitMerge.css'
@@ -11,8 +10,8 @@ import {byteToSize} from '../../common/util'
 import Table from '../component/Table'
 import {message} from '../component/Message'
 import path from 'path'
-import electron from 'electron'
-import IpcEvent from '../../common/IpcEvent'
+import {config} from '../store/Config'
+import electronApi from '../electronApi'
 
 export default function SplitMerge() {
   const [splitInfo, setSplitInfo] = useState<ReturnType<typeof splitTask>>()
@@ -21,7 +20,7 @@ export default function SplitMerge() {
 
   const setSplitFile = useCallback((file?: File) => {
     if (file) {
-      const task = splitTask(file, projectConfig.splitSize)
+      const task = splitTask(file, config.splitSize)
       setSplitInfo(task)
       setOutput(`${task.file.path}.split`)
     } else {
@@ -57,16 +56,13 @@ export default function SplitMerge() {
       FooterComponent={
         <div className={'footer'}>
           <span className='output'>
-            <span onClick={() => electron.ipcRenderer.invoke(IpcEvent.shell, 'showItemInFolder', output)}>
-              输出路径:{' '}
-            </span>
+            <span onClick={() => electronApi.showItemInFolder(output)}>输出路径: </span>
             <span
-              onClick={() => {
-                electron.ipcRenderer.invoke(IpcEvent.dialog).then((value: Electron.OpenDialogReturnValue) => {
-                  if (!value.canceled) {
-                    setOutput(value.filePaths[0])
-                  }
-                })
+              onClick={async () => {
+                const value = await electronApi.showOpenDialog({properties: ['openDirectory']})
+                if (!value.canceled) {
+                  setOutput(value.filePaths[0])
+                }
               }}
             >
               {output}

@@ -1,4 +1,4 @@
-export default {
+const project = {
   lanzouUrl: 'https://pc.woozooo.com',
   page: {
     home: '/mydisk.php',
@@ -7,12 +7,6 @@ export default {
   api: {
     task: '/doupload.php',
   },
-  // 大于 maxSize 按 splitSize 分割
-  // splitSize: '47m', // 错误7079 - Math.floor(50000000 / 1024 / 1024)
-  splitSize: '95m', // Math.floor(100000000 / 1024 / 1024)
-  maxSize: '95m', // Math.floor(100000000 / 1024 / 1024)
-  // splitSize: '2m', // 测试
-  // maxSize: '5m', // 测试
   supportList: [
     'doc',
     'docx',
@@ -80,5 +74,9 @@ export default {
     'bdi',
     'ssf',
     'it',
+    'pkg',
+    'cfg',
   ],
 }
+
+export default project

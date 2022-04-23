@@ -64,18 +64,21 @@ const App = observer(() => {
 
           <div className='logout'>
             <div title={download.dir} className='downFolder'>
-              <span onClick={() => electron.ipcRenderer.invoke(IpcEvent.shell, 'showItemInFolder', download.dir)}>
+              <span
+                onClick={async () => {
+                  await electronApi.showItemInFolder(download.dir)
+                }}
+              >
                 下载地址：
               </span>
               <Icon iconName={'folder'} />
               <span
-                onClick={() => {
-                  electron.ipcRenderer.invoke(IpcEvent.dialog).then((value: Electron.OpenDialogReturnValue) => {
-                    if (!value.canceled) {
-                      download.dir = value.filePaths[0]
-                      store.set('downloads', download.dir)
-                    }
-                  })
+                onClick={async () => {
+                  const value = await electronApi.showOpenDialog({properties: ['openDirectory']})
+                  if (!value.canceled) {
+                    download.dir = value.filePaths[0]
+                    store.set('downloads', download.dir)
+                  }
                 }}
               >
                 {basename(download.dir)}

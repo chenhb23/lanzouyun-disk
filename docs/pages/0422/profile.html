@@ -1,0 +1,515 @@
+<html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="renderer" content="webkit"/>
+<title>User's Control Panel</title>
+<link href="/mystyle.css?v=202004290998007" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="/includes/js/jquery-1.7.2.min.js"></script>
+<script type="text/javascript" src="/includes/js/webuploader2.js"></script>
+<script type="text/javascript" src="includes/js/comm.js?v27"></script>
+<script type="text/javascript" src="includes/js/jquery.qrcode.min.js"></script>
+</head>
+<body><script type="text/javascript">var tpl_dir = 'templates/default/';</script>
+<script type="text/javascript" src="includes/js/jquery.js"></script>
+<script type="text/javascript" src="includes/js/common.js"></script>
+<script type="text/javascript" src="includes/js/highslide.js"></script>
+<script type="text/javascript">
+hs.outlineType = 'rounded-white';
+hs.wrapperClassName = 'draggable-header';
+</script>
+<style>
+#free{display: none;}
+#frees{display: none;}
+</style>
+
+<div id="container">
+<div class="pro">
+<div class="mydisk_file_bar">
+<a href="mydisk.php?item=profile&action=mypower" target="mainframe" class="diskdao3">我的权限</a>
+<a href="mydisk.php?item=profile&action=goods" target="mainframe" id="kvip" class="diskdao">财务充值</a>
+<a href="mydisk.php?item=profile&action=buygoods" target="mainframe" id="kvips" class="diskdao">文件升级</a>
+<a href="mydisk.php?item=profile&action=exchange" target="mainframe" id="free" class="diskdao">下载提现</a>
+<a href="mydisk.php?item=profile&action=orders" target="mainframe" id="frees" class="diskdao">提现记录</a>
+<a href="mydisk.php?item=buddy&action=invite" target="mainframe" class="diskdao mobdao">邀请注册</a>
+<a href="mydisk.php?item=profile&action=huiyuan" target="mainframe" id="kvip" class="diskdao">会员个性化</a>
+</div>
+<div class="tips_box"><img class="img_light" src="images/light.gif" align="absmiddle" /> <b>提示: </b>
+<span class="txtgray">当前存储统计，账号级别，常规项目统计数等。</span>
+</div>
+
+
+</div>
+
+
+
+<div id="info1">
+<div class="mf" style="display:none">
+<div class="mf1">我的会员: </div>
+<div class="mf2"><b><font color="#FF8800" size="5">L0</font></b></div>
+</div>
+<div class="mf">
+<div class="mf1">权限: </div>
+<div class="mf2"><b>普 </b> ， <font color="#FF8800" size="5">0</font> 级 <span class="txtgray">( <img src="images/gr.gif" align="center" border="0" />升级加速已开启 )</span> <span class="txtgray">( <img src="images/gr.gif" align="center" border="0" />优质下载线路 )</span> <span class="txtgray">( <img src="images/gr.gif" align="center" border="0" />大客户特权已开启 )</span></div>
+</div>
+
+<div class="mf" id="domaindiyviewb">
+<div class="mf1">个性域名: </div>
+<div class="mf2">
+<div id="domaindiynow">https://wwn.lanzouf.com</div>
+<span id="domaindiyedit"><span onclick="domainedit()" class="btn">修改</span> <span onclick="domainlist()" class="btn" id="domainlist">切换</span></span>
+<div id="domaindiyview">
+<div class="domaindiy" id="domaindiy">
+
+</div>
+</div>
+<br style="clear:both;">
+
+<div id="domaindiyadd">
+<div class="f_cl" onclick="domaincl()">X</div>
+<div class="domainshow">新增个性域名</div>
+<div class="domaindiyinput">
+https://<input type="text" class="domaindiy_ipt k1" id="udomain" class="" value="" placeholder="个性输入">.lanzouf.com</div>
+<div class="domainshow" style="color: #cc4829;">每个用户可以设置1个域名，设置后不可以修改</div>
+<div class="btn domaindiybtn"  onclick="domainsub()">提交</div>
+</div>
+
+<div class="show5">
+切换个性域名，之前已经分享的连接继续有效</div>
+
+</div>
+</div> 
+<style>
+#domaindiynow{}
+#domaindiyedit{}
+#domaindiyedit span{    display: inline-block;
+    width: 68px;
+    height: 20px;
+    text-align: center;
+    color: #555;
+    line-height: 20px;
+    font-weight: 400;
+    cursor: default;
+    margin-top: 7px;}
+#domaindiyview{display:none;}
+.domaindiy{    border: 1px solid #eee;max-width: 500px;line-height: 28px;border-bottom:0;}
+.domaindiylist{clear:both;border-bottom: 1px solid #eee;}
+.domaindiylist:hover{    background: #eee;}
+.domaindiyleft{float: left;    padding-left: 10px;    min-height: 28px;}
+.domaindiyright{    float: right;    padding-right: 10px;    min-height: 28px;    cursor: pointer;    color: #37f;}
+#domaindiyadd{display:none;
+box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    padding: 10px 20px;
+    position: absolute;
+    margin-left: 50px;
+    min-width: 270px;
+    background: rgb(255, 255, 255);}
+.domaindiyinput{    height: 50px;
+    line-height: 50px;}
+.domaindiy_ipt{height: 35px;
+    width: 150px;
+    margin: 0 5px;
+    font-size: 14px;}
+.domainshow{color: #888;
+    font-size: 12px;
+    padding-top: 10px;padding-bottom: 20px;}
+.domaindiybtn{text-align: center;
+    line-height: 34px;
+    float: right;margin-bottom: 10px;}
+</style>
+<div class="mf">
+<div class="mf1">账号活跃度: </div>
+<div class="mf2"><span title="0级"><span class="f10">N/A</span></span><div class="rank_info" title="距离下一级还差经验 50">
+	<div style="background:#FFD360;width:0%;"><span style="font-size:9px">0/<b>50</b></span></div>
+    </div></div>
+</div>
+<div class="mf">
+<div class="mf1">签约账户: </div>
+<div class="mf2">
+<img src="images/wr.gif" align="center" border="0" /> <span class="txtgray">未签约</span>
+</div>
+</div>
+
+
+<div class="mf">
+<div class="mf1">增值服务: </div>
+<div class="mf2"><img src="images/wr.gif" align="center" border="0" /> <span class="txtgray">状态未知</span></div>
+</div>
+<div class="mf">
+<div class="mf1">最近登录时间: </div>
+<div class="mf2">2022-04-21 23:09:10</div>
+</div>
+<div class="mf">
+<div class="mf1">密码修改: </div>
+<div class="mf2"><span class="txtgray"><a href="/mydisk.php?item=profile&action=password">立即修改</a></span></div>
+</div>
+<div class="mf">
+<div class="mf1">安全验证: </div>
+<div class="mf2"><span id="phone_id">188****3429</span>  <span class="txtgray"><a style="color: #08f;" href="javascript:phoneedit();">更换</a> </span>
+
+<div id="phonediv">
+<div class="f_cl" onclick="phoneeditcl()">X</div>
+<div id="phonediv_1">
+<div class="show5">当前手机号</div>
+<input type="text" class="k1 showipt" id="phoneold" name="phoneold" value="" maxlength="18"/>
+<div class="show5">新手机号</div>
+<input type="text" class="k1 showipt" id="phonenew" name="phonenew" value="" maxlength="18"/>
+</div>
+<div id="phonediv_2">
+<div class="show5">输入接收到的验证码</div>
+<input type="text" class="k1 showipt" id="phonecode" name="phonecode" value="" maxlength="18"/>
+</div>
+<div class="show5">仅修改接收短信手机号（用户名不支持修改）</div>
+<div class="show2"><input type="button" id="" class="btn nophone7 titinput" value="确认" onclick="phonesub()"/></div>
+<input type="hidden" name="phonetype" value="1" id="phonetype"/>
+</div>
+<style>
+#phonediv{display:none;
+box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    padding: 10px 20px;
+    position: absolute;
+    margin-left: 50px;
+    min-width: 270px;
+    background: rgb(255, 255, 255);}
+#phonediv_2{display:none;}
+.show5{color: #888;
+    font-size: 12px;
+    padding-top: 10px;}
+.show2{    padding-top: 20px;
+    text-align: right;}
+</style>
+</div>
+</div>
+<div class="mf" style="display:none;">
+<div class="mf1">文件数: </div>
+<div class="mf2"><font color="#FF8800" size="5"></font> 个</div>
+</div>
+<div class="mf" style="display:none;">
+<div class="mf1">文件夹数: </div>
+<div class="mf2"><font color="#FF8800" size="5"></font> 个</div>
+</div>
+<div class="mf">
+<div class="mf1">下载流量: </div>
+<div class="mf2"><img src="images/gr.gif" align="center" border="0" /> 不限制</div>
+</div>
+
+<div class="mf">
+<div class="mf1">存储空间: </div>
+<div class="mf2"><img src="images/gr.gif" align="center" border="0" /> 不限制</div>
+</div>
+<div class="mf">
+<div class="mf1">允许上传类型: </div>
+<div class="mf2">doc,docx,zip,rar,apk,ipa,txt,exe,7z,e,z,ct,ke,cetrainer,db,tar,pdf,w3x<br>epub,mobi,azw,azw3,osk,osz,xpa,cpk,lua,jar,dmg,ppt,pptx,xls,xlsx,mp3<br>ipa,iso,img,gho,ttf,ttc,txf,dwg,bat,imazingapp,dll,crx,xapk,conf<br>deb,rp,rpm,rplib,mobileconfig,appimage,lolgezi,flac<br>cad,hwt,accdb,ce,xmind,enc,bds,bdi,ssf,it<br>pkg,cfg</div>
+</div>
+<div class="mf">
+<div class="mf1">文件评论:</div>
+<div class="mf2"><img src="images/wr.gif" align="center" border="0" /> <span class="txtgray">状态未知</span></div>
+</div>
+<div class="mf">
+<div class="mf1">文件"点赞"/"踩": </div>
+<div class="mf2"><img src="images/wr.gif" align="center" border="0" /> <span class="txtgray">状态未知</span></div>
+</div>
+<div class="mf">
+<div class="mf1">单个文件大小: </div>
+<div class="mf2"><font color="#FF8800" size="5">
+100M
+</font>  <span class="txtgray"><a href="/mydisk.php?item=profile&action=buygoods">升级</a></span></div>
+</div>
+
+<div class="mf">
+<div class="mf1">云存储统计: </div>
+<!--<div class="mf2"><img src="images/ds.gif" align="center" border="0" /> 已用 <font color="#FF8800" size="5">0.0 B</font> / 不限 (<b> 0% </b>)</div>-->
+<div class="mf2"><img src="images/ds.gif" align="center" border="0" /> 已用 <font color="#FF8800" size="5">不限</font> / 不限 (<b> 0% </b>)</div>
+</div>
+</div>
+
+
+
+<div id="info" style="display:none">
+
+<form action="mydisk.php?item=profile" method="post" onSubmit="return chkform(this);">
+
+<input type="hidden" name="action" value="password"/>
+<input type="hidden" name="task" value="codepwd"/>
+<input type="hidden" name="formhash" value="3a24afaa" />
+<input type="hidden" name="codeoff" value="0" id="codeoff"/>
+
+<div id="pwd1">
+<div class="pwd1">开启密码: </div>
+<div class="pwd2">
+<div id="off" onclick="off()"><div class="off1"></div></div>
+<div id="on" onclick="on()" style="display:none"><div class="on1"></div></div>
+<style>#pwd2{display:none}</style>
+</div>
+</div>
+
+<div id="pwd2">
+<div class="pwd1">密码: </div>
+<div class="pwd2"><input type="text" class="k1 mk1 mq3 k112" name="code" value="" maxlength="18" />
+<div id="pwd31">密码仅可使用数字英文字符</div>
+</div>
+</div>
+
+<div class="mf">
+<div class="mf1">&nbsp;</div>
+<div class="mf2"><input type="submit" class="btn mbtn" value="确认" />
+</div>
+</div>
+
+</form>
+<style>
+#pwd1{padding: 25px 26px;}
+#pwd2{padding: 25px 26px;}
+.pwd1{width: 153px;text-align: right;}
+.pwd2{margin-left: 199px;margin-top: -23px;}
+#pwd31{color: #888;font-size: 12px;}
+#off{background: #eee;height: 26px;width: 60px;border-radius: 30px;box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.15);margin-top: 3px;}
+#on{background: #4dbf08;height: 26px;width: 60px;border-radius: 30px;box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.15);margin-top: 3px;}
+.off{background: #eee;height: 26px;width: 60px;border-radius: 30px;box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.15);margin-top: 3px;}
+.on{background: #4dbf08;height: 26px;width: 60px;border-radius: 30px;box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.15);margin-top: 3px;}
+.off1{border-radius: 50%;width: 25px;background: #fff;height: 25px;box-shadow: 2px 2px 1px rgba(0, 0, 0, 0.15);}
+.on1{border-radius: 50%;width: 25px;background: #fff;height: 25px;
+box-shadow: 2px 2px 1px rgba(0, 0, 0, 0.15);    float: right;}
+
+#infosm{display: none;border-radius: 8px;box-shadow: rgba(0, 0, 0, 0.298039) 0px 0px 5px;padding: 20px;position: absolute;margin-left: 100px;min-width: 270px;background: rgb(255, 255, 255);}
+.titbox{}
+.titr{padding-top: 18px;padding-bottom: 5px;}
+.titipt{padding-top: 18px;padding-bottom: 5px;text-align: right;}
+
+@media (max-width: 768px){
+#pwd1{border-top: 1px solid #f1f1f1;    padding: 20px 18px;clear: both;padding: 20px 18px;}
+#pwd2{border-top: 1px solid #f1f1f1;    padding: 20px 18px;clear: both;padding: 20px 18px;}
+#pwd31{text-align: right;}
+.pwd1{text-align: left;}
+.pwd2{float: right;}
+.k112{border: 0;}
+#infosm{text-align: left;margin-left: 0;position: fixed;right: 15px;left: 15px;top: 30px;}
+#showname{text-align: left;margin-left: 0;position: fixed;right: 15px;left: 15px;top: 30px;}
+
+.titinput{width: 100%;margin-bottom: 8px;}
+}
+@media (max-width: 768px){
+#phonediv{    margin: auto;}
+#domaindiyadd{    margin: auto;}
+}
+</style>
+<script type="text/javascript">
+function utcn(){
+	url ='https://wwn.lanzouf.com/u/18817833429?t2';
+	$.ajax({
+			type : 'post',
+			url : '/tcn.php?url='+url,
+			data : { 't':1 },
+			dataType : 'json',
+			success:function(msg){
+				if(msg.zt == '1'){
+					//success
+					url ='<a href='+ msg.info +' target=_blank>'+ msg.info +'</a>';
+					$('div#utcn').html(url);
+				}else{
+					//w_info('获取失败，请重试');
+				}
+			},
+			error:function(){
+				//w_info('获取失败，请重试');
+			}
+	
+	});
+};
+function domainedit(){
+	$("div#domaindiyadd").show(100);
+};
+function domaincl(){
+	$("div#domaindiyadd").hide(100);
+};
+function domainsub(){
+	var domainadd = document.getElementById('udomain').value;
+	$.ajax({
+			type : 'post',
+			url : '/doupload.php',
+			data : { 'task':48,'domain':domainadd},
+			dataType : 'json',
+			success:function(msg){
+				if(msg.zt == '1'){
+					document.getElementById("domaindiyadd").style.display='none';
+					$("#domaindiynow").html(msg.text);
+					w_info(msg.info);
+				}else{
+					w_info(msg.info);
+				}
+			},
+			error:function(){
+				//document.getElementById("taocansub").value = '确认';
+				
+			}
+	
+		});
+};
+function domainlist(){
+		$("div#domaindiyview").show(100);
+		//$("#domainlist").hide(100);
+		$.ajax({
+			type : 'post',
+			url : '/doupload.php',
+			data : { 'task':49,'type':1 },
+			dataType : 'json',
+			success:function(msg){
+				if(msg.zt == '1'){
+					$("#domainlist").hide(100);
+					var data = msg.text;
+					$.each(data, function(i, n){
+						var str;//
+						str ="<div class=domaindiylist><div class=domaindiyleft>"+ n.domain +"</div><div onclick=domainnset("+ n.id +") class=domaindiyright>设为默认</div><br style=clear:both;></div>";
+						$(str).appendTo("#domaindiy");
+					});
+				}else{
+					w_info(msg.info);
+				}
+			},
+			error:function(){
+				w_info(msg.info);
+			}
+	
+		});
+};
+function domainnset(str){
+	$.ajax({
+			type : 'post',
+			url : '/doupload.php',
+			data : { 'task':49,'type':2,'domainid':str},
+			dataType : 'json',
+			success:function(msg){
+				if(msg.zt == '1'){
+					//document.getElementById("domaindiy").style.display='none';
+					$("#domaindiynow").html(msg.text);
+					w_info(msg.info);
+				}else{
+					w_info(msg.info);
+				}
+			},
+			error:function(){
+				//document.getElementById("taocansub").value = '确认';
+				
+			}
+	
+		});
+};
+function phoneedit(){
+	$("div#phonediv").show(100);
+	document.getElementById("phonetype").value = '1';
+};
+function phoneeditcl(){
+	$("div#phonediv").hide(100);
+};
+function phonesub(){
+	var phoneold = document.getElementById('phoneold').value;
+	var phonenew = document.getElementById('phonenew').value;
+	var phonetype = document.getElementById('phonetype').value;
+	var phonecode = document.getElementById('phonecode').value;
+	$.ajax({
+			type : 'post',
+			url : '/doupload.php',
+			data : { 'task':43,type:phonetype,phoneold:phoneold,phonenew:phonenew,phonecode:phonecode },
+			dataType : 'json',
+			success:function(msg){
+				if(msg.zt == '1'){
+					document.getElementById("phonediv_1").style.display='none';
+					document.getElementById("phonediv_2").style.display='block';
+					document.getElementById("phonetype").value = '2';
+					w_info(msg.info);
+				}else if(msg.zt == '2'){
+					$("div#phonediv").hide(100);
+					$("#phone_id").html(phonenew);
+					w_info(msg.info);
+				}else{
+					w_info(msg.info);
+				}
+			},
+			error:function(){
+				//document.getElementById("taocansub").value = '确认';
+				
+			}
+	
+		});
+};
+function titon(){
+	$("div#infosm").show(100);
+};
+function titcl(){
+	$("div#infosm").hide(100);
+};
+function codepwd(){
+	document.getElementById("info1").style.display='none';
+	document.getElementById("info").style.display='block';
+
+};
+function off(){
+	document.getElementById("codeoff").value = 1
+	document.getElementById("off").style.display='none';
+	document.getElementById("on").style.display='block';
+	document.getElementById("pwd2").style.display='block';
+};
+function on(){
+	document.getElementById("codeoff").value = 0
+	document.getElementById("off").style.display='block';
+	document.getElementById("on").style.display='none';
+	document.getElementById("pwd2").style.display='none';
+	
+};
+
+
+
+function chkform(o){
+if(o.code.value.strtrim().length >16){
+		//$('#e_name').addClass('reg');
+		document.getElementById('pwd31').innerHTML = '不能超过16个字'
+		o.code.focus();
+		return false;
+	}
+
+}
+function off_s(){
+	document.getElementById("share").value = 1;
+	document.getElementById("off_s").style.display='none';
+	document.getElementById("on_s").style.display='block';
+	sharego();
+};
+function on_s(){
+	document.getElementById("share").value = 0;
+	document.getElementById("off_s").style.display='block';
+	document.getElementById("on_s").style.display='none';
+	sharego();
+	
+};
+function sharego(){
+	var share = document.getElementById('share').value;
+	$.ajax({
+			type : 'post',
+			url : '/doupload.php',
+			data : { 'task':51,'share':share },
+			dataType : 'json',
+			success:function(msg){
+				if(msg.zt == '1'){
+					w_info(msg.info);
+				}else{
+					w_info(msg.info);
+				}
+			},
+			error:function(){
+				w_info("失败，请重试");
+			}
+	
+		});
+};
+</script>
+</div>
+
+
+
+</div>
+
+<div id="wring"></div>
+<script type="text/javascript" src="/img/top.js"></script>
+<div style="display:none"><script src="https://s95.cnzz.com/z_stat.php?id=1253610886&web_id=1253610886" language="JavaScript"></script></div>
+</body>
+</html>
+
+
