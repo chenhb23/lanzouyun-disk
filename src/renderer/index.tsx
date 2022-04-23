@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOMClient from 'react-dom/client'
-import App from './renderer/App'
-import AuthGate from './renderer/AuthGate'
+import App from './App'
+import AuthGate from './AuthGate'
 
 const root = ReactDOMClient.createRoot(document.getElementById('root'))
 root.render(

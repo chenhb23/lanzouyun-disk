@@ -2,7 +2,7 @@
   "name": "lanzouyun-pan",
   "version": "2.0.1",
   "private": true,
-  "main": "build/electron.js",
+  "main": "build/main/index.js",
   "homepage": "./",
   "dependencies": {
     "cheerio": "^1.0.0-rc.10",

@@ -8,13 +8,10 @@ import {Icon} from '../component/Icon'
 import {byteToSize} from '../../common/util'
 import {download} from '../store'
 import {TaskStatus} from '../store/AbstractTask'
-import {useLoading} from '../hook/useLoading'
 import Table from '../component/Table'
 import path from 'path'
 
 const Download = observer(() => {
-  const {loading, listener} = useLoading()
-
   return (
     <ScrollView
       HeaderComponent={
@@ -63,15 +60,11 @@ const Download = observer(() => {
                     <Button
                       icon={item.status === TaskStatus.pending ? 'pause' : 'start'}
                       type={'icon'}
-                      loading={
-                        // loading['download.pause'] ||
-                        loading['download.start']
-                      }
                       onClick={() => {
                         if (item.status === TaskStatus.pending) {
                           download.pause(item.url)
                         } else {
-                          listener(download.start(item.url, true), 'download.start')
+                          download.start(item.url, true)
                         }
                       }}
                     />
