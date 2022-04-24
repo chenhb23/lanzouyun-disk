@@ -7,26 +7,14 @@ const project = {
   api: {
     task: '/doupload.php',
   },
-  supportList: [
-    'doc',
-    'docx',
-    'zip',
-    'rar', // octet-stream
-    'apk',
-    'ipa',
-    'txt',
-    'exe',
-    '7z', // 上传 7z 文件导致：错误7072（切片不压缩导致文件不完整？，但改了 zip 的名字 就可以上传）
-    'e',
-    'z',
+  supportListStr:
+    'doc,docx,zip,rar,apk,ipa,txt,exe,7z,e,z,ct,ke,cetrainer,db,tar,pdf,w3x,epub,mobi,azw,azw3,osk,osz,xpa,cpk,lua,jar,dmg,ppt,pptx,xls,xlsx,mp3,ipa,iso,img,gho,ttf,ttc,txf,dwg,bat,imazingapp,dll,crx,xapk,conf,deb,rp,rpm,rplib,mobileconfig,appimage,lolgezi,flac,cad,hwt,accdb,ce,xmind,enc,bds,bdi,ssf,it,pkg,cfg',
+  // https://en.wikipedia.org/wiki/List_of_file_signatures
+  safeSuffixList: [
     'ct',
     'ke',
-    'cetrainer',
-    'db',
-    'tar',
-    'pdf',
+    // 'cetrainer', // 不能上传
     'w3x',
-    'epub',
     'mobi',
     'azw',
     'azw3',
@@ -35,41 +23,22 @@ const project = {
     'xpa',
     'cpk',
     'lua',
-    'jar',
-    'dmg',
-    'ppt',
-    'pptx',
-    'xls',
-    'xlsx',
-    'mp3',
-    'ipa',
-    'iso',
-    'img',
     'gho',
-    'ttf',
     'ttc',
     'txf',
-    'dwg',
     'bat',
     'imazingapp',
-    'dll',
-    'crx',
     'xapk',
     'conf',
-    'deb',
     'rp',
-    'rpm',
     'rplib',
     'mobileconfig',
     'appimage',
     'lolgezi',
-    'flac',
     'cad',
     'hwt',
-    'accdb',
     'ce',
     'xmind',
-    'enc',
     'bds',
     'bdi',
     'ssf',
@@ -78,5 +47,7 @@ const project = {
     'cfg',
   ],
 }
+
+export const supportList = project.supportListStr.split(',')
 
 export default project

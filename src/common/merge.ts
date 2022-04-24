@@ -15,7 +15,7 @@ export async function merge(files: string[], target: string) {
 
 export async function split(tasks: SplitTaskFile[], dir: string) {
   await fs.ensureDir(dir)
-  for (const [index, task] of tasks.entries()) {
+  for (const task of tasks) {
     const fr = task.endByte
       ? fs.createReadStream(task.sourceFile.path, {start: task.startByte, end: task.endByte})
       : fs.createReadStream(task.sourceFile.path)
@@ -23,7 +23,7 @@ export async function split(tasks: SplitTaskFile[], dir: string) {
     await pipeline(
       //
       fr,
-      fs.createWriteStream(path.join(dir, task.name), {flags: index === 0 ? 'w' : 'a'})
+      fs.createWriteStream(path.join(dir, task.name))
     )
   }
 }

@@ -47,8 +47,16 @@ const Download = observer(() => {
           },
           {
             title: '大小',
+            width: 170,
             render: item => (
-              <Observer>{() => <span>{`${byteToSize(item.resolve)} / ${byteToSize(item.total)}`}</span>}</Observer>
+              <Observer>
+                {() => (
+                  <span>
+                    {`${byteToSize(item.resolve)} / ${byteToSize(item.total)}`} (
+                    {((item.resolve / item.total) * 100).toFixed(1)}%)
+                  </span>
+                )}
+              </Observer>
             ),
           },
           {

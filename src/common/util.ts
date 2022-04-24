@@ -1,4 +1,4 @@
-import config from '../project.config'
+import config, {supportList} from '../project.config'
 import {Request} from 'got'
 
 export const delay = (ms = 1000) => new Promise(resolve => setTimeout(resolve, ms))
@@ -43,30 +43,25 @@ export function byteToSize(byte: number) {
   if (byte < sizeToByte('1t')) return `${formatSize(byte, sizeToByte('1g'))} G`
 }
 
-const suffix = config.supportList.filter(value => {
-  const length = value.length
-  return length >= 2 && !['zip', 'tar', 'rar', '7z', 'txt', 'conf', 'bat'].includes(value)
-})
 // const suffix = ['zip', 'tar', 'rar']
 function getRandomItem(list: string[]) {
   return list[Math.round(Math.random() * (list.length - 1))]
 }
 // 前面不带 .
 export function getSuffix() {
-  const shortList = config.supportList.filter(value => value.length <= 3)
-  return `${getRandomItem(shortList)}.${getRandomItem(suffix)}`
+  return `${getRandomItem(config.safeSuffixList)}.${getRandomItem(config.safeSuffixList)}`
 }
 
 // todo: delete
-const suffixTypeMap = {
-  zip: 'application/zip',
-  tar: 'application/x-tar',
-  rar: 'application/x-rar',
-}
-export function getFileType(filename: string, defaultType = 'application/octet-stream') {
-  const ext = filename.replace(/.+\.(\w+)$/, '$1')
-  return suffixTypeMap[ext] || defaultType
-}
+// const suffixTypeMap = {
+//   zip: 'application/zip',
+//   tar: 'application/x-tar',
+//   rar: 'application/x-rar',
+// }
+// export function getFileType(filename: string, defaultType = 'application/octet-stream') {
+//   const ext = filename.replace(/.+\.(\w+)$/, '$1')
+//   return suffixTypeMap[ext] || defaultType
+// }
 
 /**
  * whether it is special file
@@ -79,11 +74,12 @@ export function isSpecificFile(name: string) {
     return !/\d$/.test(name)
   }
 
-  if (config.supportList.some(value => name.endsWith(`.${value}`))) {
+  if (supportList.some(value => name.endsWith(`.${value}`))) {
     name = name.replace(/\.\w+?$/, '')
-    const ends = config.supportList.find(value => name.endsWith(value))
+    const ends = supportList.find(value => name.endsWith(value))
     if (ends) {
       name = name.replace(new RegExp(`${ends}$`), '')
+      // todo: 判断是否还有后缀
       return !/\d$/.test(name)
     }
   }

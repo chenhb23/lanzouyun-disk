@@ -9,8 +9,8 @@ import type {Progress} from 'got/dist/source/core'
 import throttle from 'lodash.throttle'
 
 import Task, {TaskStatus} from './AbstractTask'
-import project from '../../project.config'
-import {createSpecificName, getFileType, sizeToByte} from '../../common/util'
+import project, {supportList} from '../../project.config'
+import {createSpecificName, sizeToByte} from '../../common/util'
 import {isExistByName} from '../../common/core/isExist'
 import {mkdir} from '../../common/core/mkdir'
 import {splitTask} from '../../common/split'
@@ -173,9 +173,10 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
       if (file.size <= sizeToByte(config.maxSize)) {
         let supportName = file.name
         let type = file.type
-        if (project.supportList.every(ext => !file.path.endsWith(`.${ext}`))) {
+        if (supportList.every(ext => !file.path.endsWith(`.${ext}`))) {
           supportName = createSpecificName(supportName)
-          type = getFileType(supportName)
+          // type = getFileType(supportName)
+          type = null
         }
         task.tasks.push({
           name: supportName,
@@ -196,7 +197,8 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
           ...result.splitFiles.map(value => ({
             name: value.name,
             size: value.size,
-            type: getFileType(value.name),
+            // type: getFileType(value.name),
+            type: null,
             sourceFile: value.sourceFile,
             status: TaskStatus.ready,
             folderId: subFolderId,

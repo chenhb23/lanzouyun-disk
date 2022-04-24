@@ -50,11 +50,13 @@ const Upload = observer(() => {
           },
           {
             title: '大小',
+            width: 170,
             render: item => (
               <Observer>
                 {() => (
                   <span>
-                    {byteToSize(item.resolve)} / {byteToSize(item.file.size)}
+                    {byteToSize(item.resolve)} / {byteToSize(item.file.size)} (
+                    {((item.resolve / item.file.size) * 100).toFixed(1)}%)
                   </span>
                 )}
               </Observer>
