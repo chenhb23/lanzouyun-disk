@@ -9,10 +9,10 @@ const electronApi: ElectronApi = {
     ipcRenderer.send(IpcEvent.logout)
   },
   showItemInFolder(fullPath: string) {
-    return ipcRenderer.invoke(IpcEvent.shell_showItemInFolder, fullPath)
+    return ipcRenderer.invoke(IpcEvent['shell:showItemInFolder'], fullPath)
   },
   showOpenDialog(options) {
-    return ipcRenderer.invoke(IpcEvent.dialog_showOpenDialog, options)
+    return ipcRenderer.invoke(IpcEvent['dialog:showOpenDialog'], options)
   },
 }
 

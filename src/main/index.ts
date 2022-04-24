@@ -6,6 +6,7 @@ import store from '../common/store'
 import config from '../project.config'
 import {Application} from './application'
 import {Ipc} from './ipc'
+import {AppMenu} from './menu'
 
 // todo: 根据 platform 显示不同外观
 console.log('process.platform', process.platform) // darwin, win32
@@ -69,3 +70,6 @@ class App extends Application {
 
 const electronApp = new App()
 electronApp.install(new Ipc())
+if (!isDev) {
+  electronApp.install(new AppMenu())
+}

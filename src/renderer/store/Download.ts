@@ -325,6 +325,10 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
   async initTask(task: DownloadTask) {
     if (task.tasks?.length) return
     const {name, type, list} = await lsShare(task)
+    if (!list.length) {
+      throw new Error('列表为空！')
+    }
+
     task.urlType = type
     if (!task.name) {
       task.name = name

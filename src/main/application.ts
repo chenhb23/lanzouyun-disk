@@ -108,18 +108,12 @@ export abstract class Application {
   createWindow() {
     this.mainWindow = new BrowserWindow({
       width: 1400,
-      // height: 800,
       height: 900,
-      // minWidth: 900,
-      // minHeight: 600,
-      // autoHideMenuBar: true,
-      titleBarStyle: 'hidden',
       webPreferences: {
         // preload: path.resolve(__dirname, 'main/preload.js'),
         webSecurity: false, // 不使用网页安全性，跨域
         nodeIntegration: true, // 开启后可在渲染线程 require()
         contextIsolation: false,
-        // nativeWindowOpen: true,
       },
     })
   }

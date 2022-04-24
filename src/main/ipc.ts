@@ -23,8 +23,8 @@ export class Ipc implements Extension {
 
   install(instance: Application) {
     this.app = instance
-    ipcMain.handle(IpcEvent.dialog_showOpenDialog, this.showOpenDialog)
-    ipcMain.handle(IpcEvent.shell_showItemInFolder, this.showItemInFolder)
+    ipcMain.handle(IpcEvent['dialog:showOpenDialog'], this.showOpenDialog)
+    ipcMain.handle(IpcEvent['shell:showItemInFolder'], this.showItemInFolder)
     ipcMain.on(IpcEvent.logout, this.logout.bind(this))
   }
 }

@@ -1,7 +1,7 @@
 enum IpcEvent {
   // handle
-  dialog_showOpenDialog = 'dialog_showOpenDialog',
-  shell_showItemInFolder = 'shell.showItemInFolder',
+  'dialog:showOpenDialog' = 'dialog:showOpenDialog',
+  'shell:showItemInFolder' = 'shell:showItemInFolder',
 
   // on
   logout = 'logout',

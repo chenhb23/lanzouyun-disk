@@ -48,7 +48,7 @@ h1, h2, h3, h4, h5 {
 .aside {
   background-color: #F6F6F6;
   width: 200px;
-  padding-top: 68px;
+  padding-top: 46px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;

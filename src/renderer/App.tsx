@@ -1,7 +1,6 @@
 import React, {useState} from 'react'
 import {observer} from 'mobx-react'
 import {basename} from 'path'
-import electron from 'electron'
 
 import './component/Icon/lib/iconfont.js'
 import {Menu, MenuItem, MenuProvider} from './component/Menu'
@@ -14,10 +13,11 @@ import Parse from './page/Parse'
 import SplitMerge from './page/SplitMerge'
 import {download, upload} from './store'
 import {Button} from './component/Button'
-import IpcEvent from '../common/IpcEvent'
 import {Icon} from './component/Icon'
 import store from '../common/store'
 import electronApi from './electronApi'
+import {config} from './store/Config'
+
 import './App.css'
 
 const App = observer(() => {
@@ -86,6 +86,7 @@ const App = observer(() => {
             </div>
             <Button
               style={{width: '100%'}}
+              title={`最近登录: ${config.lastLogin}`}
               onClick={() => {
                 electronApi.logout()
               }}

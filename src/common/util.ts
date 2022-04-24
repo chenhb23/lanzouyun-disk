@@ -43,12 +43,11 @@ export function byteToSize(byte: number) {
   if (byte < sizeToByte('1t')) return `${formatSize(byte, sizeToByte('1g'))} G`
 }
 
-const suffix = ['zip', 'tar', 'rar']
-const suffixTypeMap = {
-  zip: 'application/zip',
-  tar: 'application/x-tar',
-  rar: 'application/x-rar',
-}
+const suffix = config.supportList.filter(value => {
+  const length = value.length
+  return length >= 2 && !['zip', 'tar', 'rar', '7z', 'txt', 'conf', 'bat'].includes(value)
+})
+// const suffix = ['zip', 'tar', 'rar']
 function getRandomItem(list: string[]) {
   return list[Math.round(Math.random() * (list.length - 1))]
 }
@@ -58,6 +57,12 @@ export function getSuffix() {
   return `${getRandomItem(shortList)}.${getRandomItem(suffix)}`
 }
 
+// todo: delete
+const suffixTypeMap = {
+  zip: 'application/zip',
+  tar: 'application/x-tar',
+  rar: 'application/x-rar',
+}
 export function getFileType(filename: string, defaultType = 'application/octet-stream') {
   const ext = filename.replace(/.+\.(\w+)$/, '$1')
   return suffixTypeMap[ext] || defaultType
@@ -68,13 +73,13 @@ export function getFileType(filename: string, defaultType = 'application/octet-s
  * 未命名.png.epub.zip
  */
 export function isSpecificFile(name: string) {
-  // 兼容老版本
+  // 兼容 v1 版本
   if (name.endsWith('.lzy.zip')) {
     name = name.replace(/\.lzy\.zip$/, '')
     return !/\d$/.test(name)
   }
 
-  if (suffix.some(value => name.endsWith(`.${value}`))) {
+  if (config.supportList.some(value => name.endsWith(`.${value}`))) {
     name = name.replace(/\.\w+?$/, '')
     const ends = config.supportList.find(value => name.endsWith(value))
     if (ends) {
@@ -102,7 +107,7 @@ export function restoreFileName(name: string) {
  * suffix 无需带 .
  */
 export function createSpecificIndexName(fileName: string, suffix: string, index: number, total: number) {
-  const sign = suffix[suffix.length - 1 - 2]
+  const sign = suffix.split('.').pop()?.[0]
   const padLength = `${total}`.length
   return `${fileName}.${sign}${`${index}`.padStart(padLength, '0')}${suffix}`
 }
