@@ -20,7 +20,7 @@ jobs:
         run: |
           rm yarn.lock
           npm install
-          ls -alh
+          ls -alh node_modules/.bin
           
       - name: Build React
         run: npm run react-build
