@@ -2,7 +2,6 @@
 
 <a href="https://github.com/chenhb23/lanzouyun-disk/releases">![](https://img.shields.io/github/v/release/chenhb23/lanzouyun-disk)</a>
 ![GitHub Release Date](https://img.shields.io/github/release-date/chenhb23/lanzouyun-disk) 
-<a href="https://github.com/chenhb23/lanzouyun-disk/releases">![GitHub all releases](https://img.shields.io/github/downloads/chenhb23/lanzouyun-disk/total)</a>
 
 v2 版本已发布！
 
