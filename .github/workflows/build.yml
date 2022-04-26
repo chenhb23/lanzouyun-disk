@@ -1,0 +1,12 @@
+name: BUILD
+
+on:
+  push:
+    branches: [ action ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - run: echo hello
+
