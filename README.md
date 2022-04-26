@@ -1,4 +1,8 @@
-# 蓝奏云盘 ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/chenhb23/lanzouyun-disk)
+# 蓝奏云盘
+
+<a href="https://github.com/chenhb23/lanzouyun-disk/releases">![](https://img.shields.io/github/v/release/chenhb23/lanzouyun-disk)</a>
+![GitHub Release Date](https://img.shields.io/github/release-date/chenhb23/lanzouyun-disk) 
+<a href="https://github.com/chenhb23/lanzouyun-disk/releases">![GitHub all releases](https://img.shields.io/github/downloads/chenhb23/lanzouyun-disk/total)</a>
 
 v2 版本已发布！
 
@@ -46,6 +50,7 @@ yarn
 yarn start
 ```
 
-## 声明
+## 免责声明
 
-本项目旨在学习 `electron` 桌面应用的开发，使用本软件所造成的一切后果与本人无关。
+- 本程序为免费开源项目，旨在方便管理网盘文件及学习 `electron` 桌面应用的开发，使用时请遵守相关法律法规；
+- 在使用本程序之前，你应了解并承担相应的风险，使用本软件所造成的一切后果与本项目无关。
