@@ -72,15 +72,15 @@ interface FileUploadRes {
   size: string
   time: string
 }
-interface FolderShareInfo {
-  des: string // ''
-  is_newd: string // 'https://wws.lanzous.com'
-  name: string // 'e8fa618362844fec927d67ed7ea27db7.png'
-  new_url: string // 'https://wws.lanzous.com/b01tp16xg'
-  onof: Bool // '1'
-  pwd: string // '5wex'
-  taoc: string // ''
-}
+// interface FolderShareInfo {
+//   des: string // ''
+//   is_newd: string // 'https://wws.lanzous.com'
+//   name: string // 'e8fa618362844fec927d67ed7ea27db7.png'
+//   new_url: string // 'https://wws.lanzous.com/b01tp16xg'
+//   onof: Bool // '1'
+//   pwd: string // '5wex'
+//   taoc: string // ''
+// }
 ///////////////////////////////////////////////////////////////////
 // 列举文件夹
 interface Task47 {
@@ -173,15 +173,15 @@ interface Task3Res {
 }
 
 ///////////////////////////////////////////////////////////////////
-interface Task18 {
-  task: 18
-  folder_id: FolderId
-}
-interface Task18Res {
-  info: FolderShareInfo
-  text: null
-  zt: 1
-}
+// interface Task18 {
+//   task: 18
+//   folder_id: FolderId
+// }
+// interface Task18Res {
+//   info: FolderShareInfo
+//   text: null
+//   zt: 1
+// }
 ///////////////////////////////////////////////////////////////////
 // 文件夹信息
 interface Task18 {

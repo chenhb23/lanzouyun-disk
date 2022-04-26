@@ -20,9 +20,10 @@
     "jsx": "react-jsx",
     "checkJs": false,
     "strictNullChecks": false,
-    "noEmit": true
+    "noEmit": true,
+    "experimentalDecorators": true
   },
   "include": [
-    "src"
+    "src/**/*"
   ]
 }
