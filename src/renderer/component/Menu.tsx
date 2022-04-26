@@ -1,4 +1,4 @@
-import React, {createContext, useContext, useEffect, useState} from 'react'
+import React, {createContext, PropsWithChildren, useContext, useEffect, useState} from 'react'
 import './Menu.css'
 import {Icon} from './Icon'
 
@@ -46,10 +46,10 @@ export const MenuItem: React.FC<MenuItemProps> = props => {
 
 interface MenuProviderProps {
   defaultKey: string
-  onChange?: (key: string) => void
+  onChange?: (key: string) => any
 }
 
-export const MenuProvider: React.FC<MenuProviderProps> = props => {
+export const MenuProvider = (props: PropsWithChildren<MenuProviderProps>) => {
   const [key, setKey] = useState(() => props.defaultKey)
   useEffect(() => {
     props.onChange?.(key)
