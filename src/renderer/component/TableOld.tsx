@@ -1,4 +1,4 @@
-import React, {createContext, useContext, useState} from 'react'
+import React, {createContext, PropsWithChildren, useContext, useState} from 'react'
 import './Table.css'
 import {Split} from './Split'
 
@@ -9,7 +9,7 @@ export interface TableOldProps {
   selectable?: boolean
 }
 
-export const TableOld: React.FC<TableOldProps> = props => {
+export const TableOld: React.FC<PropsWithChildren<TableOldProps>> = props => {
   const [widthList, setWidthList] = useState(props.header?.map((item, i) => (i === 0 ? 490 : 150)))
   const [distanceList, setDistanceList] = useState(props.header?.map(() => 0))
 

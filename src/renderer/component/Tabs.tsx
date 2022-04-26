@@ -1,11 +1,11 @@
-import React from 'react'
+import React, {PropsWithChildren} from 'react'
 import './Tabs.css'
 
 export interface TabsProps {
   activeKey: string
 }
 
-export const Tabs: React.FC<TabsProps> = props => {
+export const Tabs: React.FC<PropsWithChildren<TabsProps>> = props => {
   return (
     <div className='Tabs'>
       {(props.children as any).map(child => (

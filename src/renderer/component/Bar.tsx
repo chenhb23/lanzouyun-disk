@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {PropsWithChildren} from 'react'
 import './Bar.css'
 
 export interface BarProps {
@@ -6,7 +6,7 @@ export interface BarProps {
   // onClick: (folderid) => void
 }
 
-export const Bar: React.FC<BarProps> = props => {
+export const Bar: React.FC<PropsWithChildren<BarProps>> = props => {
   return (
     <div className='bar'>
       {props.children}
@@ -24,5 +24,5 @@ export const Bar: React.FC<BarProps> = props => {
 }
 
 Bar.defaultProps = {
-  crumbs: [],
+  // crumbs: [],
 }

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {PropsWithChildren, useEffect, useState} from 'react'
 import ReactDOM from 'react-dom'
 import './Modal.css'
 import {delay} from '../../common/util'
@@ -9,7 +9,7 @@ export interface ModalProps {
   // mask?: boolean
 }
 
-export const Modal: React.FC<ModalProps> = props => {
+export const Modal: React.FC<PropsWithChildren<ModalProps>> = props => {
   const [div] = useState(() => {
     const div = document.createElement('div')
     div.className = 'ModalMask'

@@ -12,7 +12,7 @@ export interface MenuProps {
   title?: string
 }
 
-export const Menu: React.FC<MenuProps> = props => {
+export const Menu: React.FC<PropsWithChildren<MenuProps>> = props => {
   return (
     <div>
       {props.title && <p className='MenuTitle'>{props.title}</p>}
@@ -26,10 +26,9 @@ export interface MenuItemProps {
   icon?: IconName
   active?: boolean
   onClick?: () => void
-  children?: React.ReactNode
 }
 
-export const MenuItem: React.FC<MenuItemProps> = props => {
+export const MenuItem: React.FC<PropsWithChildren<MenuItemProps>> = props => {
   const context = useContext(MenuContext)
   return (
     <li
@@ -47,10 +46,10 @@ export const MenuItem: React.FC<MenuItemProps> = props => {
 
 interface MenuProviderProps {
   defaultKey: string
-  onChange?: (key: string) => any
+  onChange?: (key: string) => void
 }
 
-export const MenuProvider = (props: PropsWithChildren<MenuProviderProps>) => {
+export const MenuProvider: React.FC<PropsWithChildren<MenuProviderProps>> = props => {
   const [key, setKey] = useState(() => props.defaultKey)
   useEffect(() => {
     props.onChange?.(key)
