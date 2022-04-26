@@ -26,6 +26,7 @@ export interface MenuItemProps {
   icon?: IconName
   active?: boolean
   onClick?: () => void
+  children?: React.ReactNode
 }
 
 export const MenuItem: React.FC<MenuItemProps> = props => {
