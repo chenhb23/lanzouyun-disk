@@ -18,16 +18,14 @@ jobs:
 
       - name: install
         run: |
-          rm yarn.lock
-          npm install
-          npm install react-app-rewired
+          yarn
           ls -alh node_modules/.bin
-          
+
       - name: Build React
-        run: npm run react-build
+        run: yarn react-build
 
       - name: Build Electron
-        run: npm run electron-build
+        run: yarn electron-build
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.0.0

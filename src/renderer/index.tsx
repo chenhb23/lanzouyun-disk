@@ -1,13 +1,21 @@
 import React from 'react'
-import ReactDOMClient from 'react-dom/client'
+// import ReactDOMClient from 'react-dom/client'
+import ReactDOM from 'react-dom'
 import App from './App'
 import AuthGate from './AuthGate'
 
-const root = ReactDOMClient.createRoot(document.getElementById('root'))
-root.render(
-  // <React.StrictMode>
+ReactDOM.render(
   <AuthGate>
     <App />
-  </AuthGate>
-  // </React.StrictMode>
+  </AuthGate>,
+  document.getElementById('root')
 )
+
+// const root = ReactDOMClient.createRoot(document.getElementById('root'))
+// root.render(
+//   // <React.StrictMode>
+//   <AuthGate>
+//     <App />
+//   </AuthGate>
+//   // </React.StrictMode>
+// )

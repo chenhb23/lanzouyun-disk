@@ -9,7 +9,7 @@ import type {Progress} from 'got/dist/source/core'
 import throttle from 'lodash.throttle'
 
 import Task, {TaskStatus} from './AbstractTask'
-import project, {supportList} from '../../project.config'
+import {supportList} from '../../project.config'
 import {createSpecificName, sizeToByte} from '../../common/util'
 import {isExistByName} from '../../common/core/isExist'
 import {mkdir} from '../../common/core/mkdir'
