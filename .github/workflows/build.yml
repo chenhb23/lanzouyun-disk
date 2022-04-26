@@ -25,7 +25,7 @@ jobs:
         run: yarn react-build & echo $?
 
       - name: Build Electron
-        run: yarn electron-build
+        run: yarn electron-build -- --publish=never
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
