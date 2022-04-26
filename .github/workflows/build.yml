@@ -16,8 +16,7 @@ jobs:
           node-version: v14.19.0
       - name: install, build
         run: |
-          rm -rf node_modules
-          yarn cache clean
+          ls -alh
           yarn
           ./node_modules/.bin/react-app-rewired build
       - name: Upload a Build Artifact
