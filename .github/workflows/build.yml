@@ -26,6 +26,8 @@ jobs:
 
       - name: Build Electron
         run: yarn electron-build
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.0.0
@@ -36,3 +38,4 @@ jobs:
           path: |
             dist/*.zip
             dist/*.dmg
+          
