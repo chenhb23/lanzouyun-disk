@@ -17,7 +17,7 @@ jobs:
       - name: install, build
         run: |
           yarn
-          yarn run build
+          yarn react-build
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.0.0
         with:
@@ -25,6 +25,4 @@ jobs:
           name: dist
           # A file, directory or wildcard pattern that describes what to upload
           path: |
-            *.zip
-            *.dmg
-
+            build/*
