@@ -22,7 +22,7 @@ jobs:
           ls -alh node_modules/.bin
 
       - name: Build React
-        run: yarn react-build
+        run: ./node_modules/.bin/react-app-rewired build
 
       - name: Build Electron
         run: yarn electron-build -- --publish=never
