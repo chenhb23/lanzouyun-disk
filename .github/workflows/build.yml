@@ -22,7 +22,7 @@ jobs:
           ls -alh node_modules/.bin
 
       - name: Build React
-        run: ./node_modules/.bin/react-app-rewired build
+        run: yarn react-build
 
       - name: Build Electron
         run: yarn electron-build -- --publish=never
@@ -38,4 +38,4 @@ jobs:
           path: |
             dist/*.zip
             dist/*.dmg
-          
+
