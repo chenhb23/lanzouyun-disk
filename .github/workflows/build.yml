@@ -22,7 +22,9 @@ jobs:
           ls -alh node_modules/.bin
 
       - name: Build React
-        run: CI=false yarn react-build && echo $?
+        run: yarn react-build
+        env:
+          CI: false
 
       - name: Build Electron
         run: yarn electron-build -- --publish=never
