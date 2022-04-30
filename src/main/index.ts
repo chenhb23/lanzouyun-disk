@@ -70,6 +70,4 @@ class App extends Application {
 
 const electronApp = new App()
 electronApp.install(new Ipc())
-if (!isDev) {
-  electronApp.install(new AppMenu())
-}
+electronApp.install(new AppMenu())

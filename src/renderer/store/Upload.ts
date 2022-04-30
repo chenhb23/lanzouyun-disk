@@ -175,7 +175,6 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
         let type = file.type
         if (supportList.every(ext => !file.path.endsWith(`.${ext}`))) {
           supportName = createSpecificName(supportName)
-          // type = getFileType(supportName)
           type = null
         }
         task.tasks.push({
@@ -188,6 +187,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
           resolve: 0,
         })
       } else {
+        // throw new Error('文件大小超出限制')
         let subFolderId = await isExistByName(options.folderId, file.name).then(value => value?.fol_id)
         if (!subFolderId) {
           subFolderId = await mkdir(options.folderId, file.name)
@@ -197,7 +197,6 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
           ...result.splitFiles.map(value => ({
             name: value.name,
             size: value.size,
-            // type: getFileType(value.name),
             type: null,
             sourceFile: value.sourceFile,
             status: TaskStatus.ready,
@@ -274,11 +273,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
     const onProgress = throttle((progress: Progress) => {
       subTask.resolve = progress.transferred
     }, 1000)
-    const req = http.request
-      .post('fileup.php', {
-        body: form,
-      })
-      .on('uploadProgress', onProgress)
+    const req = http.request.post('fileup.php', {body: form}).on('uploadProgress', onProgress)
     try {
       this.taskSignal[signalId] = req
       await req
@@ -312,33 +307,6 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
     })
   }
 }
-
-// interface FormOptions {
-//   fr: ReturnType<typeof fs.createReadStream>
-//   size: number
-//   name: string
-//   folderId: FolderId
-//   id?: string
-//   type?: string
-//   lastModified: number
-//   taskIndex: number
-// }
-
-// export function createUploadForm(options: FormOptions) {
-//   const form = new FormData()
-//   form.append('task', '1')
-//   form.append('ve', '2')
-//   form.append('lastModifiedDate', new Date(options.lastModified).toString())
-//   form.append('type', options.type || 'application/octet-stream')
-//   // form.append('id', options.id ?? 'WU_FILE_0')
-//   form.append('id', `WU_FILE_${options.taskIndex}`)
-//   form.append('folder_id_bb_n', options.folderId)
-//   form.append('size', options.size)
-//   form.append('name', options.name)
-//   form.append('upload_file', options.fr, options.name)
-//
-//   return form
-// }
 
 function createUploadForm(subTask: UploadSubTask, taskIndex: number) {
   const form = new FormData()

@@ -109,6 +109,7 @@ export abstract class Application {
     this.mainWindow = new BrowserWindow({
       width: 1400,
       height: 900,
+      autoHideMenuBar: true,
       webPreferences: {
         // preload: path.resolve(__dirname, 'main/preload.js'),
         webSecurity: false, // 不使用网页安全性，跨域

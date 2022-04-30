@@ -1,9 +1,9 @@
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import {observer} from 'mobx-react'
 import {basename} from 'path'
 
 import './component/Icon/lib/iconfont.js'
-import {Menu, MenuItem, MenuProvider} from './component/Menu'
+import {Menu} from './component/Menu/Menu'
 import {TabPane, Tabs} from './component/Tabs'
 import Upload from './page/Upload'
 import Files from './page/Files'
@@ -17,50 +17,46 @@ import {Icon} from './component/Icon'
 import store from '../common/store'
 import electronApi from './electronApi'
 import {config} from './store/Config'
+import pkg from '../../package.json'
 
 import './App.css'
 
-const App = observer(() => {
-  const [menu, setMenu] = useState('')
+function taskLength<T>(tasks: T[]) {
+  const len = tasks?.length
+  return len ? `（${len}）` : ''
+}
 
-  function taskLength<T>(tasks: T[]) {
-    const len = tasks?.length
-    return len ? `（${len}）` : ''
-  }
+const App = observer(() => {
+  const [activeKey, setActiveKey] = useState('1')
 
   return (
     <div className='App'>
       <main className='main'>
         <aside className='aside'>
-          <div>
-            <MenuProvider defaultKey={'1'} onChange={key => setMenu(key)}>
-              <Menu>
-                <MenuItem id={'1'} icon={'file'}>
-                  全部文件
-                </MenuItem>
-              </Menu>
-              <Menu title={'传输列表'}>
-                <MenuItem id={'2'} icon={'upload'}>
-                  正在上传 {taskLength(upload.list)}
-                </MenuItem>
-                <MenuItem id={'3'} icon={'download'}>
-                  正在下载 {taskLength(download.list)}
-                </MenuItem>
-                <MenuItem id={'4'} icon={'finish'}>
-                  已完成 {taskLength(download.finishList)}
-                </MenuItem>
-              </Menu>
-              <Menu title={'实用工具'}>
-                <MenuItem id={'5'} icon={'upload'}>
-                  解析Url
-                </MenuItem>
-                <MenuItem id={'6'} icon={'split'}>
-                  文件分割
-                  {/*/ 合并*/}
-                </MenuItem>
-              </Menu>
-            </MenuProvider>
-          </div>
+          <Menu activeKey={activeKey} onChange={key => setActiveKey(key)}>
+            <Menu.Title>当前版本 {pkg.version}</Menu.Title>
+            <Menu.Item id={'1'} icon={'file'}>
+              全部文件
+            </Menu.Item>
+            <Menu.Title>传输列表</Menu.Title>
+            <Menu.Item id={'2'} icon={'upload'}>
+              正在上传 {taskLength(upload.list)}
+            </Menu.Item>
+            <Menu.Item id={'3'} icon={'download'}>
+              正在下载 {taskLength(download.list)}
+            </Menu.Item>
+            <Menu.Item id={'4'} icon={'finish'}>
+              已完成 {taskLength(download.finishList)}
+            </Menu.Item>
+            <Menu.Title>实用工具</Menu.Title>
+            <Menu.Item id={'5'} icon={'more'}>
+              解析Url
+            </Menu.Item>
+            <Menu.Item id={'6'} icon={'split'}>
+              文件分割
+              {/*/ 合并*/}
+            </Menu.Item>
+          </Menu>
 
           <div className='logout'>
             <div title={download.dir} className='downFolder'>
@@ -87,16 +83,14 @@ const App = observer(() => {
             <Button
               style={{width: '100%'}}
               title={`最近登录: ${config.lastLogin}`}
-              onClick={() => {
-                electronApi.logout()
-              }}
+              onClick={() => electronApi.logout()}
             >
               退出登录
             </Button>
           </div>
         </aside>
         <div className='content'>
-          <Tabs activeKey={menu}>
+          <Tabs activeKey={activeKey}>
             <TabPane id={'1'}>
               <Files />
             </TabPane>
