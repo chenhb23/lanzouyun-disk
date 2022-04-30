@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useRef} from 'react'
 import './Tabs.css'
 
 export interface TabsProps {
@@ -6,17 +6,19 @@ export interface TabsProps {
 }
 
 export const Tabs: React.FC<TabsProps> = props => {
+  const ref = useRef({[props.activeKey]: true})
+  ref.current[props.activeKey] = true
+
   return (
     <div className='Tabs'>
-      {(props.children as any).map(child => (
-        <div
-          key={child.props.id}
-          className='TabsWrapper'
-          style={child.props.id !== props.activeKey ? {display: 'none'} : {}}
-        >
-          {child}
-        </div>
-      ))}
+      {React.Children.map(props.children, (child: any) => {
+        const id = child.props?.id
+        return ref.current[id] ? (
+          <div key={id} className='TabsWrapper' style={id !== props.activeKey ? {display: 'none'} : {}}>
+            {child}
+          </div>
+        ) : null
+      })}
     </div>
   )
 }

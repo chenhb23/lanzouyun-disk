@@ -312,7 +312,7 @@ export default function Files() {
         ]}
       />
 
-      <Modal visible={visible}>
+      <Modal visible={visible} onCancel={cancel}>
         <div className='dialog'>
           <div style={{width: 400}}>
             <h3>文件名</h3>
@@ -338,7 +338,7 @@ export default function Files() {
         </div>
       </Modal>
 
-      <Modal visible={!!fileForm.file_id}>
+      <Modal visible={!!fileForm.file_id} onCancel={() => setFileForm({} as typeof fileForm)}>
         <div className='dialog'>
           <div style={{width: 400}}>
             <h3>文件名</h3>
