@@ -322,7 +322,7 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
     })
   }
 
-  async initTask(task: DownloadTask) {
+  private async initTask(task: DownloadTask) {
     if (task.tasks?.length) return
     const {name, type, list} = await lsShare(task)
     if (!list.length) {

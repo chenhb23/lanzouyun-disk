@@ -9,9 +9,9 @@ import type {Progress} from 'got/dist/source/core'
 import throttle from 'lodash.throttle'
 
 import Task, {TaskStatus} from './AbstractTask'
-import project, {supportList} from '../../project.config'
-import {createSpecificName, sizeToByte} from '../../common/util'
-import {isExistByName} from '../../common/core/isExist'
+import {supportList} from '../../project.config'
+import {byteToSize, createSpecificName, sizeToByte} from '../../common/util'
+import {findFolderByName} from '../../common/core/isExist'
 import {mkdir} from '../../common/core/mkdir'
 import {splitTask} from '../../common/split'
 import {message} from '../component/Message'
@@ -156,8 +156,46 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
       .filter(filter)
   }
 
+  // 上传文件（夹）任务
   async addTask(options: {folderId: FolderId; file: UploadFile}) {
+    const filePath = options.file.path
+    const stat = await fs.stat(filePath)
+    if (stat.isFile()) {
+      this.addFileTask(options)
+    } else if (stat.isDirectory()) {
+      const files = await fs.readdir(filePath)
+      if (!files.length) return
+
+      let subFolderId = await findFolderByName(options.folderId, options.file.name).then(value => value?.fol_id)
+      if (!subFolderId) {
+        subFolderId = await mkdir(options.folderId, options.file.name)
+      }
+      for (const file of files) {
+        const path = resolve(filePath, file)
+        const fstat = await fs.stat(path)
+        if (fstat.isFile()) {
+          this.addFileTask({
+            folderId: subFolderId,
+            file: {size: fstat.size, name: file, type: '', path, lastModified: fstat.mtime.getTime()},
+          })
+        }
+      }
+    } else {
+      console.log(`格式不支持: ${options.file.name}`)
+    }
+  }
+
+  // 校验上传文件
+  private beforeAddTask(file: UploadFile) {
+    if (file.size > sizeToByte(config.maxSize)) {
+      throw new Error(`文件大小(${byteToSize(file.size)}) 超出限制，最大允许上传 ${config.maxSize}`)
+    }
+  }
+
+  private addFileTask(options: {folderId: FolderId; file: UploadFile}) {
     try {
+      this.beforeAddTask(options.file)
+
       const file: UploadFile = {
         size: options.file.size,
         name: options.file.name,
@@ -165,48 +203,8 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
         path: options.file.path,
         lastModified: options.file.lastModified,
       }
-      const task = new UploadTask({
-        file,
-        folderId: options.folderId,
-      })
+      const task = new UploadTask({file, folderId: options.folderId})
 
-      if (file.size <= sizeToByte(config.maxSize)) {
-        let supportName = file.name
-        let type = file.type
-        if (supportList.every(ext => !file.path.endsWith(`.${ext}`))) {
-          supportName = createSpecificName(supportName)
-          type = null
-        }
-        task.tasks.push({
-          name: supportName,
-          type: type,
-          size: file.size,
-          sourceFile: file,
-          folderId: options.folderId,
-          status: TaskStatus.ready,
-          resolve: 0,
-        })
-      } else {
-        // throw new Error('文件大小超出限制')
-        let subFolderId = await isExistByName(options.folderId, file.name).then(value => value?.fol_id)
-        if (!subFolderId) {
-          subFolderId = await mkdir(options.folderId, file.name)
-        }
-        const result = splitTask(file, config.splitSize)
-        task.tasks.push(
-          ...result.splitFiles.map(value => ({
-            name: value.name,
-            size: value.size,
-            type: null,
-            sourceFile: value.sourceFile,
-            status: TaskStatus.ready,
-            folderId: subFolderId,
-            resolve: 0,
-            startByte: value.startByte,
-            endByte: value.endByte,
-          }))
-        )
-      }
       this.list.push(task)
     } catch (e: any) {
       message.error(e)
@@ -252,7 +250,9 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
     if (!task) return
     if (!this.canStart()) return
 
-    if (reset) {
+    if (!task.tasks?.length) {
+      await this.initTask(task)
+    } else if (reset) {
       task.tasks.forEach(task => {
         if ([TaskStatus.pause, TaskStatus.fail].includes(task.status)) {
           task.status = TaskStatus.ready
@@ -291,8 +291,54 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
     }
   }
 
+  private async initTask(task: UploadTask) {
+    if (task.tasks?.length) return
+
+    const file = task.file
+    const folderId = task.folderId
+
+    if (file.size <= sizeToByte(config.maxSize)) {
+      let supportName = file.name
+      let type = file.type
+      if (supportList.every(ext => !file.path.endsWith(`.${ext}`))) {
+        supportName = createSpecificName(supportName)
+        type = null
+      }
+      task.tasks = [
+        {
+          name: supportName,
+          type: type,
+          size: file.size,
+          sourceFile: file,
+          folderId: folderId,
+          status: TaskStatus.ready,
+          resolve: 0,
+        },
+      ]
+    } else {
+      let subFolderId = await findFolderByName(folderId, file.name).then(value => value?.fol_id)
+      if (!subFolderId) {
+        subFolderId = await mkdir(folderId, file.name)
+      }
+      const result = splitTask(file, config.splitSize)
+      task.tasks.push(
+        ...result.splitFiles.map(value => ({
+          name: value.name,
+          size: value.size,
+          type: null,
+          sourceFile: value.sourceFile,
+          status: TaskStatus.ready,
+          folderId: subFolderId,
+          resolve: 0,
+          startByte: value.startByte,
+          endByte: value.endByte,
+        }))
+      )
+    }
+  }
+
   canStart() {
-    return this.queue < 3
+    return this.queue < 2
   }
 
   startAll() {

@@ -123,12 +123,12 @@ export default function Files() {
         event.preventDefault()
         event.stopPropagation()
       }}
-      onDrop={event => {
+      onDrop={async event => {
         message.destroy()
         message.success('上传中...')
-        Array.prototype.map.call(event.dataTransfer.files, (file: File) => {
-          upload.addTask({folderId: currentFolder, file})
-        })
+        for (const file of event.dataTransfer.files) {
+          await upload.addTask({folderId: currentFolder, file})
+        }
       }}
       HeaderComponent={
         <>

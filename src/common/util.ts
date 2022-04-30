@@ -112,16 +112,6 @@ export function createSpecificName(fileName: string) {
   return `${fileName}.${getSuffix()}`
 }
 
-/**
- * 创建临时文件夹
- * todo: async
- */
-// export function mkTempDirSync() {
-//   const lanzouDir = path.resolve(os.homedir(), config.homeTempDir)
-//   fs.ensureDirSync(lanzouDir)
-//   return fs.mkdtempSync(lanzouDir + '/')
-// }
-
 export function isFile(name: string) {
   return /\.[0-9a-zA-Z]+$/.test(name)
 }
@@ -140,7 +130,6 @@ export function streamToText(stream: Request) {
 
 /**
  * ua 去除 lanzouyun-pan 和 electron 字样
- * 预防被检测
  */
 export function safeUserAgent(userAgent: string) {
   const filters = ['lanzouyun-pan', 'electron']

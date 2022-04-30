@@ -6,7 +6,7 @@ export async function isExist(folderId: FolderId) {
   return text.length + info.length > 0
 }
 
-export async function isExistByName(parentId: FolderId, name: string) {
+export async function findFolderByName(parentId: FolderId, name: string) {
   const {text} = await lsDir(parentId)
   return text.find(item => item.name === name)
 }
