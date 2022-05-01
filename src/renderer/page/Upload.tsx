@@ -40,11 +40,19 @@ const Upload = observer(() => {
             render: item => {
               const extname = path.extname(item.file.name).replace(/^\./, '')
               return (
-                <span onClick={() => setShowItem(item)}>
-                  <Icon iconName={extname} defaultIcon={'file'} />
-                  <span>{item.file.name}</span>
-                  {item.tasks.length > 1 && <span>{` | ${item.tasks.length} 个子任务`}</span>}
-                </span>
+                <Observer>
+                  {() => (
+                    <a href={'#'} onClick={() => setShowItem(item)}>
+                      <Icon iconName={extname} defaultIcon={'file'} />
+                      <span>{item.file.name}</span>
+                      {item.tasks?.length > 1 && (
+                        <span>{` | ${item.tasks.filter(value => value.status === TaskStatus.finish).length} / ${
+                          item.tasks.length
+                        }`}</span>
+                      )}
+                    </a>
+                  )}
+                </Observer>
               )
             },
           },
@@ -88,17 +96,16 @@ const Upload = observer(() => {
         ]}
       />
 
-      <Modal visible={!!showItem}>
-        <div className='dialog'>
-          <ScrollView style={{maxHeight: 400, minHeight: 200, width: 600}}>
-            {showItem?.tasks?.map(item => (
-              <p key={item.name}>{`${item.name}  |  ${TaskStatusName[item.status]}`}</p>
-            ))}
-          </ScrollView>
-          <div style={{textAlign: 'right', paddingTop: 16}}>
-            <Button onClick={() => setShowItem(null)}>取消</Button>
-          </div>
-        </div>
+      <Modal
+        visible={!!showItem}
+        onCancel={() => setShowItem(null)}
+        footer={<Button onClick={() => setShowItem(null)}>取消</Button>}
+      >
+        <ScrollView style={{maxHeight: 400, minHeight: 200}}>
+          {showItem?.tasks?.map(item => (
+            <p key={item.name}>{`${item.name}  /  ${TaskStatusName[item.status]}`}</p>
+          ))}
+        </ScrollView>
       </Modal>
     </ScrollView>
   )

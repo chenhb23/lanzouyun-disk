@@ -1,17 +1,70 @@
+.ModalRoot {
+  position: fixed;
+  z-index: 98;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  height: 100%;
+
+  overflow: auto;
+  text-align: center;
+}
+
+.ModalRoot::before {
+  content: ' ';
+  display: inline-block;
+  vertical-align: middle;
+  width: 0;
+  height: 100%;
+}
+
 .ModalMask {
   position: fixed;
   z-index: 99;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%) scale(0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: all 0.3s;
-  opacity: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0);
+  transition: background-color 0.3s;
 }
 
-.show {
-  transform: translate(-50%, -50%) scale(1);
+.ModalRoot.show .ModalMask {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.Modal {
+  display: inline-block;
+  vertical-align: middle;
+  text-align: left;
+  width: 560px;
+  border-radius: 4px;
+  position: relative;
+  z-index: 999;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: all 0.3s;
+  background-color: #ffffff;
+  box-shadow: 0 3px 6px -4px #0000001f, 0 6px 16px #00000014, 0 9px 28px 8px #0000000d;
+}
+
+.ModalRoot.show .Modal {
+  transform: scale(1);
   opacity: 1;
+}
+
+.ModalHeader {
+  padding: 12px 16px;
+  color: #181818;
+  font-size: 16px;
+}
+
+.ModalBody {
+  padding: 8px 16px;
+}
+
+.ModalFooter {
+  text-align: right;
+  padding: 10px 16px;
 }

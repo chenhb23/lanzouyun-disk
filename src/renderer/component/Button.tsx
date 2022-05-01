@@ -1,6 +1,6 @@
 import React from 'react'
-import './Button.css'
 import {Icon} from './Icon'
+import './Button.css'
 
 export type ButtonProps = {
   type?: 'primary' | 'default' | 'icon'

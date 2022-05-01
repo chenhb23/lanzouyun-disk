@@ -7,7 +7,7 @@ import {Crumbs} from '../component/Crumbs'
 import {Icon} from '../component/Icon'
 import {isFile, sizeToByte} from '../../common/util'
 import {rmFile, rmFolder} from '../../common/core/rm'
-import {ls, LsFiles, URLType} from '../../common/core/ls'
+import {ls, lsDir, LsFiles, URLType} from '../../common/core/ls'
 import {Bar} from '../component/Bar'
 import {useLoading} from '../hook/useLoading'
 import {ScrollView} from '../component/ScrollView'
@@ -16,10 +16,11 @@ import {Modal} from '../component/Modal'
 import {mkdir} from '../../common/core/mkdir'
 import {download, upload} from '../store'
 import {fileDetail, folderDetail} from '../../common/core/detail'
-
-import './Files.css'
 import Table from '../component/Table'
 import {editFile, editFileInfo, editFolder, editFolderInfo} from '../../common/core/edit'
+import {mv} from '../../common/core/mv'
+
+import './Files.css'
 
 interface FolderForm {
   folder_id?: FolderId // 如果有 folder_id 则是编辑
@@ -37,6 +38,8 @@ export default function Files() {
   const [fileForm, setFileForm] = useState({} as {file_id: FileId; name: string})
 
   const [list, setList] = useState({text: [], info: []} as AsyncReturnType<typeof ls>)
+  const crumbs = useMemo(() => [{name: '全部文件', folderid: -1}, ...(list?.info || [])], [list?.info])
+
   const [search, setSearch] = useState('')
   const renderList = useMemo(
     () =>
@@ -52,7 +55,7 @@ export default function Files() {
     [list, search]
   )
 
-  const currentFolder = useMemo(() => list.info?.find(item => item.now === 1)?.folderid || -1, [list])
+  const currentFolder = crumbs[crumbs.length - 1].folderid
 
   const listFile = useCallback(folder_id => listener(ls(folder_id), 'ls').then(value => setList(value)), [listener])
 
@@ -88,6 +91,10 @@ export default function Files() {
   }
 
   const [selectedRows, setSelectedRows] = useState<AsyncReturnType<typeof ls>['text']>([])
+  const moveRows = useMemo(() => selectedRows.filter(value => value.type === URLType.file), [selectedRows])
+
+  const [moveVisible, setMoveVisible] = useState(false)
+
   const downloadFile = useCallback(
     async (item: LsFiles) => {
       await listenerFn(async () => {
@@ -166,6 +173,7 @@ export default function Files() {
                 </Button>
                 <Button
                   type={'primary'}
+                  title={selectedRows.map(value => value.name).join('\n')}
                   onClick={async () => {
                     for (const item of selectedRows) {
                       await downloadFile(item)
@@ -174,16 +182,22 @@ export default function Files() {
                     setSelectedRows([])
                   }}
                 >
-                  下载所选 ({selectedRows.length} 项)
+                  下载 ({selectedRows.length} 项)
                 </Button>
+                {!!moveRows.length && (
+                  <Button
+                    title={moveRows.map(value => value.name).join('\n')}
+                    type={'primary'}
+                    onClick={() => setMoveVisible(true)}
+                  >
+                    移动 ({moveRows.length} 项)
+                  </Button>
+                )}
               </>
             )}
           </Header>
           <Bar>
-            <Crumbs
-              crumbs={[{name: '全部文件', folderid: -1}, ...(list.info || [])]}
-              onClick={folderid => listFile(folderid).then(() => setSearch(''))}
-            />
+            <Crumbs crumbs={crumbs} onClick={folderid => listFile(folderid).then(() => setSearch(''))} />
             {(loading['ls'] || loading['download']) && <Icon iconName={'loading'} />}
           </Bar>
         </>
@@ -212,25 +226,23 @@ export default function Files() {
             render: item => {
               return (
                 <div className='table-file'>
-                  <span>
+                  <a
+                    href={'#'}
+                    title={item.name}
+                    onClick={() => {
+                      if (item.type === URLType.folder) {
+                        listFile(item.id).then(() => setSearch(''))
+                      }
+                    }}
+                  >
                     {item.type === URLType.folder ? (
                       <Icon iconName={'folder'} />
                     ) : (
                       <Icon iconName={item.icon} defaultIcon={'file'} />
                     )}
-
-                    <span
-                      title={item.name}
-                      onClick={() => {
-                        if (item.type === URLType.folder) {
-                          listFile(item.id).then(() => setSearch(''))
-                        }
-                      }}
-                    >
-                      {item.name}
-                      {`${item.source.onof}` === '1' && <Icon iconName={'lock'} style={{marginLeft: 5}} />}
-                    </span>
-                  </span>
+                    {item.name}
+                    {`${item.source.onof}` === '1' && <Icon iconName={'lock'} style={{marginLeft: 5}} />}
+                  </a>
                   <div className='handle'>
                     <Button
                       title={'编辑'}
@@ -311,60 +323,119 @@ export default function Files() {
           {title: '下载', render: item => ('id' in item ? item.downs : '')},
         ]}
       />
-
-      <Modal visible={visible} onCancel={cancel}>
-        <div className='dialog'>
-          <div style={{width: 400}}>
-            <h3>文件名</h3>
-            <Input
-              value={form.name}
-              placeholder={'不能包含特殊字符，如：空格，括号'}
-              onChange={event => setForm(prevState => ({...prevState, name: event.target.value}))}
-            />
-            <h3>文件描述</h3>
-            <Textarea
-              value={form.folderDesc}
-              placeholder={'可选项，建议160字数以内。'}
-              maxLength={160}
-              onChange={event => setForm(prevState => ({...prevState, folderDesc: event.target.value}))}
-            />
-            <div style={{textAlign: 'right', marginTop: 10}}>
-              <Button onClick={cancel}>取消</Button>
-              <Button loading={loading['saveDir']} type={'primary'} onClick={saveDir}>
-                保存
-              </Button>
-            </div>
-          </div>
+      <Modal
+        title={form.folder_id ? '编辑文件夹' : '新建文件夹'}
+        visible={visible}
+        onCancel={cancel}
+        onOk={saveDir}
+        okButtonProps={{loading: loading['saveDir']}}
+      >
+        <h4>文件名</h4>
+        <Input
+          value={form.name}
+          placeholder={'不能包含特殊字符，如：空格，括号'}
+          onChange={event => setForm(prevState => ({...prevState, name: event.target.value}))}
+        />
+        <h4>文件描述</h4>
+        <Textarea
+          value={form.folderDesc}
+          placeholder={'可选项，建议160字数以内。'}
+          maxLength={160}
+          onChange={event => setForm(prevState => ({...prevState, folderDesc: event.target.value}))}
+        />
+      </Modal>
+      <Modal
+        title={'编辑文件'}
+        visible={!!fileForm.file_id}
+        onCancel={() => setFileForm({} as typeof fileForm)}
+        okText={'保存'}
+        okButtonProps={{loading: loading['saveFile']}}
+        onOk={async () => {
+          if (!fileForm.name) return message.error('请输入文件名')
+          await listener(editFile(fileForm.file_id, fileForm.name), 'saveFile')
+          setFileForm({} as typeof fileForm)
+          listFile(currentFolder)
+        }}
+      >
+        <div>
+          <h4>文件名</h4>
+          <Input
+            value={fileForm.name}
+            placeholder={'不能包含特殊字符，如：空格，括号'}
+            onChange={event => setFileForm(prevState => ({...prevState, name: event.target.value}))}
+          />
         </div>
       </Modal>
 
-      <Modal visible={!!fileForm.file_id} onCancel={() => setFileForm({} as typeof fileForm)}>
-        <div className='dialog'>
-          <div style={{width: 400}}>
-            <h3>文件名</h3>
-            <Input
-              value={fileForm.name}
-              placeholder={'不能包含特殊字符，如：空格，括号'}
-              onChange={event => setFileForm(prevState => ({...prevState, name: event.target.value}))}
-            />
-            <div style={{textAlign: 'right', marginTop: 10}}>
-              <Button onClick={() => setFileForm({} as typeof fileForm)}>取消</Button>
-              <Button
-                loading={loading['saveFile']}
-                type={'primary'}
-                onClick={async () => {
-                  if (!fileForm.name) return message.error('请输入文件名')
-                  await listener(editFile(fileForm.file_id, fileForm.name), 'saveFile')
-                  setFileForm({} as typeof fileForm)
-                  listFile(currentFolder)
-                }}
-              >
-                保存
-              </Button>
-            </div>
-          </div>
-        </div>
-      </Modal>
+      <SelectDir
+        visible={moveVisible}
+        loading={loading['move']}
+        onCancel={() => setMoveVisible(false)}
+        onOk={async folderId => {
+          await listenerFn(async () => {
+            for (const item of moveRows) {
+              await mv(item.id, folderId)
+            }
+          }, 'move')
+          setMoveVisible(false)
+          setSelectedRows([])
+          listFile(currentFolder)
+        }}
+      />
     </ScrollView>
+  )
+}
+
+interface SelectDirProps {
+  visible: boolean
+  onCancel?: () => void
+  onOk: (folderId: FolderId) => void
+  loading?: boolean
+}
+
+function SelectDir(props: SelectDirProps) {
+  const [data, setData] = useState<AsyncReturnType<typeof lsDir>>(null)
+  const crumbs = useMemo(() => [{name: '全部文件', folderid: -1}, ...(data?.info || [])], [data?.info])
+  const current = crumbs[crumbs.length - 1]
+
+  const ls = useCallback(async (id = -1) => {
+    const dirs = await lsDir(id)
+    setData(dirs)
+  }, [])
+
+  useEffect(() => {
+    if (props.visible) {
+      ls('-1')
+    }
+  }, [ls, props.visible])
+
+  return (
+    <Modal
+      visible={props.visible}
+      title={'选择文件夹'}
+      okButtonProps={{style: {maxWidth: 150, textOverflow: 'ellipsis', overflow: 'hidden'}, loading: props.loading}}
+      okText={`移动到：${current.name}`}
+      onCancel={props.onCancel}
+      onOk={() => props.onOk(current.folderid)}
+    >
+      <Crumbs crumbs={crumbs} onClick={folderid => ls(folderid)} />
+      <Table
+        dataSource={data?.text}
+        columns={[
+          {
+            title: '文件夹',
+            render: record => {
+              return (
+                <div onClick={() => ls(record.fol_id)}>
+                  <Icon iconName={'folder'} />
+                  <a href={'#'}>{record.name}</a>
+                </div>
+              )
+            },
+          },
+        ]}
+        rowKey={'fol_id'}
+      />
+    </Modal>
   )
 }

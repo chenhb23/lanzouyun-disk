@@ -18,6 +18,11 @@ export interface TableProps<T = any> {
   rowKey: string | ((record: T, index?: number) => string)
   dataSource: T[]
   rowSelection?: {
+    /**
+     * 隐藏全选勾选框
+     * @default false
+     */
+    hideSelectAll?: boolean
     selectedRowKeys?: React.Key[]
     defaultSelectedRowKeys?: React.Key[]
     /**
@@ -87,37 +92,42 @@ export default function Table<T>(props: TableProps<T>) {
         <tr>
           {selection && (
             <th style={{width: 20}}>
-              <input
-                type={'checkbox'}
-                checked={selectAll}
-                onChange={event => {
-                  const checked = event.target.checked
-                  if (checked) {
-                    const changeRows = dataSource.filter(
-                      (value, i) => !selectedRowKeys.includes(rowValue(props.rowKey, value, i))
-                    )
-                    props.rowSelection?.onSelectAll?.(checked, dataSource, changeRows)
-                    props.rowSelection?.onChange?.(
-                      Array.from(
-                        new Set([...selectedRowKeys, ...dataSource.map((value, i) => rowValue(props.rowKey, value, i))])
-                      ),
-                      dataSource
-                    )
-                  } else {
-                    props.rowSelection?.onSelectAll?.(checked, [], dataSource)
-                    props.rowSelection?.onChange?.(
-                      selectedRowKeys.filter(value =>
-                        dataSource.every((item, i) => rowValue(props.rowKey, item, i) !== value)
-                      ),
-                      []
-                    )
-                  }
-                }}
-              />
+              {!props.rowSelection?.hideSelectAll && (
+                <input
+                  type={'checkbox'}
+                  checked={selectAll}
+                  onChange={event => {
+                    const checked = event.target.checked
+                    if (checked) {
+                      const changeRows = dataSource.filter(
+                        (value, i) => !selectedRowKeys.includes(rowValue(props.rowKey, value, i))
+                      )
+                      props.rowSelection?.onSelectAll?.(checked, dataSource, changeRows)
+                      props.rowSelection?.onChange?.(
+                        Array.from(
+                          new Set([
+                            ...selectedRowKeys,
+                            ...dataSource.map((value, i) => rowValue(props.rowKey, value, i)),
+                          ])
+                        ),
+                        dataSource
+                      )
+                    } else {
+                      props.rowSelection?.onSelectAll?.(checked, [], dataSource)
+                      props.rowSelection?.onChange?.(
+                        selectedRowKeys.filter(value =>
+                          dataSource.every((item, i) => rowValue(props.rowKey, item, i) !== value)
+                        ),
+                        []
+                      )
+                    }
+                  }}
+                />
+              )}
             </th>
           )}
 
-          {props.columns.map((value, index) => {
+          {props.columns.map((value, index, array) => {
             return (
               <th
                 {...(value.sorter
@@ -144,15 +154,17 @@ export default function Table<T>(props: TableProps<T>) {
                 {value.title}
                 {sort?.title === value.title ? (sort.sortOrder === 'desc' ? ' ↓' : ' ↑') : null}
 
-                <Split
-                  onMove={dx => {
-                    setOffsets(dx, index)
-                  }}
-                  onRelease={dx => {
-                    setWidths(prevState => prevState.map((item, i) => (i === index ? Math.max(50, item + dx) : item)))
-                    setOffsets(0, index)
-                  }}
-                />
+                {index !== array.length - 1 && (
+                  <Split
+                    onMove={dx => {
+                      setOffsets(dx, index)
+                    }}
+                    onRelease={dx => {
+                      setWidths(prevState => prevState.map((item, i) => (i === index ? Math.max(50, item + dx) : item)))
+                      setOffsets(0, index)
+                    }}
+                  />
+                )}
               </th>
             )
           })}

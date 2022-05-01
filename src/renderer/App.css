@@ -60,13 +60,6 @@ h1, h2, h3, h4, h5 {
   flex-direction: column;
 }
 
-.dialog {
-  background-color: #ffffff;
-  box-shadow: 2px 2px 30px 5px #e0e0e0;
-  padding: 10px;
-  border-radius: 5px;
-}
-
 .logout {
   padding: 30px 24px;
 }
@@ -78,4 +71,9 @@ h1, h2, h3, h4, h5 {
   text-overflow: ellipsis;
   cursor: pointer;
   display: block;
+}
+
+[href='#'] {
+  color: #585858;
+  text-decoration: none;
 }
