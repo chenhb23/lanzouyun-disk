@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {useState} from 'react'
 import {observer} from 'mobx-react'
 import {basename} from 'path'
 
@@ -18,25 +18,48 @@ import store from '../common/store'
 import electronApi from './electronApi'
 import {config} from './store/Config'
 import pkg from '../../package.json'
+import {delay} from '../common/util'
 
 import './App.css'
+import project from '../project.config'
 
 function taskLength<T>(tasks: T[]) {
   const len = tasks?.length
   return len ? `（${len}）` : ''
 }
 
+const recycleUrl = new URL(project.page.recycle, project.lanzouUrl).toString()
+
 const App = observer(() => {
   const [activeKey, setActiveKey] = useState('1')
+  const [visible, setVisible] = useState(true)
 
   return (
     <div className='App'>
       <main className='main'>
         <aside className='aside'>
           <Menu activeKey={activeKey} onChange={key => setActiveKey(key)}>
-            <Menu.Title>当前版本 {pkg.version}</Menu.Title>
+            <Menu.Title onClick={() => electronApi.openExternal('https://github.com/chenhb23/lanzouyun-disk')}>
+              <Icon iconName={'github'} style={{fontSize: 14}} /> v{pkg.version}
+            </Menu.Title>
             <Menu.Item id={'1'} icon={'file'}>
               全部文件
+            </Menu.Item>
+            <Menu.Item id={'7'} icon={'delete'}>
+              回收站
+              {activeKey === '7' && (
+                <Icon
+                  className='refresh'
+                  iconName={'refresh'}
+                  onClick={async () => {
+                    setVisible(false)
+                    await delay(1)
+                    setVisible(true)
+                  }}
+                >
+                  刷新
+                </Icon>
+              )}
             </Menu.Item>
             <Menu.Title>传输列表</Menu.Title>
             <Menu.Item id={'2'} icon={'upload'}>
@@ -109,6 +132,7 @@ const App = observer(() => {
             <TabPane id={'6'}>
               <SplitMerge />
             </TabPane>
+            <TabPane id={'7'}>{visible && <webview src={recycleUrl} style={{height: '100%'}} />}</TabPane>
           </Tabs>
         </div>
       </main>

@@ -73,6 +73,11 @@ h1, h2, h3, h4, h5 {
   display: block;
 }
 
+.refresh {
+  margin-left: 10px;
+  cursor: pointer;
+}
+
 [href='#'] {
   color: #585858;
   text-decoration: none;

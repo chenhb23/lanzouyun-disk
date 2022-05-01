@@ -196,7 +196,7 @@ export default function Files() {
               </>
             )}
           </Header>
-          <Bar>
+          <Bar style={{justifyContent: 'flex-start'}}>
             <Crumbs crumbs={crumbs} onClick={folderid => listFile(folderid).then(() => setSearch(''))} />
             {(loading['ls'] || loading['download']) && <Icon iconName={'loading'} />}
           </Bar>

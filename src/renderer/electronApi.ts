@@ -8,11 +8,14 @@ const electronApi: ElectronApi = {
     localStorage.removeItem('download')
     ipcRenderer.send(IpcEvent.logout)
   },
-  showItemInFolder(fullPath: string) {
+  showItemInFolder(fullPath) {
     return ipcRenderer.invoke(IpcEvent['shell:showItemInFolder'], fullPath)
   },
   showOpenDialog(options) {
     return ipcRenderer.invoke(IpcEvent['dialog:showOpenDialog'], options)
+  },
+  openExternal(url, options) {
+    return ipcRenderer.invoke(IpcEvent['shell:openExternal'], url, options)
   },
 }
 

@@ -1,28 +1,14 @@
-import React from 'react'
+import React, {CSSProperties} from 'react'
 import './Bar.css'
 
 export interface BarProps {
-  // crumbs: CrumbsInfo[]
-  // onClick: (folderid) => void
+  style?: CSSProperties
 }
 
 export const Bar: React.FC<BarProps> = props => {
   return (
-    <div className='bar'>
+    <div className='bar' style={props.style}>
       {props.children}
-      {/*<ul className='crumbs'>*/}
-      {/*  <li onClick={() => props.onClick(-1)}>全部文件</li>*/}
-      {/*  {props.crumbs.map(item => (*/}
-      {/*    <li key={item.folderid} onClick={() => props.onClick(item.folderid)}>*/}
-      {/*      <Icon iconName='right' />*/}
-      {/*      {item.name}*/}
-      {/*    </li>*/}
-      {/*  ))}*/}
-      {/*</ul>*/}
     </div>
   )
-}
-
-Bar.defaultProps = {
-  crumbs: [],
 }

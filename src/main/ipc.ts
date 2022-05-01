@@ -14,6 +14,10 @@ export class Ipc implements Extension {
     return shell.showItemInFolder(fullPath)
   }
 
+  async openExternal(event: Electron.IpcMainInvokeEvent, url: string, options?: Electron.OpenExternalOptions) {
+    return shell.openExternal(url, options)
+  }
+
   async logout(event: Electron.IpcMainEvent) {
     await this.app.clearAuth()
     this.app.onLogout(BrowserWindow.fromWebContents(event.sender))
@@ -25,6 +29,7 @@ export class Ipc implements Extension {
     this.app = instance
     ipcMain.handle(IpcEvent['dialog:showOpenDialog'], this.showOpenDialog)
     ipcMain.handle(IpcEvent['shell:showItemInFolder'], this.showItemInFolder)
+    ipcMain.handle(IpcEvent['shell:openExternal'], this.openExternal)
     ipcMain.on(IpcEvent.logout, this.logout.bind(this))
   }
 }

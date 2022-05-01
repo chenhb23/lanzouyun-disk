@@ -20,7 +20,7 @@ export type IconProps = {
   gutter?: number
 } & JSX.IntrinsicElements['svg']
 
-export const Icon: React.FC<IconProps> = ({iconName, className = '', defaultIcon, gutter, ...props}) => {
+export const Icon: React.FC<IconProps> = ({iconName, className = '', defaultIcon, gutter, style, ...props}) => {
   iconName = iconMap[iconName] ?? iconName
   const name = useMemo(() => {
     if (!icons.includes(iconName)) {
@@ -32,7 +32,7 @@ export const Icon: React.FC<IconProps> = ({iconName, className = '', defaultIcon
   return (
     <svg
       className={`icon ${name === 'loading' ? name : ''} ${className}`}
-      style={{marginRight: gutter}}
+      style={{marginRight: gutter, ...style}}
       aria-hidden='true'
       {...props}
     >

@@ -1,4 +1,5 @@
 type IconName =
+  | 'github'
   | 'edit'
   | 'lock'
   | 'txt'
