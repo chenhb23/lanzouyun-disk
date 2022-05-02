@@ -19,9 +19,11 @@ import electronApi from './electronApi'
 import {config} from './store/Config'
 import pkg from '../../package.json'
 import {delay} from '../common/util'
+import project from '../project.config'
+import {useLatestRelease} from './hook/useLatestRelease'
+import {Touchable} from './component/Touchable'
 
 import './App.css'
-import project from '../project.config'
 
 function taskLength<T>(tasks: T[]) {
   const len = tasks?.length
@@ -33,17 +35,25 @@ const recycleUrl = new URL(project.page.recycle, project.lanzouUrl).toString()
 const App = observer(() => {
   const [activeKey, setActiveKey] = useState('1')
   const [visible, setVisible] = useState(true)
+  const latestVersion = useLatestRelease()
 
   return (
     <div className='App'>
       <main className='main'>
         <aside className='aside'>
           <Menu activeKey={activeKey} onChange={key => setActiveKey(key)}>
-            <Menu.Title
-              title={'去 GitHub 点亮 star'}
-              onClick={() => electronApi.openExternal('https://github.com/chenhb23/lanzouyun-disk')}
-            >
-              <Icon iconName={'github'} style={{fontSize: 14}} /> v{pkg.version}
+            <Menu.Title>
+              <Touchable
+                title={'去 GitHub 点亮 star'}
+                onClick={() => electronApi.openExternal('https://github.com/chenhb23/lanzouyun-disk')}
+              >
+                <Icon iconName={'github'} style={{fontSize: 14}} /> v{pkg.version}
+              </Touchable>
+              {!!latestVersion && (
+                <Touchable onClick={() => electronApi.openExternal(latestVersion.html_url)} title={latestVersion.body}>
+                  （最新: {latestVersion.tag_name}）
+                </Touchable>
+              )}
             </Menu.Title>
             <Menu.Item id={'1'} icon={'file'}>
               全部文件

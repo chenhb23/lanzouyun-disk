@@ -4,12 +4,7 @@ export interface MenuTitleProps extends Pick<React.LiHTMLAttributes<HTMLLIElemen
 
 export const MenuTitle: React.FC<MenuTitleProps> = props => {
   return (
-    <li
-      className='MenuTitle'
-      title={props.title}
-      onClick={props.onClick}
-      style={props.onClick ? {cursor: 'pointer'} : undefined}
-    >
+    <li className='MenuTitle' title={props.title} onClick={props.onClick}>
       {props.children}
     </li>
   )

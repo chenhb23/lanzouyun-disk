@@ -15,9 +15,10 @@
 }
 
 .MenuTitle {
-  margin: 12px 0;
   padding-left: 24px;
   color: rgb(154, 154, 154);
   font-size: 12px;
   user-select: none;
+  height: 30px;
+  line-height: 30px;
 }
