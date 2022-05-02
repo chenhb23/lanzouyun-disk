@@ -12,6 +12,7 @@ import {message} from '../component/Message'
 import path from 'path'
 import {config} from '../store/Config'
 import electronApi from '../electronApi'
+import {ChooseFile} from '../component/ChooseFile'
 
 export default function SplitMerge() {
   const [splitInfo, setSplitInfo] = useState<ReturnType<typeof splitTask>>()
@@ -34,17 +35,15 @@ export default function SplitMerge() {
       style={{padding: '20px 10px'}}
       HeaderComponent={
         <div className={'select'}>
-          <Button
-            type={'primary'}
-            file
-            onChange={files => {
-              Array.prototype.map.call(files, (file: File) => {
+          <ChooseFile
+            onChange={event => {
+              Array.prototype.map.call(event.target.files, (file: File) => {
                 setSplitFile(file)
               })
             }}
           >
-            选择文件
-          </Button>
+            <Button type={'primary'}>选择文件</Button>
+          </ChooseFile>
           {!!splitInfo && (
             <div style={{marginLeft: 20}}>
               <Icon iconName={path.extname(splitInfo.file.name).replace(/^\./, '')} defaultIcon={'file'} />

@@ -49,6 +49,7 @@ const base = got.extend({
       },
     ],
   },
+  https: {rejectUnauthorized: false},
   ...(store.get('isDev')
     ? {
         // // 开发用

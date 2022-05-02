@@ -1,0 +1,7 @@
+.ChooseFile {
+  cursor: pointer;
+}
+
+.ChooseFile + .Button {
+  margin-left: 10px;
+}

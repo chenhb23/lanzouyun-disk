@@ -39,7 +39,10 @@ const App = observer(() => {
       <main className='main'>
         <aside className='aside'>
           <Menu activeKey={activeKey} onChange={key => setActiveKey(key)}>
-            <Menu.Title onClick={() => electronApi.openExternal('https://github.com/chenhb23/lanzouyun-disk')}>
+            <Menu.Title
+              title={'去 GitHub 点亮 star'}
+              onClick={() => electronApi.openExternal('https://github.com/chenhb23/lanzouyun-disk')}
+            >
               <Icon iconName={'github'} style={{fontSize: 14}} /> v{pkg.version}
             </Menu.Title>
             <Menu.Item id={'1'} icon={'file'}>
@@ -72,7 +75,7 @@ const App = observer(() => {
               已完成 {taskLength(download.finishList)}
             </Menu.Item>
             <Menu.Title>实用工具</Menu.Title>
-            <Menu.Item id={'5'} icon={'more'}>
+            <Menu.Item id={'5'} icon={'share'}>
               解析Url
             </Menu.Item>
             <Menu.Item id={'6'} icon={'split'}>

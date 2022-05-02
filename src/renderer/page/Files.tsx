@@ -21,6 +21,7 @@ import {editFile, editFileInfo, editFolder, editFolderInfo} from '../../common/c
 import {mv} from '../../common/core/mv'
 
 import './Files.css'
+import {ChooseFile} from '../component/ChooseFile'
 
 interface FolderForm {
   folder_id?: FolderId // 如果有 folder_id 则是编辑
@@ -147,17 +148,16 @@ export default function Files() {
               </div>
             }
           >
-            <Button
-              icon={'upload'}
-              file
-              onChange={files => {
-                Array.prototype.map.call(files, (file: File) => {
-                  upload.addTask({folderId: currentFolder, file})
-                })
+            <ChooseFile
+              multiple
+              onChange={async event => {
+                for (const file of event.target.files) {
+                  await upload.addTask({folderId: currentFolder, file})
+                }
               }}
             >
-              上传
-            </Button>
+              <Button icon={<Icon iconName={'upload'} />}>上传</Button>
+            </ChooseFile>
             <Button
               type={'primary'}
               onClick={() => {
@@ -173,7 +173,7 @@ export default function Files() {
                 </Button>
                 <Button
                   type={'primary'}
-                  title={selectedRows.map(value => value.name).join('\n')}
+                  title={selectedRows.map((value, index) => `${index + 1}. ${value.name}`).join('\n')}
                   onClick={async () => {
                     for (const item of selectedRows) {
                       await downloadFile(item)
@@ -186,7 +186,7 @@ export default function Files() {
                 </Button>
                 {!!moveRows.length && (
                   <Button
-                    title={moveRows.map(value => value.name).join('\n')}
+                    title={moveRows.map((value, index) => `${index + 1}. ${value.name}`).join('\n')}
                     type={'primary'}
                     onClick={() => setMoveVisible(true)}
                   >
@@ -204,6 +204,15 @@ export default function Files() {
       }
     >
       <Table
+        onRow={record => ({
+          onClick: () => {
+            setSelectedRows(prev =>
+              prev.some(value => value.id === record.id)
+                ? prev.filter(value => value.id !== record.id)
+                : [...prev, record]
+            )
+          },
+        })}
         rowSelection={{
           selectedRowKeys: selectedRows.map(value => value.id),
           onSelect: (record, checked) => {
@@ -229,7 +238,8 @@ export default function Files() {
                   <a
                     href={'#'}
                     title={item.name}
-                    onClick={() => {
+                    onClick={event => {
+                      event.stopPropagation()
                       if (item.type === URLType.folder) {
                         listFile(item.id).then(() => setSearch(''))
                       }
@@ -243,7 +253,7 @@ export default function Files() {
                     {item.name}
                     {`${item.source.onof}` === '1' && <Icon iconName={'lock'} style={{marginLeft: 5}} />}
                   </a>
-                  <div className='handle'>
+                  <div className='handle' onClick={event => event.stopPropagation()}>
                     <Button
                       title={'编辑'}
                       type={'icon'}
@@ -380,6 +390,7 @@ export default function Files() {
           setMoveVisible(false)
           setSelectedRows([])
           listFile(currentFolder)
+          message.success('移动成功！')
         }}
       />
     </ScrollView>
@@ -421,15 +432,18 @@ function SelectDir(props: SelectDirProps) {
       <Crumbs crumbs={crumbs} onClick={folderid => ls(folderid)} />
       <Table
         dataSource={data?.text}
+        onRow={record => ({
+          onClick: () => ls(record.fol_id),
+        })}
         columns={[
           {
             title: '文件夹',
             render: record => {
               return (
-                <div onClick={() => ls(record.fol_id)}>
+                <span>
                   <Icon iconName={'folder'} />
                   <a href={'#'}>{record.name}</a>
-                </div>
+                </span>
               )
             },
           },

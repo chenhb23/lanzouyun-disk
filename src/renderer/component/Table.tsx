@@ -34,6 +34,12 @@ export interface TableProps<T = any> {
     // changeRows 可能比 selectedRows 少
     onSelectAll?: (checked: boolean, selectedRows: T[], changeRows: T[]) => void
   }
+  onRow?: (
+    record: T,
+    index: number
+  ) => {
+    onClick: (event: any) => void
+  }
   columns: Column<T>[]
 }
 
@@ -198,8 +204,9 @@ export default function Table<T>(props: TableProps<T>) {
                 </td>
               )}
               {props.columns.map((value, index) => {
+                const handle = props.onRow?.(record, index)
                 return (
-                  <td key={index}>
+                  <td key={index} onClick={handle?.onClick}>
                     {typeof value.render === 'function' ? value.render(record) : record[value.dataIndex]}
                   </td>
                 )
