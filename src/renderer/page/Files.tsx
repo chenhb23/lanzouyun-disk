@@ -15,9 +15,9 @@ import {Input, Textarea} from '../component/Input'
 import {Modal} from '../component/Modal'
 import {mkdir} from '../../common/core/mkdir'
 import {download, upload} from '../store'
-import {fileDetail, folderDetail} from '../../common/core/detail'
+import {fileDetail, folderDetail, share} from '../../common/core/detail'
 import Table from '../component/Table'
-import {editFile, editFileInfo, editFolder, editFolderInfo} from '../../common/core/edit'
+import {editFile, editFileInfo, editFolder} from '../../common/core/edit'
 import {countTree, mv} from '../../common/core/mv'
 import {ChooseFile} from '../component/ChooseFile'
 
@@ -117,30 +117,35 @@ export default function Files() {
 
   const [moveFolderId, setMoveFolderId] = useState<FolderId>('')
 
-  const downloadFile = useCallback(
-    async (item: LsFiles) => {
-      await listenerFn(async () => {
-        if (item.type === URLType.file) {
-          const {f_id, is_newd, pwd, onof} = await fileDetail(item.id)
-          await download.addTask({
-            url: `${is_newd}/${f_id}`,
-            pwd: `${onof}` === '1' ? pwd : undefined,
-            name: item.name,
-            merge: false,
-          })
-        } else {
-          const {new_url, onof, pwd, name} = await folderDetail(item.id)
-          await download.addTask({
-            name: name,
-            url: new_url,
-            pwd: `${onof}` === '1' ? pwd : undefined,
-            merge: isFile(name),
-          })
-        }
-      }, 'download')
-    },
-    [listenerFn]
-  )
+  const downloadFile = useCallback(async (item: LsFiles) => {
+    if (item.type === URLType.file) {
+      const {f_id, is_newd, pwd, onof} = await fileDetail(item.id)
+      await download.addTask({
+        url: `${is_newd}/${f_id}`,
+        pwd: `${onof}` === '1' ? pwd : undefined,
+        name: item.name,
+        merge: false,
+      })
+    } else {
+      const {new_url, onof, pwd, name} = await folderDetail(item.id)
+      await download.addTask({
+        name: name,
+        url: new_url,
+        pwd: `${onof}` === '1' ? pwd : undefined,
+        merge: isFile(name),
+      })
+    }
+  }, [])
+
+  // 获取分享信息并复制到粘贴板，可选是否包含文件名
+  const shareAndWriteClipboard = async (files: Parameters<typeof share>[0], withFileName = true) => {
+    const data = await share(files)
+    const shareData = data
+      .map(value => `${withFileName ? `${value.name} ` : ''}${value.url}${value.pwd ? ` 密码:${value.pwd}` : ''}`)
+      .join('\n')
+    electron.clipboard.writeText(shareData)
+    return shareData
+  }
 
   return (
     <ScrollView
@@ -179,26 +184,33 @@ export default function Files() {
             >
               <Button icon={<Icon iconName={'upload'} />}>上传</Button>
             </ChooseFile>
-            <Button
-              type={'primary'}
-              onClick={() => {
-                setVisible(true)
-              }}
-            >
-              新建文件夹
-            </Button>
-            {!!selectedRows.length && (
+            <Button onClick={() => setVisible(true)}>新建文件夹</Button>
+            {selectedRows.length ? (
               <>
                 <Button type={'primary'} onClick={() => setSelectedRows([])}>
                   取消选择
                 </Button>
                 <Button
+                  type={'primary'}
+                  icon={<Icon iconName={'share'} />}
+                  loading={loading['oneClickShare']}
+                  onClick={async () => {
+                    await listener(shareAndWriteClipboard(selectedRows), 'oneClickShare')
+                    message.success('分享链接已复制!')
+                  }}
+                >
+                  分享 ({selectedRows.length})
+                </Button>
+                <Button
                   icon={<Icon iconName={'download'} />}
                   type={'primary'}
+                  loading={loading['multiDownload']}
                   onClick={async () => {
-                    for (const item of selectedRows) {
-                      await downloadFile(item)
-                    }
+                    await listenerFn(async () => {
+                      for (const item of selectedRows) {
+                        await downloadFile(item)
+                      }
+                    }, 'multiDownload')
                     message.success('已经添加到下载列表！')
                     setSelectedRows([])
                   }}
@@ -227,6 +239,18 @@ export default function Files() {
                   删除 ({selectedRows.length})
                 </Button>
               </>
+            ) : (
+              <Button
+                type={'primary'}
+                loading={loading['oneClickShare']}
+                title={'复制当前页面的分享链接'}
+                onClick={async () => {
+                  await listener(shareAndWriteClipboard(renderList.text), 'oneClickShare')
+                  message.success('分享链接已复制!')
+                }}
+              >
+                一键分享
+              </Button>
             )}
           </Header>
           <Bar style={{justifyContent: 'flex-start'}}>
@@ -296,11 +320,11 @@ export default function Files() {
                           const value = await editFileInfo(item.id)
                           setFileForm({file_id: item.id, name: value.info})
                         } else {
-                          const value = await editFolderInfo(item.id)
+                          const value = await folderDetail(item.id)
                           setForm({
                             folder_id: item.id,
-                            name: value.info.name,
-                            folderDesc: value.info.des,
+                            name: value.name,
+                            folderDesc: value.des,
                           })
                           setVisible(true)
                         }
@@ -310,18 +334,10 @@ export default function Files() {
                       title={'分享'}
                       icon={'share'}
                       type={'icon'}
-                      loading={loading['fileDetail']}
+                      loading={loading['fileShare']}
                       onClick={async () => {
-                        let shareUrl = ''
-                        if (item.type === URLType.file) {
-                          const info = await listener(fileDetail(item.id), 'fileDetail')
-                          shareUrl = `${info.is_newd}/${info.f_id}${info.onof === '1' ? `\n密码:${info.pwd}` : ''}`
-                        } else {
-                          const info = await listener(folderDetail(item.id), 'fileDetail')
-                          shareUrl = `${info.new_url}${info.onof === '1' ? `\n密码:${info.pwd}` : ''}`
-                        }
-                        electron.clipboard.writeText(shareUrl)
-                        message.success(`分享链接已复制：\n${shareUrl}`)
+                        const data = await listener(shareAndWriteClipboard([item], false), 'fileShare')
+                        message.success(`分享链接已复制：\n${data}`)
                       }}
                     />
                     <Button
@@ -329,7 +345,7 @@ export default function Files() {
                       icon={'download'}
                       type={'icon'}
                       loading={loading['download']}
-                      onClick={() => downloadFile(item)}
+                      onClick={() => listener(downloadFile(item), 'download')}
                     />
                     <Button
                       title={'删除'}
@@ -401,7 +417,7 @@ export default function Files() {
         </div>
       </Modal>
 
-      <SelectDir
+      <SelectFolder
         currentFolder={moveFolderId}
         loading={loading['move']}
         onCancel={() => setMoveFolderId('')}
@@ -425,14 +441,14 @@ export default function Files() {
   )
 }
 
-interface SelectDirProps {
+interface SelectFolderProps {
   currentFolder: FolderId
   onCancel?: () => void
   onOk: (folderId: FolderId, level: number) => void
   loading?: boolean
 }
 
-function SelectDir(props: SelectDirProps) {
+function SelectFolder(props: SelectFolderProps) {
   const [data, setData] = useState<AsyncReturnType<typeof lsDir>>(null)
   const crumbs = useMemo(() => [{name: '全部文件', folderid: -1}, ...(data?.info || [])], [data?.info])
   const current = crumbs[crumbs.length - 1]

@@ -17,15 +17,6 @@ export function editFile(file_id: FileId, file_name: string) {
 }
 
 // 文件夹信息
-export function editFolderInfo(folder_id: FolderId) {
-  return http.request
-    .post('doupload.php', {
-      form: {task: 18, folder_id} as Task18,
-    })
-    .json<Task18Res>()
-}
-
-// 文件夹信息
 export function editFolder(folder_id: FolderId, folder_name: string, folder_description = '') {
   return http.request
     .post('doupload.php', {
@@ -33,3 +24,7 @@ export function editFolder(folder_id: FolderId, folder_name: string, folder_desc
     })
     .json<Task4Res>()
 }
+
+// 文件夹不能关闭密码
+// 文件的密码不能为空
+export function setAccess() {}

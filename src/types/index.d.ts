@@ -25,15 +25,15 @@ interface FolderInfo {
   name: string
   onof: Bool // 是否需要访问密码
 }
-interface FolderEditInfo {
-  des: string // ''
-  is_newd: string // 'https://wwn.lanzouf.com'
-  name: string // 'wechat_devtools_1.05.2203070.dmg'
-  new_url: string // 'https://wwn.lanzouf.com/b01v9q6sh'
-  onof: string // '1'
-  pwd: string // '4pb8'
-  taoc: string // ''
-}
+// interface FolderEditInfo {
+//   des: string // ''
+//   is_newd: string // 'https://wwn.lanzouf.com'
+//   name: string // 'wechat_devtools_1.05.2203070.dmg'
+//   new_url: string // 'https://wwn.lanzouf.com/b01v9q6sh'
+//   onof: string // '1'
+//   pwd: string // '4pb8'
+//   taoc: string // ''
+// }
 // 列表文件
 interface FileInfo {
   filelock: string // '0'
@@ -173,6 +173,7 @@ interface Task3Res {
 }
 
 ///////////////////////////////////////////////////////////////////
+// 文件夹信息
 interface Task18 {
   task: 18
   folder_id: FolderId
@@ -183,16 +184,16 @@ interface Task18Res {
   zt: 1
 }
 ///////////////////////////////////////////////////////////////////
-// 文件夹信息
-interface Task18 {
-  task: 18
-  folder_id: FolderId
-}
-interface Task18Res {
-  info: FolderEditInfo
-  text: null
-  zt: 1
-}
+// // 文件夹信息
+// interface Task18 {
+//   task: 18
+//   folder_id: FolderId
+// }
+// interface Task18Res {
+//   info: FolderEditInfo
+//   text: null
+//   zt: 1
+// }
 
 // 重名文件夹 | 修改资料(话说)
 interface Task4 {

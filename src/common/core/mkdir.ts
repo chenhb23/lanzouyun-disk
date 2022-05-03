@@ -11,7 +11,7 @@ export function mkdir(options: MkdirOptions) {
   const folder_name = options.name.replace(/[ ()]/g, '_')
   return http.request
     .post('doupload.php', {
-      form: {task: 2, parent_id: options.parentId, folder_name, folder_description: options.description} as Task2,
+      form: {task: 2, parent_id: options.parentId, folder_name, folder_description: options.description ?? ''} as Task2,
       ...(options.hideMessage ? {context: {hideMessage: options.hideMessage}} : {}),
     })
     .json<Task2Res>()
