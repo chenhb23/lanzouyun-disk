@@ -39,6 +39,12 @@
   color: #ffffff;
 }
 
+.Button.danger {
+  background-color: rgb(255, 24, 24);
+  border-color: rgb(255, 24, 24);
+  color: #ffffff;
+}
+
 .Button.icon {
   min-width: 25px;
   background-color: transparent;

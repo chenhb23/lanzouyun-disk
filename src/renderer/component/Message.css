@@ -1,5 +1,6 @@
 .Message {
   position: fixed;
+  z-index: 100;
   left: 50%;
   transition: transform 0.5s;
   top: 0;

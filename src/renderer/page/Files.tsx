@@ -6,7 +6,7 @@ import {message} from '../component/Message'
 import {Crumbs} from '../component/Crumbs'
 import {Icon} from '../component/Icon'
 import {isFile, sizeToByte} from '../../common/util'
-import {rmFile, rmFolder} from '../../common/core/rm'
+import {rm} from '../../common/core/rm'
 import {ls, lsDir, LsFiles, URLType} from '../../common/core/ls'
 import {Bar} from '../component/Bar'
 import {useLoading} from '../hook/useLoading'
@@ -18,10 +18,10 @@ import {download, upload} from '../store'
 import {fileDetail, folderDetail} from '../../common/core/detail'
 import Table from '../component/Table'
 import {editFile, editFileInfo, editFolder, editFolderInfo} from '../../common/core/edit'
-import {mv} from '../../common/core/mv'
+import {countTree, mv} from '../../common/core/mv'
+import {ChooseFile} from '../component/ChooseFile'
 
 import './Files.css'
-import {ChooseFile} from '../component/ChooseFile'
 
 interface FolderForm {
   folder_id?: FolderId // 如果有 folder_id 则是编辑
@@ -58,7 +58,29 @@ export default function Files() {
 
   const currentFolder = crumbs[crumbs.length - 1].folderid
 
-  const listFile = useCallback(folder_id => listener(ls(folder_id), 'ls').then(value => setList(value)), [listener])
+  const listFile = useCallback(
+    async folder_id => {
+      const value = await listener(ls(folder_id), 'ls')
+      setList(value)
+    },
+    [listener]
+  )
+  // 进入下一层目录自动把搜索结果和所选择的项清除
+  const lsNextFolder = async (folderId: FolderId) => {
+    await listFile(folderId)
+    setSearch('')
+    setSelectedRows([])
+  }
+  const rmFiles = async (files: LsFiles[], loadingKey: string) => {
+    await listenerFn(async () => {
+      for (const item of files) {
+        await rm(item.id, item.type === URLType.file)
+      }
+    }, loadingKey)
+    message.success('删除成功')
+    setSelectedRows(prev => prev.filter(value => files.every(item => item.id !== value.id)))
+    listFile(currentFolder)
+  }
 
   useEffect(() => {
     listFile(-1)
@@ -83,7 +105,7 @@ export default function Files() {
       const value = await listener(editFolder(form.folder_id, form.name, form.folderDesc), 'saveDir')
       message.success(value.info)
     } else {
-      await listener(mkdir(currentFolder, form.name, form.folderDesc), 'saveDir')
+      await listener(mkdir({parentId: currentFolder, name: form.name, description: form.folderDesc}), 'saveDir')
       message.success('创建成功')
     }
 
@@ -92,9 +114,8 @@ export default function Files() {
   }
 
   const [selectedRows, setSelectedRows] = useState<AsyncReturnType<typeof ls>['text']>([])
-  const moveRows = useMemo(() => selectedRows.filter(value => value.type === URLType.file), [selectedRows])
 
-  const [moveVisible, setMoveVisible] = useState(false)
+  const [moveFolderId, setMoveFolderId] = useState<FolderId>('')
 
   const downloadFile = useCallback(
     async (item: LsFiles) => {
@@ -172,8 +193,8 @@ export default function Files() {
                   取消选择
                 </Button>
                 <Button
+                  icon={<Icon iconName={'download'} />}
                   type={'primary'}
-                  title={selectedRows.map((value, index) => `${index + 1}. ${value.name}`).join('\n')}
                   onClick={async () => {
                     for (const item of selectedRows) {
                       await downloadFile(item)
@@ -182,22 +203,34 @@ export default function Files() {
                     setSelectedRows([])
                   }}
                 >
-                  下载 ({selectedRows.length} 项)
+                  下载 ({selectedRows.length})
                 </Button>
-                {!!moveRows.length && (
-                  <Button
-                    title={moveRows.map((value, index) => `${index + 1}. ${value.name}`).join('\n')}
-                    type={'primary'}
-                    onClick={() => setMoveVisible(true)}
-                  >
-                    移动 ({moveRows.length} 项)
-                  </Button>
-                )}
+                <Button
+                  title={'时间跟文件数量有关，不建议经常使用'}
+                  icon={<Icon iconName={'move'} />}
+                  type={selectedRows.some(value => value.type === URLType.folder) ? 'danger' : 'primary'}
+                  onClick={() => setMoveFolderId(currentFolder)}
+                >
+                  移动 ({selectedRows.length})
+                </Button>
+                <Button
+                  icon={<Icon iconName={'delete'} />}
+                  type={'danger'}
+                  loading={loading['deleteFiles']}
+                  onClick={() => {
+                    const result = confirm('确认删除？')
+                    if (result) {
+                      rmFiles(selectedRows, 'deleteFiles')
+                    }
+                  }}
+                >
+                  删除 ({selectedRows.length})
+                </Button>
               </>
             )}
           </Header>
           <Bar style={{justifyContent: 'flex-start'}}>
-            <Crumbs crumbs={crumbs} onClick={folderid => listFile(folderid).then(() => setSearch(''))} />
+            <Crumbs crumbs={crumbs} onClick={folderId => lsNextFolder(folderId)} />
             {(loading['ls'] || loading['download']) && <Icon iconName={'loading'} />}
           </Bar>
         </>
@@ -241,7 +274,7 @@ export default function Files() {
                     onClick={event => {
                       event.stopPropagation()
                       if (item.type === URLType.folder) {
-                        listFile(item.id).then(() => setSearch(''))
+                        lsNextFolder(item.id)
                       }
                     }}
                   >
@@ -303,16 +336,7 @@ export default function Files() {
                       icon={'delete'}
                       type={'icon'}
                       loading={loading['rmFile']}
-                      onClick={async () => {
-                        if (item.type === URLType.file) {
-                          await listener(rmFile(item.id), 'rmFile')
-                        } else {
-                          await listener(rmFolder(item.id), 'rmFile')
-                        }
-                        message.success('已删除')
-                        setSelectedRows(prev => prev.filter(value => value.id !== item.id))
-                        listFile(currentFolder)
-                      }}
+                      onClick={() => rmFiles([item], 'rmFile')}
                     />
                   </div>
                 </div>
@@ -378,19 +402,23 @@ export default function Files() {
       </Modal>
 
       <SelectDir
-        visible={moveVisible}
+        currentFolder={moveFolderId}
         loading={loading['move']}
-        onCancel={() => setMoveVisible(false)}
-        onOk={async folderId => {
+        onCancel={() => setMoveFolderId('')}
+        onOk={async (folderId, level) => {
           await listenerFn(async () => {
-            for (const item of moveRows) {
-              await mv(item.id, folderId)
+            try {
+              message.success('正在移动')
+              const result = await mv(selectedRows, folderId, level)
+              const [fileCount, folderCount] = countTree(result)
+              message.success(`成功！移动文件：${fileCount}, 文件夹：${folderCount}`)
+              setMoveFolderId('')
+              setSelectedRows([])
+              listFile(currentFolder)
+            } catch (e: any) {
+              message.error(e)
             }
           }, 'move')
-          setMoveVisible(false)
-          setSelectedRows([])
-          listFile(currentFolder)
-          message.success('移动成功！')
         }}
       />
     </ScrollView>
@@ -398,9 +426,9 @@ export default function Files() {
 }
 
 interface SelectDirProps {
-  visible: boolean
+  currentFolder: FolderId
   onCancel?: () => void
-  onOk: (folderId: FolderId) => void
+  onOk: (folderId: FolderId, level: number) => void
   loading?: boolean
 }
 
@@ -414,20 +442,29 @@ function SelectDir(props: SelectDirProps) {
     setData(dirs)
   }, [])
 
+  const visible = !!props.currentFolder
+
   useEffect(() => {
-    if (props.visible) {
+    if (visible) {
       ls('-1')
     }
-  }, [ls, props.visible])
+  }, [ls, visible])
+
+  const moveDisabled = props.currentFolder === current.folderid
 
   return (
     <Modal
-      visible={props.visible}
+      visible={visible}
       title={'选择文件夹'}
-      okButtonProps={{style: {maxWidth: 150, textOverflow: 'ellipsis', overflow: 'hidden'}, loading: props.loading}}
-      okText={`移动到：${current.name}`}
+      okButtonProps={{
+        style: {maxWidth: 150, textOverflow: 'ellipsis', overflow: 'hidden'},
+        loading: props.loading,
+        disabled: moveDisabled,
+      }}
+      okText={moveDisabled ? '无需移动' : `移动到：${current.name}`}
       onCancel={props.onCancel}
-      onOk={() => props.onOk(current.folderid)}
+      onOk={() => props.onOk(current.folderid, crumbs.length - 1)}
+      bodyStyle={{minHeight: 200}}
     >
       <Crumbs crumbs={crumbs} onClick={folderid => ls(folderid)} />
       <Table
@@ -440,10 +477,10 @@ function SelectDir(props: SelectDirProps) {
             title: '文件夹',
             render: record => {
               return (
-                <span>
+                <>
                   <Icon iconName={'folder'} />
                   <a href={'#'}>{record.name}</a>
-                </span>
+                </>
               )
             },
           },

@@ -20,7 +20,7 @@ const base = got.extend({
   hooks: {
     afterResponse: [
       async response => {
-        // 返回值状态判断
+        // 返回值状态判断。 蓝奏云返回类型: text/json，github 返回类型: application/json
         if (response.headers['content-type']?.includes('text/json')) {
           const body = JSON.parse(response.body as string)
           switch (body.zt) {
@@ -44,7 +44,9 @@ const base = got.extend({
       error => {
         // todo: 记录
         console.error(error)
-        message.error(error.message)
+        if (!error.options?.context?.hideMessage) {
+          message.error(error.message)
+        }
         return error
       },
     ],

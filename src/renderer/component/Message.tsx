@@ -37,19 +37,16 @@ function show({duration = 2000, type = 'success', message} = {} as MessageOption
   div.className = `Message ${type}`
 
   document.body.appendChild(div)
+  window.getComputedStyle(div).opacity
+  div.classList.add('show')
   elements.push(div)
-  delay(100)
-    .then(() => {
-      div.classList.add('show')
-      return delay(duration)
-    })
-    .then(() => hide(div))
+
+  delay(duration).then(() => hide(div))
   return () => hide(div)
 }
 
 async function hide(div: HTMLDivElement) {
   elements = elements.filter(item => item !== div)
+  div.addEventListener('transitionend', () => div.remove(), {once: true})
   div.classList.remove('show')
-  await delay(500)
-  div.remove()
 }

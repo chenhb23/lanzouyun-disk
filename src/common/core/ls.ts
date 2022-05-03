@@ -27,29 +27,34 @@ export interface LsResult {
   text: LsFiles[]
 }
 
-export async function ls(folder_id = -1): Promise<LsResult> {
+/**
+ * 文件列表
+ * @param folder_id
+ * @param folderFirst 文件夹优先 true
+ */
+export async function ls(folder_id: FolderId = -1, folderFirst = true): Promise<LsResult> {
   const [res1, res2] = await Promise.all([lsDir(folder_id), lsFile(folder_id)])
+
+  const folders = res1.text.map(value => ({
+    name: value.name,
+    type: URLType.folder,
+    id: `${value.fol_id}`,
+    source: value,
+  }))
+  const files = res2.map(value => ({
+    name: value.name_all,
+    type: URLType.file,
+    id: `${value.id}`,
+    icon: value.icon,
+    size: value.size,
+    time: value.time,
+    downs: value.downs,
+    source: value,
+  }))
 
   return {
     info: res1.info,
-    text: [
-      ...res1.text.map(value => ({
-        name: value.name,
-        type: URLType.folder,
-        id: `${value.fol_id}`,
-        source: value,
-      })),
-      ...res2.map(value => ({
-        name: value.name_all,
-        type: URLType.file,
-        id: `${value.id}`,
-        icon: value.icon,
-        size: value.size,
-        time: value.time,
-        downs: value.downs,
-        source: value,
-      })),
-    ],
+    text: folderFirst ? [...folders, ...files] : [...files, ...folders],
   }
 }
 

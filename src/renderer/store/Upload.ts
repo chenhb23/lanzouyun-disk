@@ -168,7 +168,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
 
       let subFolderId = await findFolderByName(options.folderId, options.file.name).then(value => value?.fol_id)
       if (!subFolderId) {
-        subFolderId = await mkdir(options.folderId, options.file.name)
+        subFolderId = await mkdir({parentId: options.folderId, name: options.file.name})
       }
       for (const file of files) {
         const path = resolve(filePath, file)
@@ -318,7 +318,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
     } else {
       let subFolderId = await findFolderByName(folderId, file.name).then(value => value?.fol_id)
       if (!subFolderId) {
-        subFolderId = await mkdir(folderId, file.name)
+        subFolderId = await mkdir({parentId: folderId, name: file.name})
       }
       const result = splitTask(file, config.splitSize)
       task.tasks.push(

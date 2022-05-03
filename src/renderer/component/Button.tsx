@@ -3,7 +3,7 @@ import {Icon} from './Icon'
 import './Button.css'
 
 export type ButtonProps = {
-  type?: 'primary' | 'default' | 'icon'
+  type?: 'primary' | 'danger' | 'default' | 'icon'
 
   // todo: 删除 icon
   icon?: IconName | React.ReactNode
