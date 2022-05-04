@@ -238,7 +238,32 @@ interface Task20Res {
   text: null
   zt: ZT
 }
+///////////////////////////////////////////////////////////////////
+// 设置文件夹密码
+interface Task16 {
+  task: 16
+  folder_id: FolderId
+  shows: 0 | 1
+  shownames: string // 91hf
+}
+interface Task16Res {
+  info: string // 修改成功
+  text: number
+  zt: ZT
+}
 
+// 设置文件密码
+interface Task23 {
+  task: 23
+  file_id: FolderId
+  shows: 0 | 1
+  shownames: string // 91hf
+}
+interface Task23Res {
+  info: string // 设置成功
+  text: number
+  zt: ZT
+}
 ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////
 interface ShareFileReq {

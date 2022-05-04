@@ -12,12 +12,12 @@ import {Bar} from '../component/Bar'
 import {useLoading} from '../hook/useLoading'
 import {ScrollView} from '../component/ScrollView'
 import {Input, Textarea} from '../component/Input'
-import {Modal} from '../component/Modal'
+import {Modal, ModalProps} from '../component/Modal'
 import {mkdir} from '../../common/core/mkdir'
 import {download, upload} from '../store'
 import {fileDetail, folderDetail, share} from '../../common/core/detail'
 import Table from '../component/Table'
-import {editFile, editFileInfo, editFolder} from '../../common/core/edit'
+import {AccessData, editFile, editFileInfo, editFolder, setAccess} from '../../common/core/edit'
 import {countTree, mv} from '../../common/core/mv'
 import {ChooseFile} from '../component/ChooseFile'
 
@@ -34,6 +34,7 @@ interface FolderForm {
 
 export default function Files() {
   const [visible, setVisible] = useState(false)
+  const [accessVisible, setAccessVisible] = useState(false)
   const {loading, listener, listenerFn} = useLoading()
   const [form, setForm] = useState({} as FolderForm)
   const [fileForm, setFileForm] = useState({} as {file_id: FileId; name: string})
@@ -185,10 +186,14 @@ export default function Files() {
               <Button icon={<Icon iconName={'upload'} />}>上传</Button>
             </ChooseFile>
             <Button onClick={() => setVisible(true)}>新建文件夹</Button>
+
             {selectedRows.length ? (
               <>
                 <Button type={'primary'} onClick={() => setSelectedRows([])}>
                   取消选择
+                </Button>
+                <Button type={'primary'} onClick={() => setAccessVisible(true)}>
+                  设置密码
                 </Button>
                 <Button
                   type={'primary'}
@@ -437,6 +442,28 @@ export default function Files() {
           }, 'move')
         }}
       />
+
+      <SetAccess
+        visible={accessVisible}
+        loading={loading['setAccess']}
+        onCancel={() => setAccessVisible(false)}
+        noOk={async data => {
+          const failTimes = await listener(
+            setAccess(
+              selectedRows.map(value => ({
+                id: value.id,
+                type: value.type,
+                shows: data.shows,
+                shownames: data.shownames,
+              }))
+            ),
+            'setAccess'
+          )
+          message.success(`成功：${selectedRows.length - failTimes}，失败：${failTimes}`)
+          setSelectedRows([])
+          setAccessVisible(false)
+        }}
+      />
     </ScrollView>
   )
 }
@@ -503,6 +530,49 @@ function SelectFolder(props: SelectFolderProps) {
         ]}
         rowKey={'fol_id'}
       />
+    </Modal>
+  )
+}
+
+interface SetAccessProps {
+  visible: ModalProps['visible']
+  loading?: boolean
+  onCancel: ModalProps['onCancel']
+  noOk: (data: Pick<AccessData, 'shows' | 'shownames'>) => void
+}
+
+function SetAccess(props: SetAccessProps) {
+  const [data, setData] = useState<Pick<AccessData, 'shows' | 'shownames'>>({shows: 1, shownames: ''})
+  const visible = props.visible
+
+  useEffect(() => {
+    if (visible) {
+      setData({shows: 1, shownames: ''})
+    }
+  }, [visible])
+
+  return (
+    <Modal
+      visible={visible}
+      title={'批量设置访问密码'}
+      onCancel={props.onCancel}
+      okButtonProps={{loading: props.loading}}
+      onOk={() => props.noOk(data)}
+    >
+      <Input
+        style={{marginBottom: 10}}
+        value={data?.shownames}
+        maxLength={6}
+        onChange={event => setData(prev => ({...prev, shownames: event.target.value}))}
+      />
+      <label>
+        <input
+          type={'checkbox'}
+          checked={data?.shows === 1}
+          onChange={event => setData(prev => ({...prev, shows: event.target.checked ? 1 : 0}))}
+        />
+        开启密码
+      </label>
     </Modal>
   )
 }

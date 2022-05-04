@@ -137,10 +137,20 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
   const title = $('title').text()
   if (isFile) {
     const name = title.replace(' - 蓝奏云', '') // '(文件名) - 蓝奏云',
-    const time = html.match(/上传时间：<\/span>(.*?)<br>/)?.[1]
-    const size = $('table')
-      .text()
-      .match(/文件大小：(.*)/)?.[1]
+    let time = html.match(/上传时间：<\/span>(.*?)<br>/)?.[1]
+    if (!time) {
+      // https://dkbd.lanzoui.com/dkbdv7
+      const memberFile = $('.filename img')
+      if (memberFile.length) {
+        time = new URL(memberFile.attr('src')).pathname
+          .split('/')
+          .filter(value => /^\d+$/.test(value))
+          .join('-')
+      }
+    }
+    const size = $('meta[name=description]')
+      .attr('content')
+      .replace(/文件大小：(.+)\|/, '$1')
     return {name, size, type: URLType.file, list: [{url, name, size, time}]}
   } else if (isPwdFile) {
     const ajaxData = Matcher.parsePwdAjax(html, pwd)
@@ -153,8 +163,10 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
       })
       .json<DownloadUrlRes>()
     const name = inf // 文件名
-    const size = $('.n_filesize').text().replace('大小：', '')
-    const time = html.match(/<span class='n_file_infos'>(.*?)<\/span>/)?.[1]
+    const size = $('meta[name=description]')
+      .attr('content')
+      .replace(/文件大小：(.+)\|/, '$1')
+    const time = $('.n_file_info > .n_file_infos:first-child').text()
     return {name, size, type: URLType.file, list: [{url, pwd, name, size, time}]}
   } else if (isFolder || isPwdFolder) {
     const value = await lsShareFolder({pwd, url, html})

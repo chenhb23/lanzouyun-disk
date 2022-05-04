@@ -5,6 +5,7 @@ export const delay = (ms = 1000) => new Promise(resolve => setTimeout(resolve, m
 
 // 95.0 M
 export function sizeToByte(size: string) {
+  if (!size) return 0
   const getUnit = unit =>
     ({
       get b() {
@@ -137,4 +138,22 @@ export function safeUserAgent(userAgent: string) {
     .filter(value => filters.every(item => item.toLowerCase() !== value[1].toLowerCase()))
     .map(value => value[0])
     .join(' ')
+}
+
+// 异步 map，可控制并发
+export async function asyncMap<T, R>(
+  array: T[],
+  asyncCallback: (value: T, index: number) => Promise<R>,
+  options = {} as {thread: number}
+): Promise<R[]> {
+  const thread = options.thread || 2
+  const data = []
+  for (let i = 0; i < array.length; i += thread) {
+    const nextThread = i + (thread - 1) < array.length ? thread : array.length - i
+    const values = await Promise.all(
+      Array.from({length: nextThread}).map((_, index) => asyncCallback(array[i + index], i + index))
+    )
+    data.push(...values)
+  }
+  return data
 }

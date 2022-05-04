@@ -234,6 +234,12 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
 
     if (!task.tasks?.length) {
       await this.initTask(task)
+      if (!task.tasks?.length) {
+        message.error('任务下载失败，列表为空！')
+        // 删除任务
+        this.remove(url)
+        return
+      }
     } else if (reset) {
       task.tasks.forEach(value => {
         if ([TaskStatus.pause, TaskStatus.fail].includes(value.status)) {
@@ -325,9 +331,7 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
   private async initTask(task: DownloadTask) {
     if (task.tasks?.length) return
     const {name, type, list} = await lsShare(task)
-    if (!list.length) {
-      throw new Error('列表为空！')
-    }
+    if (!list?.length) return
 
     task.urlType = type
     if (!task.name) {

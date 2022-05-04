@@ -1,5 +1,6 @@
 import * as http from '../http'
 import {LsFiles, URLType} from './ls'
+import {asyncMap} from '../util'
 
 /**
  * 文件夹详情
@@ -40,16 +41,12 @@ export async function share<T extends Pick<LsFiles, 'id' | 'type' | 'name'>>(fil
     }
   }
 
-  const thread = 1
-  const result: ShareData[] = []
-  for (let i = 0; i < files.length; i += thread) {
-    const info = await createFetch(files[i])
-    const item: ShareData = {
-      name: files[i].name,
+  return asyncMap(files, async value => {
+    const info = await createFetch(value)
+    return {
+      name: value.name,
       pwd: info.onof === '1' ? info.pwd : undefined,
       url: 'f_id' in info ? `${info.is_newd}/${info.f_id}` : info.new_url,
     }
-    result.push(item)
-  }
-  return result
+  })
 }

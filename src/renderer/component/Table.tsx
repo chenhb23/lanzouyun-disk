@@ -38,7 +38,8 @@ export interface TableProps<T = any> {
     record: T,
     index: number
   ) => {
-    onClick: (event: any) => void
+    onClick?: (event: React.MouseEvent<HTMLTableDataCellElement, MouseEvent>) => void
+    onContextMenu?: (event: React.MouseEvent<HTMLTableDataCellElement, MouseEvent>) => void
   }
   columns: Column<T>[]
 }
@@ -206,7 +207,7 @@ export default function Table<T>(props: TableProps<T>) {
               {props.columns.map((value, index) => {
                 const handle = props.onRow?.(record, index)
                 return (
-                  <td key={index} onClick={handle?.onClick}>
+                  <td key={index} onClick={handle?.onClick} onContextMenu={handle?.onContextMenu}>
                     {typeof value.render === 'function' ? value.render(record) : record[value.dataIndex]}
                   </td>
                 )
