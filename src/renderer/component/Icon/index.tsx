@@ -20,7 +20,7 @@ export type IconProps = {
   gutter?: number
 } & JSX.IntrinsicElements['svg']
 
-export const Icon: React.FC<IconProps> = ({iconName, className = '', defaultIcon, gutter, style, ...props}) => {
+export const MyIcon: React.FC<IconProps> = ({iconName, className = '', defaultIcon, gutter, style, ...props}) => {
   iconName = iconMap[iconName] ?? iconName
   const name = useMemo(() => {
     if (!icons.includes(iconName)) {
@@ -41,6 +41,6 @@ export const Icon: React.FC<IconProps> = ({iconName, className = '', defaultIcon
   )
 }
 
-Icon.defaultProps = {
+MyIcon.defaultProps = {
   gutter: 5,
 }

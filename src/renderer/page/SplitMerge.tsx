@@ -1,18 +1,17 @@
 import React, {useCallback, useState} from 'react'
-import {ScrollView} from '../component/ScrollView'
-import {Icon} from '../component/Icon'
-import {Button} from '../component/Button'
+import {MyScrollView} from '../component/ScrollView'
+import {MyIcon} from '../component/Icon'
 import {splitTask} from '../../common/split'
 import {useLoading} from '../hook/useLoading'
 import {split} from '../../common/merge'
-import './SplitMerge.css'
 import {byteToSize} from '../../common/util'
-import Table from '../component/Table'
-import {message} from '../component/Message'
 import path from 'path'
 import {config} from '../store/Config'
 import electronApi from '../electronApi'
-import {ChooseFile} from '../component/ChooseFile'
+import {MyHeader} from '../component/Header'
+import {Button, Col, message, Row, Space, Table, Upload} from 'antd'
+
+import './SplitMerge.css'
 
 export default function SplitMerge() {
   const [splitInfo, setSplitInfo] = useState<ReturnType<typeof splitTask>>()
@@ -31,67 +30,75 @@ export default function SplitMerge() {
   }, [])
 
   return (
-    <ScrollView
-      style={{padding: '20px 10px'}}
+    <MyScrollView
       HeaderComponent={
-        <div className={'select'}>
-          <ChooseFile
-            onChange={event => {
-              Array.prototype.map.call(event.target.files, (file: File) => {
-                setSplitFile(file)
-              })
-            }}
-          >
-            <Button type={'primary'}>选择文件</Button>
-          </ChooseFile>
-          {!!splitInfo && (
-            <div style={{marginLeft: 20}}>
-              <Icon iconName={path.extname(splitInfo.file.name).replace(/^\./, '')} defaultIcon={'file'} />
-              文件名: {splitInfo.file.name}, 文件类型: {splitInfo.file.type}
-            </div>
-          )}
-        </div>
+        <>
+          <MyHeader>
+            <Space size={12}>
+              <Upload customRequest={options => setSplitFile(options.file as File)} showUploadList={false}>
+                <Button type={'primary'}>选择文件</Button>
+              </Upload>
+              {!!splitInfo && (
+                <span>
+                  <MyIcon iconName={path.extname(splitInfo.file.name).replace(/^\./, '')} defaultIcon={'file'} />
+                  文件名: {splitInfo.file.name}, 文件类型: {splitInfo.file.type}
+                </span>
+              )}
+            </Space>
+          </MyHeader>
+        </>
       }
       FooterComponent={
-        <div className={'footer'}>
-          <span className='output'>
-            <span onClick={() => electronApi.showItemInFolder(output)}>输出路径: </span>
-            <span
+        <Row align={'middle'} style={{padding: '10px 20px'}}>
+          <Col flex={1}>
+            <Space>
+              <a title={'打开路径'} href={'#'} onClick={() => electronApi.showItemInFolder(output)}>
+                输出路径:{' '}
+              </a>
+              <a
+                href={'#'}
+                title={'选择输出路径'}
+                onClick={async () => {
+                  const value = await electronApi.showOpenDialog({properties: ['openDirectory']})
+                  if (!value.canceled) {
+                    setOutput(value.filePaths[0])
+                  }
+                }}
+              >
+                {output}
+              </a>
+            </Space>
+          </Col>
+          <Col>
+            <Button
+              type={'primary'}
+              disabled={!splitInfo}
+              loading={loading['split']}
               onClick={async () => {
-                const value = await electronApi.showOpenDialog({properties: ['openDirectory']})
-                if (!value.canceled) {
-                  setOutput(value.filePaths[0])
-                }
+                await listener(split(splitInfo.splitFiles, output), 'split')
+                message.success('分割完成')
               }}
             >
-              {output}
-            </span>
-          </span>
-          <Button
-            type={'primary'}
-            disabled={!splitInfo}
-            loading={loading['split']}
-            onClick={async () => {
-              await listener(split(splitInfo.splitFiles, output), 'split')
-              message.success('分割完成')
-            }}
-          >
-            开始分割
-          </Button>
-        </div>
+              开始分割
+            </Button>
+          </Col>
+        </Row>
       }
     >
       <Table
+        pagination={false}
         rowKey={'name'}
+        size={'small'}
+        sticky
         dataSource={splitInfo?.splitFiles}
         columns={[
           {
             title: `分割文件名` + (splitInfo?.splitFiles ? `(${splitInfo.splitFiles.length}项)` : ''),
             dataIndex: 'name',
           },
-          {title: '大小', render: record => byteToSize(record.size)},
+          {title: '大小', width: 180, render: (_, record) => byteToSize(record.size)},
         ]}
       />
-    </ScrollView>
+    </MyScrollView>
   )
 }

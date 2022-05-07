@@ -1,45 +1,41 @@
 import React from 'react'
 import {observer, Observer} from 'mobx-react'
-import {ScrollView} from '../component/ScrollView'
-import {Header} from '../component/Header'
-import {Button} from '../component/Button'
-import {Bar} from '../component/Bar'
-import {Icon} from '../component/Icon'
+import {MyScrollView} from '../component/ScrollView'
+import {MyHeader} from '../component/Header'
+import {MyIcon} from '../component/Icon'
 import {byteToSize} from '../../common/util'
 import {download} from '../store'
 import {TaskStatus} from '../store/AbstractTask'
-import Table from '../component/Table'
 import path from 'path'
+import {Button, Space, Table} from 'antd'
 
 const Download = observer(() => {
   return (
-    <ScrollView
+    <MyScrollView
       HeaderComponent={
-        <>
-          <Header>
+        <MyHeader>
+          <Space>
             <Button onClick={() => download.pauseAll()}>全部暂停</Button>
             <Button onClick={() => download.startAll()}>全部开始</Button>
             <Button onClick={() => download.removeAll()}>全部删除</Button>
-          </Header>
-          <Bar>
-            <span>正在下载</span>
-          </Bar>
-        </>
+          </Space>
+        </MyHeader>
       }
     >
       <Table
+        pagination={false}
+        size={'small'}
         rowKey={'url'}
         dataSource={[...download.list]}
-        // dataSource={download.list}
         columns={[
           {
             title: '文件名',
-            render: item => {
+            render: (_, item) => {
               const extname = path.extname(item.name).replace(/^\./, '')
 
               return (
                 <>
-                  <Icon iconName={extname} defaultIcon={'file'} />
+                  <MyIcon iconName={extname} defaultIcon={'file'} />
                   <span title={item.dir}>{item.name}</span>
                 </>
               )
@@ -47,8 +43,8 @@ const Download = observer(() => {
           },
           {
             title: '大小',
-            width: 170,
-            render: item => (
+            width: 200,
+            render: (_, item) => (
               <Observer>
                 {() => (
                   <span>
@@ -61,13 +57,20 @@ const Download = observer(() => {
           },
           {
             title: '操作',
-            render: item => (
+            render: (_, item) => (
               <>
                 <Observer>
                   {() => (
                     <Button
-                      icon={item.status === TaskStatus.pending ? 'pause' : 'start'}
-                      type={'icon'}
+                      size={'small'}
+                      type={'text'}
+                      icon={
+                        item.status === TaskStatus.pending ? (
+                          <MyIcon iconName={'pause'} />
+                        ) : (
+                          <MyIcon iconName={'start'} />
+                        )
+                      }
                       onClick={() => {
                         if (item.status === TaskStatus.pending) {
                           download.pause(item.url)
@@ -79,13 +82,18 @@ const Download = observer(() => {
                   )}
                 </Observer>
 
-                <Button icon={'delete'} type={'icon'} onClick={() => download.remove(item.url)} />
+                <Button
+                  size={'small'}
+                  icon={<MyIcon iconName={'delete'} />}
+                  type={'text'}
+                  onClick={() => download.remove(item.url)}
+                />
               </>
             ),
           },
         ]}
       />
-    </ScrollView>
+    </MyScrollView>
   )
 })
 

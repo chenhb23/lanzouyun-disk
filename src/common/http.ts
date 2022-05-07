@@ -1,10 +1,10 @@
 import got from 'got'
 import {cookieJar, shareCookieJar} from './cookie'
 import config from '../project.config'
-import {message} from '../renderer/component/Message'
 import store from './store'
 import {delay} from './util'
 import electronApi from '../renderer/electronApi'
+import {message} from 'antd'
 
 const base = got.extend({
   headers: {
@@ -45,6 +45,7 @@ const base = got.extend({
         // todo: 记录
         console.error(error)
         if (!error.options?.context?.hideMessage) {
+          // my_message.error(error.message)
           message.error(error.message)
         }
         return error

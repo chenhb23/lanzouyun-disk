@@ -14,9 +14,9 @@ import {byteToSize, createSpecificName, sizeToByte} from '../../common/util'
 import {findFolderByName} from '../../common/core/isExist'
 import {mkdir} from '../../common/core/mkdir'
 import {splitTask} from '../../common/split'
-import {message} from '../component/Message'
 import * as http from '../../common/http'
 import {config} from './Config'
+import {message} from 'antd'
 
 export type UploadFile = {
   size: File['size']

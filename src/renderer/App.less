@@ -1,0 +1,151 @@
+@import "~antd/dist/antd.less";
+
+@primary-color: #4C89F7;
+@text-color: #585858;
+@text-color-secondary: #9a9a9a;
+@font-size-base: 13px;
+@layout-header-background: #fff;
+@layout-sider-background-light: #f6f6f6;
+
+@menu-item-active-bg: #e5e5e5;
+@menu-highlight-color: @text-color;
+@menu-bg: transparent;
+
+@layout-body-background: inherit;
+
+@modal-header-padding-vertical: 10px;
+@modal-header-padding-horizontal: 15px;
+@modal-body-padding: @modal-header-padding-horizontal;
+@modal-header-border-width: 0;
+@modal-footer-border-width: 0;
+.ant-modal-close-x {
+  width: 43px;
+  height: 43px;
+  line-height: 43px;
+}
+
+// button
+.ant-btn.ant-btn-text.ant-btn-icon-only {
+  transition: background-color 0.3s;
+}
+
+// tabs
+.ant-tabs-tabpane {
+  height: 100vh;
+  overflow: hidden;
+}
+
+// table
+.ant-table-tbody > tr > td {
+  transition: none;
+  border-bottom-color: #f4f4f4;
+}
+
+.ant-table.ant-table-small .ant-table-thead > tr > th,
+.ant-table.ant-table-small .ant-table-tbody > tr > td {
+  padding: 4px 4px 4px 8px;
+}
+
+.ant-table-row {
+  height: 36px;
+}
+
+.spaceBetween {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.handle {
+  visibility: hidden;
+}
+
+.ant-table-row:hover .handle {
+  visibility: visible;
+}
+
+//body {
+//  margin: 0;
+//  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
+//  'Droid Sans', 'Helvetica Neue', sans-serif;
+//  -webkit-font-smoothing: antialiased;
+//  -moz-osx-font-smoothing: grayscale;
+//  overflow-x: hidden;
+//  color: #585858;
+//  font-size: 13px;
+//}
+
+//code {
+//  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+//}
+
+//ul {
+//  margin: 0;
+//  padding: 0;
+//}
+//
+//div, input, textarea {
+//  box-sizing: border-box;
+//}
+
+//h1, h2, h3, h4, h5 {
+//  margin-top: 10px;
+//  margin-bottom: 6px;
+//}
+
+/*font-size: 14px;*/
+/*===================================*/
+
+.App {
+  height: 100vh;
+  background-color: #ffffff;
+  flex-direction: column;
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+/*aside 24 右边距*/
+.aside {
+  background-color: #F6F6F6;
+  width: 200px;
+  padding-top: 46px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  user-select: none;
+}
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.logout {
+  padding: 30px 24px;
+}
+
+.downFolder {
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  display: block;
+}
+
+.refresh {
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+[href='#'] {
+  color: #585858;
+  text-decoration: none;
+}

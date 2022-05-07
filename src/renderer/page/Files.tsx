@@ -1,27 +1,44 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react'
 import electron from 'electron'
-import {Header} from '../component/Header'
-import {Button} from '../component/Button'
-import {message} from '../component/Message'
-import {Crumbs} from '../component/Crumbs'
-import {Icon} from '../component/Icon'
-import {isFile, sizeToByte} from '../../common/util'
+import {MyHeader} from '../component/Header'
+import {MyIcon} from '../component/Icon'
+import {asyncMap, delay, isFile, sizeToByte} from '../../common/util'
 import {rm} from '../../common/core/rm'
 import {ls, lsDir, LsFiles, URLType} from '../../common/core/ls'
-import {Bar} from '../component/Bar'
+import {MyBar} from '../component/Bar'
 import {useLoading} from '../hook/useLoading'
-import {ScrollView} from '../component/ScrollView'
-import {Input, Textarea} from '../component/Input'
-import {Modal, ModalProps} from '../component/Modal'
+import {MyScrollView} from '../component/ScrollView'
 import {mkdir} from '../../common/core/mkdir'
 import {download, upload} from '../store'
 import {fileDetail, folderDetail, share} from '../../common/core/detail'
-import Table from '../component/Table'
 import {AccessData, editFile, editFileInfo, editFolder, setAccess} from '../../common/core/edit'
 import {countTree, mv} from '../../common/core/mv'
-import {ChooseFile} from '../component/ChooseFile'
 
 import './Files.css'
+
+import {
+  Breadcrumb,
+  Button,
+  Col,
+  Divider,
+  Dropdown,
+  Form,
+  Input,
+  Menu,
+  message,
+  Modal,
+  ModalProps,
+  Popconfirm,
+  Row,
+  Space,
+  Switch,
+  Table,
+  Tree,
+  Upload,
+} from 'antd'
+
+import {CloudUploadOutlined, DragOutlined, RightOutlined} from '@ant-design/icons'
+import {EventDataNode} from 'antd/lib/tree'
 
 interface FolderForm {
   folder_id?: FolderId // 如果有 folder_id 则是编辑
@@ -29,15 +46,17 @@ interface FolderForm {
   folderDesc: string
 }
 
-// const getRowKey = (record: AsyncReturnType<typeof ls>['text'][number]) =>
-//   `${'id' in record ? record.id : record.id}`
-
 export default function Files() {
   const [visible, setVisible] = useState(false)
+  const [folderForm] = Form.useForm<FolderForm>()
+
+  const [fileModalVisible, setFileModalVisible] = useState(false)
+  const [fileForm] = Form.useForm<{file_id: FileId; name: string}>()
+
   const [accessVisible, setAccessVisible] = useState(false)
   const {loading, listener, listenerFn} = useLoading()
-  const [form, setForm] = useState({} as FolderForm)
-  const [fileForm, setFileForm] = useState({} as {file_id: FileId; name: string})
+
+  const [uploadMaskVisible, setUploadMaskVisible] = useState(false)
 
   const [list, setList] = useState({text: [], info: []} as AsyncReturnType<typeof ls>)
   const crumbs = useMemo(() => [{name: '全部文件', folderid: -1}, ...(list?.info || [])], [list?.info])
@@ -57,10 +76,10 @@ export default function Files() {
     [list, search]
   )
 
-  const currentFolder = crumbs[crumbs.length - 1].folderid
+  const currentFolder = crumbs[crumbs.length - 1]
 
   const listFile = useCallback(
-    async folder_id => {
+    async (folder_id: FolderId) => {
       const value = await listener(ls(folder_id), 'ls')
       setList(value)
     },
@@ -80,7 +99,7 @@ export default function Files() {
     }, loadingKey)
     message.success('删除成功')
     setSelectedRows(prev => prev.filter(value => files.every(item => item.id !== value.id)))
-    listFile(currentFolder)
+    listFile(currentFolder.folderid)
   }
 
   useEffect(() => {
@@ -88,35 +107,16 @@ export default function Files() {
   }, [listFile])
 
   useEffect(() => {
-    const refresh = () => listFile(currentFolder)
+    const refresh = () => listFile(currentFolder.folderid)
     upload.on('finish', refresh)
     return () => {
       upload.removeListener('finish', refresh)
     }
-  }, [currentFolder, listFile])
-
-  function cancel() {
-    setVisible(false)
-    setForm({} as FolderForm)
-  }
-
-  // 创建 / 修改 文件夹
-  async function saveDir() {
-    if (form.folder_id) {
-      const value = await listener(editFolder(form.folder_id, form.name, form.folderDesc), 'saveDir')
-      message.success(value.info)
-    } else {
-      await listener(mkdir({parentId: currentFolder, name: form.name, description: form.folderDesc}), 'saveDir')
-      message.success('创建成功')
-    }
-
-    cancel()
-    listFile(currentFolder)
-  }
+  }, [currentFolder.folderid, listFile])
 
   const [selectedRows, setSelectedRows] = useState<AsyncReturnType<typeof ls>['text']>([])
 
-  const [moveFolderId, setMoveFolderId] = useState<FolderId>('')
+  const [moveInfo, setMoveInfo] = useState<{folderId: FolderId; rows: LsFiles[]}>(null)
 
   const downloadFile = useCallback(async (item: LsFiles) => {
     if (item.type === URLType.file) {
@@ -149,123 +149,135 @@ export default function Files() {
   }
 
   return (
-    <ScrollView
+    <MyScrollView
       onDragEnter={() => {
-        message.destroy()
-        message.info('放开上传')
+        if (!uploadMaskVisible) {
+          setUploadMaskVisible(true)
+        }
       }}
       onDragOver={event => {
         event.preventDefault()
         event.stopPropagation()
       }}
-      onDrop={async event => {
-        message.destroy()
-        message.success('上传中...')
-        for (const file of event.dataTransfer.files) {
-          await upload.addTask({folderId: currentFolder, file})
-        }
-      }}
       HeaderComponent={
         <>
-          <Header
+          <MyHeader
             right={
-              <div className='Search'>
-                <Input placeholder={'搜索当前页面'} value={search} onChange={event => setSearch(event.target.value)} />
-                {!!search && <Icon iconName={'clear'} className='SearchIcon' onClick={() => setSearch('')} />}
-              </div>
+              <Input
+                allowClear
+                placeholder={'搜索当前页面'}
+                value={search}
+                onChange={event => setSearch(event.target.value)}
+              />
             }
           >
-            <ChooseFile
-              multiple
-              onChange={async event => {
-                for (const file of event.target.files) {
-                  await upload.addTask({folderId: currentFolder, file})
+            <Space>
+              <Upload
+                multiple
+                customRequest={options =>
+                  upload.addTask({folderId: currentFolder.folderid, file: options.file as File})
                 }
-              }}
-            >
-              <Button icon={<Icon iconName={'upload'} />}>上传</Button>
-            </ChooseFile>
-            <Button onClick={() => setVisible(true)}>新建文件夹</Button>
+                showUploadList={false}
+              >
+                <Button icon={<CloudUploadOutlined />}>上传</Button>
+              </Upload>
+              <Button onClick={() => setVisible(true)}>新建文件夹</Button>
 
-            {selectedRows.length ? (
-              <>
-                <Button type={'primary'} onClick={() => setSelectedRows([])}>
-                  取消选择
-                </Button>
-                <Button type={'primary'} onClick={() => setAccessVisible(true)}>
-                  设置密码
-                </Button>
+              {!selectedRows.length ? (
                 <Button
                   type={'primary'}
-                  icon={<Icon iconName={'share'} />}
                   loading={loading['oneClickShare']}
+                  title={'复制当前页面的分享链接'}
                   onClick={async () => {
-                    await listener(shareAndWriteClipboard(selectedRows), 'oneClickShare')
+                    await listener(shareAndWriteClipboard(renderList.text), 'oneClickShare')
                     message.success('分享链接已复制!')
                   }}
                 >
-                  分享 ({selectedRows.length})
+                  一键分享
                 </Button>
-                <Button
-                  icon={<Icon iconName={'download'} />}
-                  type={'primary'}
-                  loading={loading['multiDownload']}
-                  onClick={async () => {
-                    await listenerFn(async () => {
-                      for (const item of selectedRows) {
-                        await downloadFile(item)
-                      }
-                    }, 'multiDownload')
-                    message.success('已经添加到下载列表！')
-                    setSelectedRows([])
-                  }}
-                >
-                  下载 ({selectedRows.length})
-                </Button>
-                <Button
-                  title={'时间跟文件数量有关，不建议经常使用'}
-                  icon={<Icon iconName={'move'} />}
-                  type={selectedRows.some(value => value.type === URLType.folder) ? 'danger' : 'primary'}
-                  onClick={() => setMoveFolderId(currentFolder)}
-                >
-                  移动 ({selectedRows.length})
-                </Button>
-                <Button
-                  icon={<Icon iconName={'delete'} />}
-                  type={'danger'}
-                  loading={loading['deleteFiles']}
-                  onClick={() => {
-                    const result = confirm('确认删除？')
-                    if (result) {
-                      rmFiles(selectedRows, 'deleteFiles')
-                    }
-                  }}
-                >
-                  删除 ({selectedRows.length})
-                </Button>
-              </>
-            ) : (
-              <Button
-                type={'primary'}
-                loading={loading['oneClickShare']}
-                title={'复制当前页面的分享链接'}
-                onClick={async () => {
-                  await listener(shareAndWriteClipboard(renderList.text), 'oneClickShare')
-                  message.success('分享链接已复制!')
-                }}
-              >
-                一键分享
-              </Button>
-            )}
-          </Header>
-          <Bar style={{justifyContent: 'flex-start'}}>
-            <Crumbs crumbs={crumbs} onClick={folderId => lsNextFolder(folderId)} />
-            {(loading['ls'] || loading['download']) && <Icon iconName={'loading'} />}
-          </Bar>
+              ) : (
+                <>
+                  <Button type={'primary'} onClick={() => setSelectedRows([])}>
+                    取消选择
+                  </Button>
+                  <Button type={'primary'} onClick={() => setAccessVisible(true)}>
+                    设置密码
+                  </Button>
+                  <Button
+                    type={'primary'}
+                    icon={<MyIcon iconName={'share'} />}
+                    loading={loading['oneClickShare']}
+                    onClick={async () => {
+                      await listener(shareAndWriteClipboard(selectedRows), 'oneClickShare')
+                      message.success('分享链接已复制!')
+                    }}
+                  >
+                    分享 ({selectedRows.length})
+                  </Button>
+                  <Button
+                    icon={<MyIcon iconName={'download'} />}
+                    type={'primary'}
+                    loading={loading['multiDownload']}
+                    onClick={async () => {
+                      await listenerFn(async () => {
+                        for (const item of selectedRows) {
+                          await downloadFile(item)
+                        }
+                      }, 'multiDownload')
+                      message.success('已经添加到下载列表！')
+                      setSelectedRows([])
+                    }}
+                  >
+                    下载 ({selectedRows.length})
+                  </Button>
+                  <Button
+                    title={'时间跟文件数量有关，不建议经常使用'}
+                    icon={<MyIcon iconName={'move'} />}
+                    type={'primary'}
+                    danger={selectedRows.some(value => value.type === URLType.folder)}
+                    onClick={() => setMoveInfo({folderId: currentFolder.folderid, rows: selectedRows})}
+                  >
+                    移动 ({selectedRows.length})
+                  </Button>
+                  <Button
+                    icon={<MyIcon iconName={'delete'} />}
+                    type={'primary'}
+                    danger
+                    loading={loading['deleteFiles']}
+                    onClick={() => {
+                      Modal.confirm({
+                        content: '确认删除？',
+                        okText: '删除',
+                        okButtonProps: {danger: true},
+                        onOk: () => rmFiles(selectedRows, 'deleteFiles'),
+                      })
+                    }}
+                  >
+                    删除 ({selectedRows.length})
+                  </Button>
+                </>
+              )}
+            </Space>
+          </MyHeader>
+          <MyBar>
+            <Breadcrumb separator={<RightOutlined />}>
+              {crumbs.map(value => (
+                <Breadcrumb.Item key={value.folderid} href={'#'} onClick={() => lsNextFolder(value.folderid)}>
+                  {value.name}
+                </Breadcrumb.Item>
+              ))}
+            </Breadcrumb>
+          </MyBar>
         </>
       }
     >
       <Table
+        pagination={false}
+        loading={loading['ls']}
+        rowKey={'id'}
+        dataSource={renderList.text}
+        sticky
+        size={'small'}
         onRow={record => ({
           onClick: () => {
             setSelectedRows(prev =>
@@ -288,154 +300,227 @@ export default function Files() {
             )
           },
         }}
-        rowKey={'id'}
-        dataSource={renderList.text}
         columns={[
           {
             title: `文件名${renderList.text?.length ? ` (共${renderList.text?.length}项)` : ''}`,
             sorter: (a, b) => (a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1),
-            render: item => {
+            render: (_, item) => {
               return (
-                <div className='table-file'>
-                  <a
-                    href={'#'}
-                    title={item.name}
-                    onClick={event => {
-                      event.stopPropagation()
-                      if (item.type === URLType.folder) {
-                        lsNextFolder(item.id)
-                      }
-                    }}
-                  >
-                    {item.type === URLType.folder ? (
-                      <Icon iconName={'folder'} />
-                    ) : (
-                      <Icon iconName={item.icon} defaultIcon={'file'} />
-                    )}
-                    {item.name}
-                    {`${item.source.onof}` === '1' && <Icon iconName={'lock'} style={{marginLeft: 5}} />}
-                  </a>
-                  <div className='handle' onClick={event => event.stopPropagation()}>
-                    <Button
-                      title={'编辑'}
-                      type={'icon'}
-                      icon={'edit'}
-                      onClick={async () => {
-                        if (item.type === URLType.file) {
-                          const value = await editFileInfo(item.id)
-                          setFileForm({file_id: item.id, name: value.info})
-                        } else {
-                          const value = await folderDetail(item.id)
-                          setForm({
-                            folder_id: item.id,
-                            name: value.name,
-                            folderDesc: value.des,
-                          })
-                          setVisible(true)
+                <Dropdown
+                  overlay={
+                    <Menu
+                      style={{minWidth: 120}}
+                      onClick={info => info.domEvent.stopPropagation()}
+                      items={[
+                        {type: 'group', label: `操作：${item.name}`},
+                        {
+                          key: '1',
+                          label: '移动',
+                          icon: <DragOutlined />,
+                          onClick: () => setMoveInfo({folderId: currentFolder.folderid, rows: [item]}),
+                        },
+                        // {
+                        //   key: '2',
+                        //   label: '递归下载',
+                        // }
+                      ]}
+                    />
+                  }
+                  trigger={['contextMenu']}
+                >
+                  <div className='spaceBetween'>
+                    <a
+                      href={'#'}
+                      title={item.name}
+                      onClick={event => {
+                        event.stopPropagation()
+                        if (item.type === URLType.folder) {
+                          lsNextFolder(item.id)
                         }
                       }}
-                    />
-                    <Button
-                      title={'分享'}
-                      icon={'share'}
-                      type={'icon'}
-                      loading={loading['fileShare']}
-                      onClick={async () => {
-                        const data = await listener(shareAndWriteClipboard([item], false), 'fileShare')
-                        message.success(`分享链接已复制：\n${data}`)
-                      }}
-                    />
-                    <Button
-                      title={'下载'}
-                      icon={'download'}
-                      type={'icon'}
-                      loading={loading['download']}
-                      onClick={() => listener(downloadFile(item), 'download')}
-                    />
-                    <Button
-                      title={'删除'}
-                      icon={'delete'}
-                      type={'icon'}
-                      loading={loading['rmFile']}
-                      onClick={() => rmFiles([item], 'rmFile')}
-                    />
+                    >
+                      {item.type === URLType.folder ? (
+                        <MyIcon iconName={'folder'} />
+                      ) : (
+                        <MyIcon iconName={item.icon} defaultIcon={'file'} />
+                      )}
+                      {item.name}
+                      {`${item.source.onof}` === '1' && <MyIcon iconName={'lock'} style={{marginLeft: 5}} />}
+                    </a>
+                    <div className='handle' onClick={event => event.stopPropagation()}>
+                      <Button
+                        title={'编辑'}
+                        size={'small'}
+                        icon={<MyIcon iconName={'edit'} />}
+                        type={'text'}
+                        onClick={async () => {
+                          if (item.type === URLType.file) {
+                            const value = await editFileInfo(item.id)
+                            fileForm.setFieldsValue({file_id: item.id, name: value.info})
+                            setFileModalVisible(true)
+                          } else {
+                            const value = await folderDetail(item.id)
+                            folderForm.setFieldsValue({folder_id: item.id, name: value.name, folderDesc: value.des})
+                            setVisible(true)
+                          }
+                        }}
+                      />
+                      <Button
+                        title={'分享'}
+                        size={'small'}
+                        icon={<MyIcon iconName={'share'} />}
+                        type={'text'}
+                        loading={loading['fileShare']}
+                        onClick={async () => {
+                          const data = await listener(shareAndWriteClipboard([item], false), 'fileShare')
+                          message.success(
+                            <span>
+                              分享链接已复制：
+                              <br />
+                              {data}
+                            </span>
+                          )
+                        }}
+                      />
+                      <Button
+                        title={'下载'}
+                        size={'small'}
+                        icon={<MyIcon iconName={'download'} />}
+                        type={'text'}
+                        loading={loading['download']}
+                        onClick={async () => {
+                          await listener(downloadFile(item), 'download')
+                          message.success('已经添加到下载列表！')
+                        }}
+                      />
+                      <Popconfirm
+                        title={`确认删除 "${item.name}" ？`}
+                        onConfirm={() => rmFiles([item], 'rmFile')}
+                        okText='删除'
+                        cancelText='取消'
+                      >
+                        <Button
+                          title={'删除'}
+                          size={'small'}
+                          icon={<MyIcon iconName={'delete'} />}
+                          type={'text'}
+                          loading={loading['rmFile']}
+                        />
+                      </Popconfirm>
+                    </div>
                   </div>
-                </div>
+                </Dropdown>
               )
             },
           },
           {
             title: '大小',
+            width: 120,
             sorter: (a, b) => {
               if ('size' in a && 'size' in b) {
                 return sizeToByte(a.size) - sizeToByte(b.size)
               }
               return 0
             },
-            render: item => ('id' in item ? item.size : '-'),
+            render: (_, item) => item.size,
           },
-          {title: '时间', render: item => ('id' in item ? item.time : '')},
-          {title: '下载', render: item => ('id' in item ? item.downs : '')},
+          {title: '时间', width: 120, render: (_, item) => ('id' in item ? item.time : '')},
+          {title: '下载', width: 120, render: (_, item) => ('id' in item ? item.downs : '')},
         ]}
       />
+
+      {/*创建 / 修改 文件夹*/}
       <Modal
-        title={form.folder_id ? '编辑文件夹' : '新建文件夹'}
+        title={folderForm.getFieldValue('folder_id') ? '编辑文件夹' : '新建文件夹'}
         visible={visible}
-        onCancel={cancel}
-        onOk={saveDir}
-        okButtonProps={{loading: loading['saveDir']}}
+        onCancel={() => setVisible(false)}
+        onOk={() => folderForm.submit()}
+        afterClose={() => folderForm.resetFields()}
+        confirmLoading={loading['saveDir']}
+        destroyOnClose
       >
-        <h4>文件名</h4>
-        <Input
-          value={form.name}
-          placeholder={'不能包含特殊字符，如：空格，括号'}
-          onChange={event => setForm(prevState => ({...prevState, name: event.target.value}))}
-        />
-        <h4>文件描述</h4>
-        <Textarea
-          value={form.folderDesc}
-          placeholder={'可选项，建议160字数以内。'}
-          maxLength={160}
-          onChange={event => setForm(prevState => ({...prevState, folderDesc: event.target.value}))}
-        />
+        <Form
+          form={folderForm}
+          layout={'vertical'}
+          onFinish={async () => {
+            const form: AsyncReturnType<typeof folderForm.validateFields> = folderForm.getFieldsValue(true)
+            if (form.folder_id) {
+              const value = await listener(editFolder(form.folder_id, form.name, form.folderDesc), 'saveDir')
+              message.success(value.info)
+            } else {
+              await listener(
+                mkdir({parentId: currentFolder.folderid, name: form.name, description: form.folderDesc}),
+                'saveDir'
+              )
+              message.success('创建成功')
+            }
+
+            setVisible(false)
+            listFile(currentFolder.folderid)
+          }}
+        >
+          <Form.Item label={'文件名'} name={'name'} rules={[{required: true}]}>
+            <Input autoFocus placeholder={'不能包含特殊字符，如：空格，括号'} />
+          </Form.Item>
+          <Form.Item label={'文件描述'} name={'folderDesc'}>
+            <Input.TextArea placeholder={'可选项，建议160字数以内。'} maxLength={160} showCount rows={5} />
+          </Form.Item>
+        </Form>
       </Modal>
+
       <Modal
         title={'编辑文件'}
-        visible={!!fileForm.file_id}
-        onCancel={() => setFileForm({} as typeof fileForm)}
+        visible={fileModalVisible}
+        onCancel={() => setFileModalVisible(false)}
         okText={'保存'}
-        okButtonProps={{loading: loading['saveFile']}}
-        onOk={async () => {
-          if (!fileForm.name) return message.error('请输入文件名')
-          await listener(editFile(fileForm.file_id, fileForm.name), 'saveFile')
-          setFileForm({} as typeof fileForm)
-          listFile(currentFolder)
-        }}
+        confirmLoading={loading['saveFile']}
+        onOk={() => fileForm.submit()}
+        afterClose={() => fileForm.resetFields()}
+        destroyOnClose
       >
-        <div>
-          <h4>文件名</h4>
-          <Input
-            value={fileForm.name}
-            placeholder={'不能包含特殊字符，如：空格，括号'}
-            onChange={event => setFileForm(prevState => ({...prevState, name: event.target.value}))}
-          />
-        </div>
+        <Form
+          form={fileForm}
+          layout={'vertical'}
+          onFinish={async () => {
+            const values: AsyncReturnType<typeof fileForm.validateFields> = fileForm.getFieldsValue(true)
+
+            if (!values.name) return message.error('请输入文件名')
+            await listener(editFile(values.file_id, values.name), 'saveFile')
+            setFileModalVisible(false)
+            listFile(currentFolder.folderid)
+          }}
+        >
+          <Form.Item label={'文件名'} name={'name'} rules={[{required: true}]}>
+            <Input autoFocus placeholder={'不能包含特殊字符，如：空格，括号'} />
+          </Form.Item>
+        </Form>
       </Modal>
 
       <SelectFolder
-        currentFolder={moveFolderId}
-        loading={loading['move']}
-        onCancel={() => setMoveFolderId('')}
+        currentFolder={moveInfo?.folderId}
+        onCancel={() => setMoveInfo(null)}
         onOk={async (folderId, level) => {
           await listenerFn(async () => {
             try {
-              message.success('正在移动')
-              const result = await mv(selectedRows, folderId, level)
+              const result = await mv(moveInfo.rows, folderId, level)
               const [fileCount, folderCount] = countTree(result)
-              message.success(`成功！移动文件：${fileCount}, 文件夹：${folderCount}`)
-              setMoveFolderId('')
+              const dismiss = message.success(
+                <span>
+                  成功！移动文件：{fileCount}, 文件夹：{folderCount}
+                  <Button
+                    type={'link'}
+                    onClick={() => {
+                      dismiss()
+                      lsNextFolder(folderId)
+                    }}
+                  >
+                    打开目录
+                  </Button>
+                </span>
+              )
+              setMoveInfo(null)
               setSelectedRows([])
-              listFile(currentFolder)
+              listFile(currentFolder.folderid)
             } catch (e: any) {
               message.error(e)
             }
@@ -445,44 +530,106 @@ export default function Files() {
 
       <SetAccess
         visible={accessVisible}
-        loading={loading['setAccess']}
+        rows={selectedRows}
         onCancel={() => setAccessVisible(false)}
-        noOk={async data => {
-          const failTimes = await listener(
-            setAccess(
-              selectedRows.map(value => ({
-                id: value.id,
-                type: value.type,
-                shows: data.shows,
-                shownames: data.shownames,
-              }))
-            ),
-            'setAccess'
+        noOk={async rows => {
+          const failTimes = await setAccess(
+            rows.map(value => ({
+              id: value.id,
+              type: value.type,
+              shows: value.shows,
+              shownames: value.shownames,
+            }))
           )
-          message.success(`成功：${selectedRows.length - failTimes}，失败：${failTimes}`)
+          message.open({
+            content: `成功：${selectedRows.length - failTimes}，失败：${failTimes}`,
+            type: selectedRows.length === failTimes ? 'error' : failTimes ? 'warning' : 'success',
+          })
           setSelectedRows([])
           setAccessVisible(false)
         }}
       />
-    </ScrollView>
+
+      {/*上传遮罩*/}
+      {uploadMaskVisible && (
+        <div className='upload'>
+          <MyIcon iconName={'empty'} className='uploadIcon' />
+          {`上传到: ${currentFolder.name}`}
+          <div
+            className='uploadMask'
+            onDragLeave={() => setUploadMaskVisible(false)}
+            onDragOver={event => {
+              event.preventDefault()
+              event.stopPropagation()
+            }}
+            onDrop={async event => {
+              setUploadMaskVisible(false)
+
+              if (event.dataTransfer.files.length) {
+                message.success('上传中...')
+                for (const file of event.dataTransfer.files) {
+                  await upload.addTask({folderId: currentFolder.folderid, file})
+                }
+              }
+            }}
+          />
+        </div>
+      )}
+    </MyScrollView>
   )
 }
 
 interface SelectFolderProps {
   currentFolder: FolderId
   onCancel?: () => void
-  onOk: (folderId: FolderId, level: number) => void
-  loading?: boolean
+  onOk: (folderId: FolderId, level: number) => Promise<void>
+}
+
+interface DataNode {
+  title: string
+  key: React.Key
+  disabled?: boolean
+  isLeaf?: boolean
+  children?: DataNode[]
+}
+
+function updateTreeData(list: DataNode[], key: React.Key, children: DataNode[]): DataNode[] {
+  return list.map(node => {
+    if (node.key === key) {
+      return {...node, children}
+    }
+    if (node.children) {
+      return {
+        ...node,
+        children: updateTreeData(node.children, key, children),
+      }
+    }
+    return node
+  })
 }
 
 function SelectFolder(props: SelectFolderProps) {
-  const [data, setData] = useState<AsyncReturnType<typeof lsDir>>(null)
-  const crumbs = useMemo(() => [{name: '全部文件', folderid: -1}, ...(data?.info || [])], [data?.info])
-  const current = crumbs[crumbs.length - 1]
+  const [data, setData] = useState<DataNode[]>([{key: -1, title: '全部文件'}])
+  const [confirmLoading, setConfirmLoading] = useState(false)
+  const [select, setSelect] = useState<EventDataNode>(null)
 
-  const ls = useCallback(async (id = -1) => {
-    const dirs = await lsDir(id)
-    setData(dirs)
+  const ls = useCallback(async (id = -1, isEndLeaf = false) => {
+    const {text} = await lsDir(id)
+    setData(prev =>
+      updateTreeData(
+        prev,
+        id,
+        text.map(value => {
+          const data: DataNode = {key: `${value.fol_id}`, title: value.name}
+          if (isEndLeaf) {
+            data.isLeaf = true
+          }
+          return data
+        })
+      )
+    )
+    // ant design 的 bug，不然显示不了数据
+    await delay(1)
   }, [])
 
   const visible = !!props.currentFolder
@@ -493,86 +640,192 @@ function SelectFolder(props: SelectFolderProps) {
     }
   }, [ls, visible])
 
-  const moveDisabled = props.currentFolder === current.folderid
-
   return (
     <Modal
+      width={600}
       visible={visible}
       title={'选择文件夹'}
+      confirmLoading={confirmLoading}
+      okText={
+        <span style={{maxWidth: 150, textOverflow: 'ellipsis', overflow: 'hidden'}}>
+          {!select?.title
+            ? '请选择目录'
+            : select?.key === props.currentFolder
+            ? '不能移动到相同目录'
+            : `移动到：${select.title}`}
+        </span>
+      }
+      cancelButtonProps={{style: {verticalAlign: 'middle'}}}
       okButtonProps={{
-        style: {maxWidth: 150, textOverflow: 'ellipsis', overflow: 'hidden'},
-        loading: props.loading,
-        disabled: moveDisabled,
+        type: 'primary',
+        disabled: !select || select.key === props.currentFolder,
+        style: {verticalAlign: 'middle'},
       }}
-      okText={moveDisabled ? '无需移动' : `移动到：${current.name}`}
       onCancel={props.onCancel}
-      onOk={() => props.onOk(current.folderid, crumbs.length - 1)}
+      onOk={() => {
+        setConfirmLoading(true)
+        props.onOk(select.key, select.pos.split('-').length - 1).finally(() => setConfirmLoading(false))
+      }}
       bodyStyle={{minHeight: 200}}
+      destroyOnClose
+      afterClose={() => setSelect(null)}
     >
-      <Crumbs crumbs={crumbs} onClick={folderid => ls(folderid)} />
-      <Table
-        dataSource={data?.text}
-        onRow={record => ({
-          onClick: () => ls(record.fol_id),
-        })}
-        columns={[
-          {
-            title: '文件夹',
-            render: record => {
-              return (
-                <>
-                  <Icon iconName={'folder'} />
-                  <a href={'#'}>{record.name}</a>
-                </>
-              )
-            },
-          },
-        ]}
-        rowKey={'fol_id'}
+      <Tree
+        defaultExpandedKeys={[-1]}
+        blockNode
+        height={500}
+        showIcon
+        onSelect={(selectedKeys, e) => setSelect(e.selected ? e.node : null)}
+        icon={<MyIcon iconName={'folder'} />}
+        loadData={async treeNode => {
+          const isEndLeaf = treeNode.pos.split('-').length >= 5
+          await ls(treeNode.key, isEndLeaf)
+        }}
+        treeData={data}
       />
     </Modal>
   )
 }
 
 interface SetAccessProps {
-  visible: ModalProps['visible']
-  loading?: boolean
+  visible: boolean
+  rows: LsFiles[]
   onCancel: ModalProps['onCancel']
-  noOk: (data: Pick<AccessData, 'shows' | 'shownames'>) => void
+  noOk: (data: AccessData[]) => Promise<void>
 }
 
 function SetAccess(props: SetAccessProps) {
-  const [data, setData] = useState<Pick<AccessData, 'shows' | 'shownames'>>({shows: 1, shownames: ''})
-  const visible = props.visible
+  const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (visible) {
-      setData({shows: 1, shownames: ''})
+  const visible = props.visible
+  const [form] = Form.useForm<
+    Pick<AccessData, 'shows' | 'shownames'> & {
+      _setAll: boolean
+      rows: (AccessData & Pick<LsFiles, 'name'>)[]
     }
-  }, [visible])
+  >()
 
   return (
     <Modal
       visible={visible}
       title={'批量设置访问密码'}
       onCancel={props.onCancel}
-      okButtonProps={{loading: props.loading}}
-      onOk={() => props.noOk(data)}
+      afterClose={() => form.resetFields()}
+      confirmLoading={loading}
+      onOk={() => form.submit()}
+      destroyOnClose
     >
-      <Input
-        style={{marginBottom: 10}}
-        value={data?.shownames}
-        maxLength={6}
-        onChange={event => setData(prev => ({...prev, shownames: event.target.value}))}
-      />
-      <label>
-        <input
-          type={'checkbox'}
-          checked={data?.shows === 1}
-          onChange={event => setData(prev => ({...prev, shows: event.target.checked ? 1 : 0}))}
-        />
-        开启密码
-      </label>
+      <Form
+        form={form}
+        colon={false}
+        labelCol={{flex: '75px'}}
+        onFinish={() => {
+          const values: AsyncReturnType<typeof form.validateFields> = form.getFieldsValue(true)
+          const accessDatas = values._setAll
+            ? props.rows.map(value => ({
+                id: value.id,
+                type: value.type,
+                shows: values.shows,
+                shownames: values.shownames,
+              }))
+            : values.rows.map(value => ({
+                id: value.id,
+                type: value.type,
+                shows: value.shows,
+                shownames: value.shownames,
+              }))
+          setLoading(true)
+          props.noOk(accessDatas).finally(() => setLoading(false))
+        }}
+        initialValues={{shows: 1, _setAll: true}}
+      >
+        <Form.Item label={'批量设置'} name={'_setAll'} valuePropName={'checked'}>
+          <Switch
+            onChange={async checked => {
+              if (!checked && !form.getFieldValue('rows')?.length) {
+                const rows = await asyncMap(props.rows, async value => {
+                  const result =
+                    (await value.type) === URLType.file ? await fileDetail(value.id) : await folderDetail(value.id)
+                  return {
+                    id: value.id,
+                    type: value.type,
+                    name: value.name,
+                    shows: `${result.onof}` === '1' ? 1 : 0,
+                    shownames: result.pwd,
+                  } as AsyncReturnType<typeof form.validateFields>['rows'][number]
+                })
+                form.setFieldsValue({rows})
+              }
+            }}
+          />
+        </Form.Item>
+        <Form.Item noStyle shouldUpdate={(prev, next) => prev._setAll !== next._setAll}>
+          {f =>
+            f.getFieldValue('_setAll') ? (
+              <Form.Item label={'密码'}>
+                <Row align={'middle'} gutter={12}>
+                  <Col flex={1}>
+                    <Form.Item noStyle name={'shownames'}>
+                      <Input autoFocus maxLength={6} showCount placeholder={'该密码会应用于所有文件和文件夹'} />
+                    </Form.Item>
+                  </Col>
+                  <Col>
+                    <label>
+                      <Space>
+                        <Form.Item
+                          noStyle
+                          name={'shows'}
+                          valuePropName={'checked'}
+                          getValueProps={value => ({checked: value === 1})}
+                          getValueFromEvent={event => (event ? 1 : 0)}
+                        >
+                          <Switch />
+                        </Form.Item>
+                        密码开关
+                      </Space>
+                    </label>
+                  </Col>
+                </Row>
+              </Form.Item>
+            ) : (
+              <>
+                <Divider plain>列表</Divider>
+                <Form.List name={'rows'}>
+                  {fields =>
+                    fields.map(field => (
+                      <Form.Item key={field.key} help={form.getFieldValue(['rows', field.name, 'name'])}>
+                        <Row align={'middle'} gutter={12} wrap={false}>
+                          <Col flex={1}>
+                            <Form.Item noStyle name={[field.name, 'shownames']}>
+                              <Input autoFocus maxLength={6} showCount placeholder={'请输入密码'} />
+                            </Form.Item>
+                          </Col>
+                          <Col>
+                            <label>
+                              <Space>
+                                <Form.Item
+                                  noStyle
+                                  name={[field.name, 'shows']}
+                                  valuePropName={'checked'}
+                                  getValueProps={value => ({checked: value === 1})}
+                                  getValueFromEvent={event => (event ? 1 : 0)}
+                                >
+                                  <Switch />
+                                </Form.Item>
+                                密码开关
+                              </Space>
+                            </label>
+                          </Col>
+                        </Row>
+                      </Form.Item>
+                    ))
+                  }
+                </Form.List>
+              </>
+            )
+          }
+        </Form.Item>
+      </Form>
     </Modal>
   )
 }

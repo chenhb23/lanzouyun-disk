@@ -8,7 +8,6 @@ import {delay, isSpecificFile, restoreFileName, sizeToByte, streamToText} from '
 import {lsShare, URLType} from '../../common/core/ls'
 import {merge} from '../../common/merge'
 import store from '../../common/store'
-import {message} from '../component/Message'
 import * as http from '../../common/http'
 
 import fs from 'fs-extra'
@@ -17,6 +16,7 @@ import {pipeline} from 'stream/promises'
 import {Request} from 'got'
 import {Matcher} from '../../common/core/matcher'
 import throttle from 'lodash.throttle'
+import {message} from 'antd'
 
 export interface DownloadSubTask {
   url: string

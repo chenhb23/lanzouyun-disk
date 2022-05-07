@@ -14,7 +14,7 @@ type IconName =
   | 'cad'
   | 'exe'
   | 'apk'
-  | 'clear'
+  | 'clear' //
   | 'split'
   | 'open-folder'
   | 'pause'

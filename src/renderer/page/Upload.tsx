@@ -1,49 +1,60 @@
-import React, {useState} from 'react'
-import {ScrollView} from '../component/ScrollView'
-import {Header} from '../component/Header'
-import {Button} from '../component/Button'
-import {Bar} from '../component/Bar'
-import {Icon} from '../component/Icon'
+import React from 'react'
+import {MyScrollView} from '../component/ScrollView'
+import {MyHeader} from '../component/Header'
+import {MyIcon} from '../component/Icon'
 import {byteToSize} from '../../common/util'
 import {UploadTask} from '../store/Upload'
 import {upload} from '../store'
-import {Modal} from '../component/Modal'
 import {Observer, observer} from 'mobx-react'
 import {TaskStatus, TaskStatusName} from '../store/AbstractTask'
-import Table from '../component/Table'
 import path from 'path'
+import {Button, Modal, Space, Table} from 'antd'
 
 const Upload = observer(() => {
-  const [showItem, setShowItem] = useState<UploadTask>(null)
+  const showSubTask = (task: UploadTask) => {
+    Modal.success({
+      width: 600,
+      maskClosable: true,
+      icon: null,
+      okText: '关闭',
+      title: task.file.name,
+      content: (
+        <MyScrollView style={{maxHeight: 400, minHeight: 200}}>
+          {task.tasks?.map(item => (
+            <p key={item.name}>{`${item.name}  /  ${TaskStatusName[item.status]}`}</p>
+          ))}
+        </MyScrollView>
+      ),
+    })
+  }
 
   return (
-    <ScrollView
+    <MyScrollView
       HeaderComponent={
-        <>
-          <Header>
+        <MyHeader>
+          <Space>
             <Button onClick={() => upload.pauseAll()}>全部暂停</Button>
             <Button onClick={() => upload.startAll()}>全部开始</Button>
             <Button onClick={() => upload.removeAll()}>全部删除</Button>
-          </Header>
-          <Bar>
-            <span>正在上传</span>
-          </Bar>
-        </>
+          </Space>
+        </MyHeader>
       }
     >
       <Table
+        pagination={false}
+        size={'small'}
         rowKey={record => record.file.path}
         dataSource={[...upload.list]}
         columns={[
           {
             title: '文件名',
-            render: item => {
+            render: (_, item) => {
               const extname = path.extname(item.file.name).replace(/^\./, '')
               return (
                 <Observer>
                   {() => (
-                    <a href={'#'} onClick={() => setShowItem(item)}>
-                      <Icon iconName={extname} defaultIcon={'file'} />
+                    <a href={'#'} onClick={() => showSubTask(item)}>
+                      <MyIcon iconName={extname} defaultIcon={'file'} />
                       <span>{item.file.name}</span>
                       {item.tasks?.length > 1 && (
                         <span>{` | ${item.tasks.filter(value => value.status === TaskStatus.finish).length} / ${
@@ -58,8 +69,8 @@ const Upload = observer(() => {
           },
           {
             title: '大小',
-            width: 170,
-            render: item => (
+            width: 200,
+            render: (_, item) => (
               <Observer>
                 {() => (
                   <span>
@@ -72,13 +83,20 @@ const Upload = observer(() => {
           },
           {
             title: '操作',
-            render: item => (
+            render: (_, item) => (
               <>
                 <Observer>
                   {() => (
                     <Button
-                      icon={item.status === TaskStatus.pending ? 'pause' : 'start'}
-                      type={'icon'}
+                      size={'small'}
+                      type={'text'}
+                      icon={
+                        item.status === TaskStatus.pending ? (
+                          <MyIcon iconName={'pause'} />
+                        ) : (
+                          <MyIcon iconName={'start'} />
+                        )
+                      }
                       onClick={() => {
                         if (item.status === TaskStatus.pending) {
                           upload.pause(item.file.path)
@@ -89,25 +107,18 @@ const Upload = observer(() => {
                     />
                   )}
                 </Observer>
-                <Button icon={'delete'} type={'icon'} onClick={() => upload.remove(item.file.path)} />
+                <Button
+                  size={'small'}
+                  type={'text'}
+                  icon={<MyIcon iconName={'delete'} />}
+                  onClick={() => upload.remove(item.file.path)}
+                />
               </>
             ),
           },
         ]}
       />
-
-      <Modal
-        visible={!!showItem}
-        onCancel={() => setShowItem(null)}
-        footer={<Button onClick={() => setShowItem(null)}>取消</Button>}
-      >
-        <ScrollView style={{maxHeight: 400, minHeight: 200}}>
-          {showItem?.tasks?.map(item => (
-            <p key={item.name}>{`${item.name}  /  ${TaskStatusName[item.status]}`}</p>
-          ))}
-        </ScrollView>
-      </Modal>
-    </ScrollView>
+    </MyScrollView>
   )
 })
 

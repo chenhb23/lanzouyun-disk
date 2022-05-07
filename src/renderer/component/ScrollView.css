@@ -3,6 +3,7 @@
   flex: 1;
   flex-direction: column;
   overflow-y: hidden;
+  height: 100%;
 }
 
 .ScrollViewContent {

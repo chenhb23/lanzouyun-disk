@@ -1,17 +1,17 @@
-.select {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding-bottom: 10px;
-}
-.footer {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 10px;
-}
+/*.select {*/
+/*  display: flex;*/
+/*  flex-direction: row;*/
+/*  align-items: center;*/
+/*  padding-bottom: 10px;*/
+/*}*/
+/*.footer {*/
+/*  display: flex;*/
+/*  flex-direction: row;*/
+/*  align-items: center;*/
+/*  justify-content: space-between;*/
+/*  padding-top: 10px;*/
+/*}*/
 
-.output {
-  cursor: pointer;
-}
+/*.output {*/
+/*  cursor: pointer;*/
+/*}*/

@@ -14,13 +14,11 @@ export function useLatestRelease() {
 
   useEffect(() => {
     http.share
-      .get('https://api.github.com/repos/chenhb23/lanzouyun-disk/releases')
-      .json<LatestRelease[]>()
+      .get('https://api.github.com/repos/chenhb23/lanzouyun-disk/releases/latest')
+      .json<LatestRelease>()
       .then(value => {
-        if (!value?.length) return
-
-        if (gt(value[0].tag_name, pkg.version)) {
-          setLatestVersion(value[0])
+        if (value && gt(value.tag_name, pkg.version)) {
+          setLatestVersion(value)
         }
       })
   }, [])

@@ -1,65 +1,64 @@
 import React from 'react'
 import {observer} from 'mobx-react'
 import path from 'path'
-import electron from 'electron'
-import {ScrollView} from '../component/ScrollView'
-import {Header} from '../component/Header'
-import {Button} from '../component/Button'
-import {Bar} from '../component/Bar'
-import {Icon} from '../component/Icon'
+import {MyScrollView} from '../component/ScrollView'
+import {MyHeader} from '../component/Header'
+import {MyIcon} from '../component/Icon'
 import {byteToSize} from '../../common/util'
 import {download} from '../store'
-import IpcEvent from '../../common/IpcEvent'
-import Table from '../component/Table'
 import electronApi from '../electronApi'
+import {Button, Table} from 'antd'
 
 const Complete = observer(() => {
   return (
-    <ScrollView
+    <MyScrollView
       HeaderComponent={
-        <>
-          <Header>
-            <Button
-              onClick={() => {
-                download.removeAllFinish()
-              }}
-            >
-              清除全部记录
-            </Button>
-          </Header>
-          <Bar>
-            <span>已完成</span>
-          </Bar>
-        </>
+        <MyHeader>
+          <Button
+            onClick={() => {
+              download.removeAllFinish()
+            }}
+          >
+            清除全部记录
+          </Button>
+        </MyHeader>
       }
     >
       <Table
+        pagination={false}
+        size={'small'}
         rowKey={(record, index) => `${record.url}${index}`}
         dataSource={[...download.finishList]}
         columns={[
           {
             title: '文件名',
-            render: item => {
+            render: (_, item) => {
               const extname = path.extname(item.name).replace(/^\./, '')
 
               return (
-                <>
-                  <Icon iconName={extname} defaultIcon={'file'} />
+                <a
+                  href={'#'}
+                  title={`打开文件：${item.name}`}
+                  onClick={() => electronApi.openPath(path.join(item.dir, item.name))}
+                >
+                  <MyIcon iconName={extname} defaultIcon={'file'} />
                   <span title={item.dir}>{item.name}</span>
-                </>
+                </a>
               )
             },
           },
           {
             title: '大小',
-            render: item => `${byteToSize(item.total)}`,
+            width: 200,
+            render: (_, item) => `${byteToSize(item.total)}`,
           },
           {
             title: '操作',
-            render: item => (
+            render: (_, item) => (
               <Button
-                icon={'open-folder'}
-                type={'icon'}
+                icon={<MyIcon iconName={'open-folder'} />}
+                size={'small'}
+                type={'text'}
                 onClick={async () => {
                   const filePath = path.join(item.dir, item.name)
                   await electronApi.showItemInFolder(filePath)
@@ -69,7 +68,7 @@ const Complete = observer(() => {
           },
         ]}
       />
-    </ScrollView>
+    </MyScrollView>
   )
 })
 

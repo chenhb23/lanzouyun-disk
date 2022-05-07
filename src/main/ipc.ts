@@ -1,7 +1,7 @@
 import {BrowserWindow, dialog, shell, ipcMain} from 'electron'
 import IpcEvent from '../common/IpcEvent'
-import type {Application} from './application'
 import {Extension} from './extension'
+import type {Application} from './application'
 
 // 不能返回无法序列号的对象，如：shell
 export class Ipc implements Extension {
@@ -18,6 +18,11 @@ export class Ipc implements Extension {
     return shell.openExternal(url, options)
   }
 
+  // 如果文件不存在，会返回提示信息（不是报错信息），如：Failed to open path
+  async openPath(event: Electron.IpcMainInvokeEvent, path: string) {
+    return shell.openPath(path)
+  }
+
   async logout(event: Electron.IpcMainEvent) {
     await this.app.clearAuth()
     this.app.onLogout(BrowserWindow.fromWebContents(event.sender))
@@ -30,6 +35,7 @@ export class Ipc implements Extension {
     ipcMain.handle(IpcEvent['dialog:showOpenDialog'], this.showOpenDialog)
     ipcMain.handle(IpcEvent['shell:showItemInFolder'], this.showItemInFolder)
     ipcMain.handle(IpcEvent['shell:openExternal'], this.openExternal)
+    ipcMain.handle(IpcEvent['shell:openPath'], this.openPath)
     ipcMain.on(IpcEvent.logout, this.logout.bind(this))
   }
 }
