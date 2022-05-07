@@ -50,3 +50,12 @@ export async function share<T extends Pick<LsFiles, 'id' | 'type' | 'name'>>(fil
     }
   })
 }
+
+// 文件描述详情
+export function fileDescription(file_id: FileId) {
+  return http.request.post('doupload.php', {form: {task: 12, file_id} as Task12}).json<Task12Res>()
+}
+// 修改文件描述
+export function setFileDescription(file_id: FileId, desc: string) {
+  return http.request.post('doupload.php', {form: {task: 11, file_id, desc} as Task11}).json<TaskResponse>()
+}

@@ -3,6 +3,11 @@ import {byteToSize, delay, sizeToByte} from '../util'
 import {Matcher} from './matcher'
 import * as http from '../http'
 
+export enum URLType {
+  file = 'file', // https://wws.lanzous.com/ivvHsi3qyef
+  folder = 'folder', // https://wws.lanzous.com/b01tp3zkj
+}
+
 /**
  * 列出文件夹下的所有文件 + 目录
  * cookie
@@ -101,10 +106,6 @@ export interface LsShareItem {
   size: string
   time: string
   pwd?: string
-}
-export enum URLType {
-  file = 'file', // https://wws.lanzous.com/ivvHsi3qyef
-  folder = 'folder', // https://wws.lanzous.com/b01tp3zkj
 }
 
 /**

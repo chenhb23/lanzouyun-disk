@@ -1,3 +1,6 @@
+/**
+ * 使用方法： 右键，Run
+ */
 const fs = require('fs')
 const iconFront = require('./iconfont.json')
 const path = require('path')

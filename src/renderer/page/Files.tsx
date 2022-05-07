@@ -10,7 +10,7 @@ import {useLoading} from '../hook/useLoading'
 import {MyScrollView} from '../component/ScrollView'
 import {mkdir} from '../../common/core/mkdir'
 import {download, upload} from '../store'
-import {fileDetail, folderDetail, share} from '../../common/core/detail'
+import {fileDescription, fileDetail, folderDetail, setFileDescription, share} from '../../common/core/detail'
 import {AccessData, editFile, editFileInfo, editFolder, setAccess} from '../../common/core/edit'
 import {countTree, mv} from '../../common/core/mv'
 
@@ -37,7 +37,7 @@ import {
   Upload,
 } from 'antd'
 
-import {CloudUploadOutlined, DragOutlined, RightOutlined} from '@ant-design/icons'
+import {CloudUploadOutlined, RightOutlined} from '@ant-design/icons'
 import {EventDataNode} from 'antd/lib/tree'
 
 interface FolderForm {
@@ -147,6 +147,8 @@ export default function Files() {
     electron.clipboard.writeText(shareData)
     return shareData
   }
+
+  const [fileDescId, setFileDescId] = useState('')
 
   return (
     <MyScrollView
@@ -316,9 +318,17 @@ export default function Files() {
                         {
                           key: '1',
                           label: '移动',
-                          icon: <DragOutlined />,
                           onClick: () => setMoveInfo({folderId: currentFolder.folderid, rows: [item]}),
                         },
+                        ...(item.type === URLType.file
+                          ? [
+                              {
+                                key: '3',
+                                label: '添加描述',
+                                onClick: () => setFileDescId(item.id),
+                              },
+                            ]
+                          : []),
                         // {
                         //   key: '2',
                         //   label: '递归下载',
@@ -331,7 +341,7 @@ export default function Files() {
                   <div className='spaceBetween'>
                     <a
                       href={'#'}
-                      title={item.name}
+                      {...('folder_des' in item.source ? {title: item.source.folder_des} : {})}
                       onClick={event => {
                         event.stopPropagation()
                         if (item.type === URLType.folder) {
@@ -344,8 +354,13 @@ export default function Files() {
                       ) : (
                         <MyIcon iconName={item.icon} defaultIcon={'file'} />
                       )}
-                      {item.name}
-                      {`${item.source.onof}` === '1' && <MyIcon iconName={'lock'} style={{marginLeft: 5}} />}
+                      <Space size={3}>
+                        {item.name}
+                        {`${item.source.onof}` === '1' && <MyIcon iconName={'lock'} gutter={0} />}
+                        {`${(item.source as FileInfo).is_des}` === '1' && (
+                          <MyIcon iconName={'description'} gutter={0} />
+                        )}
+                      </Space>
                     </a>
                     <div className='handle' onClick={event => event.stopPropagation()}>
                       <Button
@@ -547,6 +562,15 @@ export default function Files() {
           })
           setSelectedRows([])
           setAccessVisible(false)
+        }}
+      />
+
+      <FileDescModal
+        fileId={fileDescId}
+        onCancel={() => setFileDescId('')}
+        onOk={() => {
+          setFileDescId('')
+          listFile(currentFolder.folderid)
         }}
       />
 
@@ -824,6 +848,53 @@ function SetAccess(props: SetAccessProps) {
               </>
             )
           }
+        </Form.Item>
+      </Form>
+    </Modal>
+  )
+}
+
+function FileDescModal(props: {fileId: FileId; onCancel: ModalProps['onCancel']; onOk: () => void}) {
+  const visible = !!props.fileId
+  const {loading, listener} = useLoading()
+
+  const [form] = Form.useForm<{desc: string}>()
+  useEffect(() => {
+    if (props.fileId) {
+      fileDescription(props.fileId).then(value => {
+        form.setFieldsValue({desc: value.info})
+      })
+    }
+  }, [form, props.fileId])
+
+  return (
+    <Modal
+      visible={visible}
+      title={'添加文件描述'}
+      onCancel={props.onCancel}
+      okText={'修改'}
+      onOk={() => form.submit()}
+      afterClose={() => form.resetFields()}
+      confirmLoading={loading['setFileDescription']}
+      destroyOnClose
+    >
+      <Form
+        form={form}
+        layout={'vertical'}
+        onFinish={async values => {
+          const res = await listener(setFileDescription(props.fileId, values.desc), 'setFileDescription')
+          props.onOk()
+          message.success(res.info)
+        }}
+      >
+        <Form.Item label={'文件描述'} name={'desc'} rules={[{required: true}]}>
+          <Input.TextArea
+            placeholder={'文件描述只允许修改一次,建议160字数以内。'}
+            autoFocus
+            allowClear
+            maxLength={160}
+            showCount
+          />
         </Form.Item>
       </Form>
     </Modal>
