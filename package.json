@@ -3,7 +3,26 @@
   "version": "3.0.0",
   "private": true,
   "main": "build/main/index.js",
+  "description": "蓝奏云网盘客户端",
+  "author": {
+    "name": "chenhb23",
+    "url": "https://github.com/chenhb23"
+  },
   "homepage": "./",
+  "scripts": {
+    "start": "concurrently \"cross-env BROWSER=none yarn react-start\" \"wait-on http://localhost:3000 && yarn electron-start\"",
+    "build": "yarn react-build && yarn electron-build",
+    "react-start": "cross-env BROWSER=none craco start",
+    "react-build": "craco build",
+    "electron-start": "yarn tsc-electron-build && cd app && yarn start",
+    "electron-debug": "yarn tsc-electron-build && cd app && yarn debug",
+    "electron-build": "yarn tsc-electron-build && cd app && yarn build",
+    "release": "yarn react-build && electron-builder --publish=always",
+    "test": "craco test",
+    "eject": "react-scripts eject",
+    "tsc-electron-build": "tsc -p tsconfig.electron.json",
+    "postinstall": "cd app && yarn"
+  },
   "dependencies": {
     "antd": "^4.20.2",
     "cheerio": "^1.0.0-rc.10",
@@ -12,30 +31,16 @@
     "form-data-encoder": "^1.7.2",
     "formdata-node": "^4.3.2",
     "fs-extra": "^10.1.0",
-    "got": "^12.0.3",
+    "got": "^12.0.4",
     "lodash.throttle": "^4.1.1",
     "mobx": "^6.5.0",
     "mobx-persist": "^0.4.1",
-    "mobx-react": "^7.3.0",
+    "mobx-react": "^7.4.0",
     "prettier": "^2.6.2",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0",
+    "react": "^18.1.0",
+    "react-dom": "^18.1.0",
     "semver": "^7.3.7",
     "tough-cookie": "^4.0.0"
-  },
-  "scripts": {
-    "react-start": "cross-env BROWSER=none craco start",
-    "react-build": "craco build",
-    "electron-start": "yarn tsc-electron-build && electron .",
-    "electron-debug": "yarn tsc-electron-build && electron --inspect-brk=8889 .",
-    "electron-build": "yarn tsc-electron-build && electron-builder -mw",
-    "release": "yarn react-build && electron-builder --publish=always",
-    "build": "yarn react-build && yarn electron-build",
-    "start": "concurrently \"cross-env BROWSER=none yarn react-start\" \"wait-on http://localhost:3000 && yarn electron-start\"",
-    "test": "craco test",
-    "eject": "react-scripts eject",
-    "tsc-build": "tsc --noEmit false --module commonjs",
-    "tsc-electron-build": "tsc -p tsconfig.electron.json"
   },
   "husky": {
     "hooks": {
@@ -61,65 +66,31 @@
     ]
   },
   "devDependencies": {
-    "@babel/generator": "^7.17.9",
-    "@babel/parser": "^7.17.9",
-    "@babel/traverse": "^7.17.9",
-    "@babel/types": "^7.17.0",
     "@craco/craco": "^6.4.3",
     "@testing-library/jest-dom": "^5.16.4",
-    "@testing-library/react": "^13.1.1",
-    "@testing-library/user-event": "^14.1.0",
-    "@types/node": "^17.0.24",
+    "@testing-library/react": "^13.2.0",
+    "@testing-library/user-event": "^14.1.1",
+    "@types/node": "^17.0.31",
     "@types/prettier": "2.6.0",
     "@types/semver": "^7.3.7",
     "@types/tough-cookie": "^4.0.2",
-    "@typescript-eslint/eslint-plugin": "^5.19.0",
-    "@typescript-eslint/parser": "^5.19.0",
+    "@typescript-eslint/eslint-plugin": "^5.22.0",
+    "@typescript-eslint/parser": "^5.22.0",
     "concurrently": "^7.1.0",
     "craco-less": "^2.0.0",
     "cross-env": "^7.0.3",
-    "electron": "^18.0.4",
+    "electron": "^18.2.0",
     "electron-builder": "^23.0.3",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-react": "^7.21.5",
-    "eslint-plugin-react-hooks": "^4.2.0",
-    "hpagent": "^0.1.2",
+    "eslint-plugin-react-hooks": "^4.5.0",
+    "hpagent": "^1.0.0",
     "husky": "^4.3.0",
-    "lint-staged": "^12.3.8",
+    "lint-staged": "^12.4.1",
     "react-scripts": "5.0.1",
-    "typescript": "^4.6.3",
+    "typescript": "^4.6.4",
     "wait-on": "^6.0.1",
     "web-vitals": "^2.1.4"
-  },
-  "description": "蓝奏云网盘客户端",
-  "author": {
-    "name": "chenhb23",
-    "url": "https://github.com/chenhb23"
-  },
-  "build": {
-    "productName": "蓝奏云盘",
-    "copyright": "更多内容到 https://github.com/chenhb23/lanzouyun-disk",
-    "appId": "org.chenhb23.lanzou",
-    "asar": true,
-    "files": [
-      "build"
-    ],
-    "extends": null,
-    "mac": {
-      "category": "org.chenhb23.lanzou.client",
-      "artifactName": "lanzouyun-${version}-${arch}-${os}.${ext}",
-      "target": {
-        "target": "dmg",
-        "arch": [
-          "x64",
-          "arm64"
-        ]
-      }
-    },
-    "win": {
-      "target": "zip",
-      "artifactName": "lanzouyun-${version}-${arch}-${os}.${ext}"
-    }
   }
 }

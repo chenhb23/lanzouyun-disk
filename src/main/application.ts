@@ -1,7 +1,6 @@
 import {app, session, BrowserWindow} from 'electron'
 import config from '../project.config'
 import store from '../common/store'
-import {Cookie} from 'tough-cookie'
 import {safeUserAgent} from '../common/util'
 import {Extension} from './extension'
 
@@ -65,20 +64,13 @@ export abstract class Application {
 
   private async _login(detail: Electron.OnResponseStartedListenerDetails) {
     const cookies = await session.defaultSession.cookies.get({})
-    const jarCookies = cookies.map(cookie => {
-      const {name, expirationDate, ...rest} = cookie
-      return new Cookie({
-        ...rest,
-        key: name,
-        ...(expirationDate ? {expires: new Date(expirationDate * 1000)} : {}),
-      })
-    })
-    store.set('cookies', jarCookies)
+    store.set('cookies', cookies)
     this.onLogin(this.mainWindow, detail)
   }
 
   async clearAuth() {
     const cookies = await session.defaultSession.cookies.get({})
+    await session.defaultSession.clearStorageData({storages: ['localstorage']})
     const cookieNames = ['phpdisk_info']
     const cookie = cookies.filter(value => cookieNames.includes(value.name))
     if (cookie.length) {
@@ -90,7 +82,7 @@ export abstract class Application {
       )
       store.set(
         'cookies',
-        store.get('cookies', []).filter(value => !cookieNames.includes(value.key))
+        store.get('cookies', []).filter(value => !cookieNames.includes(value.name))
       )
     }
 

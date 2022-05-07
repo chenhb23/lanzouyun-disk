@@ -1,7 +1,6 @@
 import {app, BrowserWindow} from 'electron'
 import path from 'path'
 import isDev from 'electron-is-dev'
-import {Cookie} from 'tough-cookie'
 import store from '../common/store'
 import config from '../project.config'
 import {Application} from './application'
@@ -38,8 +37,8 @@ class App extends Application {
   }
 
   async windowReady(win: Electron.BrowserWindow) {
-    const cookie = store.get('cookies', [])?.find(value => value.key === 'phpdisk_info')
-    if (cookie && Cookie.fromJSON(cookie).validate()) {
+    const cookie = store.get('cookies', [])?.find(value => value.name === 'phpdisk_info')
+    if (cookie) {
       await this.loadMain(win)
     } else {
       await this.clearAuth()

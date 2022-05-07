@@ -1,9 +1,8 @@
 import Store from 'electron-store'
-import {Cookie} from 'tough-cookie'
 
 export interface StoreValues {
   isDev: boolean
-  cookies: Cookie[] // 从 session 拿 cookie。| 不行，要作为打开 app 时跳转的依据
+  cookies: Electron.Cookie[] // 从 session 拿 cookie。| 不行，要作为打开 app 时跳转的依据
   downloads: string // 下载路径 // 如果没有设置，从主线程拿 downloads
   userAgent: string // 和登录的 ua 一致，不然接口无返回数据
   // referrer: string
@@ -27,6 +26,9 @@ const store = new Store<StoreValues>({
     },
     '2.1.0': s => {
       s.delete('cookies') // 重新登录
+    },
+    '3.0.0': s => {
+      s.delete('cookies') // 使用新的 cookie 类型
     },
   },
 })

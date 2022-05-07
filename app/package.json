@@ -1,0 +1,51 @@
+{
+  "name": "lanzouyun-pan",
+  "version": "3.0.0",
+  "private": true,
+  "main": "build/main/index.js",
+  "description": "蓝奏云网盘客户端",
+  "author": {
+    "name": "chenhb23",
+    "url": "https://github.com/chenhb23"
+  },
+  "scripts": {
+    "start": "electron .",
+    "debug": "electron --inspect-brk=8889 .",
+    "build": "electron-builder -mw"
+  },
+  "keywords": [],
+  "license": "ISC",
+  "dependencies": {
+    "electron-is-dev": "^2.0.0",
+    "electron-store": "^8.0.1"
+  },
+  "devDependencies": {
+    "electron": "^18.2.0",
+    "electron-builder": "^23.0.3"
+  },
+  "build": {
+    "productName": "蓝奏云盘",
+    "copyright": "更多内容到 https://github.com/chenhb23/lanzouyun-disk",
+    "appId": "org.chenhb23.lanzou",
+    "asar": true,
+    "files": [
+      "build"
+    ],
+    "extends": null,
+    "mac": {
+      "category": "org.chenhb23.lanzou.client",
+      "artifactName": "lanzouyun-${version}-${arch}-${os}.${ext}",
+      "target": {
+        "target": "dmg",
+        "arch": [
+          "x64",
+          "arm64"
+        ]
+      }
+    },
+    "win": {
+      "target": "zip",
+      "artifactName": "lanzouyun-${version}-${arch}-${os}.${ext}"
+    }
+  }
+}

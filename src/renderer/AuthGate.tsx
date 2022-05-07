@@ -2,9 +2,7 @@ import React, {useCallback, useEffect, useState} from 'react'
 import {Cookie} from 'tough-cookie'
 import store from '../common/store'
 import {cookieJar} from '../common/cookie'
-import {profile} from '../common/core/profile'
 import {MyIcon} from './component/Icon'
-import {config} from './store/Config'
 
 // 保证 cookie 已被同步过来
 const AuthGate = props => {
@@ -13,9 +11,13 @@ const AuthGate = props => {
     try {
       const cookies = store.get('cookies', [])
       await Promise.all(
-        cookies.map(cookie =>
+        cookies.map(({name, expirationDate, ...cookie}) =>
           cookieJar.setCookie(
-            Cookie.fromJSON(cookie),
+            Cookie.fromJSON({
+              ...cookie,
+              key: name,
+              ...(expirationDate ? {expires: new Date(expirationDate * 1000)} : {}),
+            }),
             (cookie.secure ? 'https://' : 'http://') + cookie.domain.replace(/^\./, '') + cookie.path
           )
         )

@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "build",
+    "outDir": "app/build",
     "noEmit": false,
     "module": "CommonJS",
     "lib": [
@@ -10,7 +10,6 @@
   },
   "include": [
     "./src/main",
-    "./src/electron.ts",
     "./src/types"
   ]
 }

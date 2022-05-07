@@ -11,6 +11,10 @@
 # production
 /build
 /dist
+# Two package.json Structure
+/app/node_modules
+/app/build
+/app/dist
 
 # misc
 .DS_Store
