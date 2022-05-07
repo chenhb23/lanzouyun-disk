@@ -1,23 +1,31 @@
+@import "~antd/dist/antd.variable";
 @import "~antd/dist/antd.less";
 
 @primary-color: #4C89F7;
+
 @text-color: #585858;
 @text-color-secondary: #9a9a9a;
 @font-size-base: 13px;
-@layout-header-background: #fff;
-@layout-sider-background-light: #f6f6f6;
 
+// menu
 @menu-item-active-bg: #e5e5e5;
 @menu-highlight-color: @text-color;
 @menu-bg: transparent;
 
+// layout
+@layout-header-background: #fff;
+@layout-sider-background-light: #f6f6f6;
 @layout-body-background: inherit;
 
-@modal-header-padding-vertical: 10px;
-@modal-header-padding-horizontal: 15px;
+// modal
+@modal-footer-padding-horizontal: 16px;
+@modal-header-padding-vertical: 14px;
+@modal-header-padding-horizontal: @modal-footer-padding-horizontal;
 @modal-body-padding: @modal-header-padding-horizontal;
+@modal-confirm-body-padding: @modal-footer-padding-horizontal @modal-footer-padding-horizontal @modal-header-padding-vertical;
 @modal-header-border-width: 0;
 @modal-footer-border-width: 0;
+
 .ant-modal-close-x {
   width: 43px;
   height: 43px;

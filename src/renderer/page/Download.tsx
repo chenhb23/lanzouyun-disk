@@ -7,7 +7,7 @@ import {byteToSize} from '../../common/util'
 import {download} from '../store'
 import {TaskStatus} from '../store/AbstractTask'
 import path from 'path'
-import {Button, Space, Table} from 'antd'
+import {Button, Progress, Space, Table} from 'antd'
 
 const Download = observer(() => {
   return (
@@ -43,20 +43,31 @@ const Download = observer(() => {
           },
           {
             title: '大小',
+            width: 150,
+            render: (_, item) => (
+              <Observer>{() => <span>{`${byteToSize(item.resolve)} / ${byteToSize(item.total)}`}</span>}</Observer>
+            ),
+          },
+          {
+            title: '状态',
             width: 200,
             render: (_, item) => (
               <Observer>
                 {() => (
-                  <span>
-                    {`${byteToSize(item.resolve)} / ${byteToSize(item.total)}`} (
-                    {((item.resolve / item.total) * 100).toFixed(1)}%)
-                  </span>
+                  <Progress
+                    style={{paddingRight: 16}}
+                    strokeColor={{from: '#4C89F7', to: '#87d068'}}
+                    format={percent => percent.toFixed(1) + '%'}
+                    percent={(item.resolve / item.total) * 100}
+                    status={item.status === TaskStatus.pending ? 'active' : 'normal'}
+                  />
                 )}
               </Observer>
             ),
           },
           {
             title: '操作',
+            width: 120,
             render: (_, item) => (
               <>
                 <Observer>

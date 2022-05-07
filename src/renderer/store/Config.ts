@@ -1,5 +1,6 @@
 import {makeAutoObservable} from 'mobx'
 import {persist} from 'mobx-persist'
+import store from '../../common/store'
 
 type BaseProps<T> = Partial<Pick<T, {[P in keyof T]: T[P] extends (...args: any) => any ? never : P}[keyof T]>>
 
@@ -11,8 +12,16 @@ export class Config {
   @persist maxSize = '100m' // Math.floor(100000000 / 1024 / 1024) // 100M
   splitSize = '100m'
 
+  // 是否默认此地址为下载路径
+  @persist setDefaultDownloadDir = false
+  // 文件下载位置
+  @persist downloadDir = ''
+
   constructor() {
     makeAutoObservable(this)
+    if (!this.downloadDir) {
+      this.downloadDir = store.get('downloads')
+    }
   }
 
   // update 过滤空项

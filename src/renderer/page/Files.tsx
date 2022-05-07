@@ -39,6 +39,7 @@ import {
 
 import {CloudUploadOutlined, RightOutlined} from '@ant-design/icons'
 import {EventDataNode} from 'antd/lib/tree'
+import {getDownloadDir} from './Setting'
 
 interface FolderForm {
   folder_id?: FolderId // 如果有 folder_id 则是编辑
@@ -118,24 +119,29 @@ export default function Files() {
 
   const [moveInfo, setMoveInfo] = useState<{folderId: FolderId; rows: LsFiles[]}>(null)
 
-  const downloadFile = useCallback(async (item: LsFiles) => {
-    if (item.type === URLType.file) {
-      const {f_id, is_newd, pwd, onof} = await fileDetail(item.id)
-      await download.addTask({
-        url: `${is_newd}/${f_id}`,
-        pwd: `${onof}` === '1' ? pwd : undefined,
-        name: item.name,
-        merge: false,
-      })
-    } else {
-      const {new_url, onof, pwd, name} = await folderDetail(item.id)
-      await download.addTask({
-        name: name,
-        url: new_url,
-        pwd: `${onof}` === '1' ? pwd : undefined,
-        merge: isFile(name),
-      })
-    }
+  const downloadFile = useCallback(async (list: LsFiles[]) => {
+    const dir = await getDownloadDir()
+    await asyncMap(list, async item => {
+      if (item.type === URLType.file) {
+        const {f_id, is_newd, pwd, onof} = await fileDetail(item.id)
+        await download.addTask({
+          url: `${is_newd}/${f_id}`,
+          pwd: `${onof}` === '1' ? pwd : undefined,
+          name: item.name,
+          merge: false,
+          dir,
+        })
+      } else {
+        const {new_url, onof, pwd, name} = await folderDetail(item.id)
+        await download.addTask({
+          name: name,
+          url: new_url,
+          pwd: `${onof}` === '1' ? pwd : undefined,
+          merge: isFile(name),
+          dir,
+        })
+      }
+    })
   }, [])
 
   // 获取分享信息并复制到粘贴板，可选是否包含文件名
@@ -221,11 +227,7 @@ export default function Files() {
                     type={'primary'}
                     loading={loading['multiDownload']}
                     onClick={async () => {
-                      await listenerFn(async () => {
-                        for (const item of selectedRows) {
-                          await downloadFile(item)
-                        }
-                      }, 'multiDownload')
+                      await listener(downloadFile(selectedRows), 'multiDownload')
                       message.success('已经添加到下载列表！')
                       setSelectedRows([])
                     }}
@@ -404,7 +406,7 @@ export default function Files() {
                         type={'text'}
                         loading={loading['download']}
                         onClick={async () => {
-                          await listener(downloadFile(item), 'download')
+                          await listener(downloadFile([item]), 'download')
                           message.success('已经添加到下载列表！')
                         }}
                       />

@@ -1,24 +1,23 @@
 import React, {useState} from 'react'
 import {observer} from 'mobx-react'
-import {basename} from 'path'
 
 import './component/Icon/lib/iconfont.js'
+import {download, upload} from './store'
+import {MyIcon} from './component/Icon'
+import electronApi from './electronApi'
+import pkg from '../../package.json'
+import {delay} from '../common/util'
+import project from '../project.config'
+import {useLatestRelease} from './hook/useLatestRelease'
+import {Touchable} from './component/Touchable'
+
 import Upload from './page/Upload'
 import Files from './page/Files'
 import Download from './page/Download'
 import Complete from './page/Complete'
 import Parse from './page/Parse'
 import SplitMerge from './page/SplitMerge'
-import {download, upload} from './store'
-import {MyIcon} from './component/Icon'
-import store from '../common/store'
-import electronApi from './electronApi'
-import {config} from './store/Config'
-import pkg from '../../package.json'
-import {delay} from '../common/util'
-import project from '../project.config'
-import {useLatestRelease} from './hook/useLatestRelease'
-import {Touchable} from './component/Touchable'
+import Setting from './page/Setting'
 
 import {
   CheckCircleOutlined,
@@ -28,12 +27,12 @@ import {
   FolderOpenOutlined,
   LinkOutlined,
   ScissorOutlined,
+  SettingOutlined,
 } from '@ant-design/icons'
 
-import {Button, Layout, Menu, Modal, Tabs} from 'antd'
+import {Layout, Menu, Tabs} from 'antd'
 
 import './App.less'
-import {TaskStatus} from './store/AbstractTask'
 
 function taskLength<T>(tasks: T[]) {
   const len = tasks?.length
@@ -117,51 +116,18 @@ const App = observer(() => {
                 },
                 {
                   type: 'group',
-                  label: '使用工具',
+                  label: '实用工具',
                   children: [
                     {key: '5', label: '解析 URL', icon: <LinkOutlined />},
                     {key: '6', label: '文件分割', icon: <ScissorOutlined />},
                   ],
                 },
+                {type: 'divider', style: {margin: '18px 0'}},
+                {key: '8', label: '设置', icon: <SettingOutlined />},
               ]}
             />
           </div>
-          <div style={{padding: '30px 24px'}}>
-            <div title={download.dir} className='downFolder'>
-              <span onClick={() => electronApi.showItemInFolder(download.dir)}>下载地址：</span>
-              <span
-                onClick={async () => {
-                  const value = await electronApi.showOpenDialog({properties: ['openDirectory']})
-                  if (!value.canceled) {
-                    download.dir = value.filePaths[0]
-                    store.set('downloads', download.dir)
-                  }
-                }}
-              >
-                <MyIcon iconName={'folder'} />
-                {basename(download.dir)}
-              </span>
-            </div>
-            <Button
-              block
-              title={`最近登录: ${config.lastLogin}`}
-              onClick={() => {
-                if (
-                  [download.list, upload.list].some(value => value.some(task => task.status === TaskStatus.pending))
-                ) {
-                  Modal.confirm({
-                    content: '有正在上传/下载的任务，是否继续退出？',
-                    okText: '退出',
-                    onOk: () => electronApi.logout(),
-                  })
-                } else {
-                  electronApi.logout()
-                }
-              }}
-            >
-              退出登录
-            </Button>
-          </div>
+          <div style={{padding: '30px 24px'}}></div>
         </div>
       </Layout.Sider>
       <Layout>
@@ -186,6 +152,9 @@ const App = observer(() => {
               <SplitMerge />
             </Tabs.TabPane>
             <Tabs.TabPane key={'7'}>{visible && <webview src={recycleUrl} style={{height: '100%'}} />}</Tabs.TabPane>
+            <Tabs.TabPane key={'8'}>
+              <Setting />
+            </Tabs.TabPane>
           </Tabs>
         </Layout.Content>
       </Layout>

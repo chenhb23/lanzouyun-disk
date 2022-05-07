@@ -8,7 +8,7 @@ import {upload} from '../store'
 import {Observer, observer} from 'mobx-react'
 import {TaskStatus, TaskStatusName} from '../store/AbstractTask'
 import path from 'path'
-import {Button, Modal, Space, Table} from 'antd'
+import {Button, Modal, Progress, Space, Table} from 'antd'
 
 const Upload = observer(() => {
   const showSubTask = (task: UploadTask) => {
@@ -69,20 +69,32 @@ const Upload = observer(() => {
           },
           {
             title: '大小',
+            width: 150,
+            render: (_, item) => (
+              <Observer>{() => <span>{`${byteToSize(item.resolve)} / ${byteToSize(item.file.size)}`}</span>}</Observer>
+            ),
+          },
+          {
+            title: '状态',
             width: 200,
             render: (_, item) => (
               <Observer>
                 {() => (
-                  <span>
-                    {byteToSize(item.resolve)} / {byteToSize(item.file.size)} (
-                    {((item.resolve / item.file.size) * 100).toFixed(1)}%)
-                  </span>
+                  <Progress
+                    style={{paddingRight: 16}}
+                    strokeColor={{from: '#4C89F7', to: '#87d068'}}
+                    format={percent => percent.toFixed(1) + '%'}
+                    percent={(item.resolve / item.file.size) * 100}
+                    status={item.status === TaskStatus.pending ? 'active' : 'normal'}
+                  />
                 )}
               </Observer>
             ),
           },
+
           {
             title: '操作',
+            width: 120,
             render: (_, item) => (
               <>
                 <Observer>

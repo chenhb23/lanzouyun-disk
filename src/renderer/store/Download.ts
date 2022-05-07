@@ -7,7 +7,6 @@ import {fileDownUrl, pwdFileDownUrl} from '../../common/core/download'
 import {delay, isSpecificFile, restoreFileName, sizeToByte, streamToText} from '../../common/util'
 import {lsShare, URLType} from '../../common/core/ls'
 import {merge} from '../../common/merge'
-import store from '../../common/store'
 import * as http from '../../common/http'
 
 import fs from 'fs-extra'
@@ -17,6 +16,7 @@ import {Request} from 'got'
 import {Matcher} from '../../common/core/matcher'
 import throttle from 'lodash.throttle'
 import {message} from 'antd'
+import {config} from './Config'
 
 export interface DownloadSubTask {
   url: string
@@ -90,7 +90,6 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
   taskSignal: {[taskUrl: string]: AbortController} = {}
   @persist('list') list: DownloadTask[] = []
   @persist('list') finishList: DownloadTask[] = []
-  @persist dir = ''
 
   get queue() {
     return this.getList(item => item.status === TaskStatus.pending).length
@@ -101,17 +100,12 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
     makeObservable(this, {
       list: observable,
       finishList: observable,
-      dir: observable,
     })
 
     process.nextTick(this.init)
   }
 
   private init = () => {
-    if (!this.dir) {
-      this.dir = store.get('downloads')
-    }
-
     this.startQueue()
     this.on('finish', info => {
       delay(200).then(() => this.onTaskFinish(info))
@@ -385,6 +379,8 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
     this.list.push(task)
   }
 
+  // todo: 在这里询问下载地址 addTasks() {}
+
   /**
    * 先不解析，开始下载时再解析
    * name, url, pwd?, merge?
@@ -392,6 +388,7 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
   async addTask(options: {
     name: string // 分享链接的下载全部没有 name
     url: string
+    dir?: string // 指定下载目录
     pwd?: string
     merge?: boolean
   }) {
@@ -401,7 +398,7 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
     task.url = options.url
     task.pwd = options.pwd
     task.merge = options.merge
-    task.dir = this.dir
+    task.dir = options.dir ?? config.downloadDir
 
     await this.pushAndCheckList(task)
   }

@@ -3,6 +3,7 @@ import {create} from 'mobx-persist'
 import {Upload, UploadTask} from './Upload'
 import {Download, DownloadTask} from './Download'
 import {TaskStatus} from './AbstractTask'
+import {config} from './Config'
 
 configure({
   enforceActions: 'never',
@@ -43,3 +44,5 @@ hydrate('upload', upload, (window as any).__STATE__?.upload).then(value => {
     return new UploadTask(task)
   })
 })
+
+hydrate('config', config, (window as any).__STATE__?.config)

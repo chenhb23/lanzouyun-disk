@@ -59,7 +59,7 @@ export default function SplitMerge() {
                 href={'#'}
                 title={'选择输出路径'}
                 onClick={async () => {
-                  const value = await electronApi.showOpenDialog({properties: ['openDirectory']})
+                  const value = await electronApi.showOpenDialog({properties: ['openDirectory', 'createDirectory']})
                   if (!value.canceled) {
                     setOutput(value.filePaths[0])
                   }

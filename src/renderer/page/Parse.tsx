@@ -9,6 +9,7 @@ import {useLoading} from '../hook/useLoading'
 import {download} from '../store'
 import {isFile} from '../../common/util'
 import {Button, Checkbox, Col, Input, message, Row, Table} from 'antd'
+import {getDownloadDir} from './Setting'
 
 const regExp = /^(.+) 密码: ?(.+)$/
 
@@ -89,6 +90,7 @@ export default function Parse() {
                     // style={{minWidth: 100}}
                     loading={loading['download']}
                     onClick={async () => {
+                      const dir = await getDownloadDir()
                       await listenerFn(async () => {
                         for (const row of selectedRows) {
                           await download.addTask({
@@ -96,6 +98,7 @@ export default function Parse() {
                             url: row.url,
                             pwd: row.pwd,
                             merge: false,
+                            dir,
                           })
                         }
                       }, 'download')
@@ -111,12 +114,14 @@ export default function Parse() {
                     disabled={!shareFiles.list?.length}
                     loading={loading['addShareTask']}
                     onClick={async () => {
+                      const dir = await getDownloadDir()
                       await listener(
                         download.addTask({
                           name: shareFiles.name,
                           url: urlForm.url,
                           pwd: urlForm.pwd,
                           merge: merge,
+                          dir,
                         }),
                         'addShareTask'
                       )
@@ -186,11 +191,13 @@ export default function Parse() {
                 icon={<MyIcon iconName={'download'} />}
                 onClick={async event => {
                   event.stopPropagation()
+                  const dir = await getDownloadDir()
                   await download.addTask({
                     name: item.name,
                     url: item.url,
                     pwd: item.pwd,
                     merge: false,
+                    dir,
                   })
                   await message.success('已添加到下载列表')
                 }}

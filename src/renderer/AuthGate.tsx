@@ -3,6 +3,8 @@ import {Cookie} from 'tough-cookie'
 import store from '../common/store'
 import {cookieJar} from '../common/cookie'
 import {MyIcon} from './component/Icon'
+import {profile} from '../common/core/profile'
+import {config} from './store/Config'
 
 // 保证 cookie 已被同步过来
 const AuthGate = props => {
@@ -22,8 +24,8 @@ const AuthGate = props => {
           )
         )
       )
-      // const info = await profile()
-      // config.update(info)
+      const info = await profile()
+      config.update(info)
     } catch (e) {
       console.log('初始化失败', e)
     } finally {
