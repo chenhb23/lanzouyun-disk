@@ -1,8 +1,14 @@
 import {ipcRenderer} from 'electron'
 import IpcEvent from '../common/IpcEvent'
-import type {ElectronApi} from '../main/ipc'
+import type {ElectronApi} from '../main/electronApi'
 
 const electronApi: ElectronApi = {
+  async getTheme() {
+    return ipcRenderer.invoke(IpcEvent['theme:getTheme'])
+  },
+  async setTheme(theme) {
+    return ipcRenderer.invoke(IpcEvent['theme:setTheme'], theme)
+  },
   async openPath(path) {
     return ipcRenderer.invoke(IpcEvent['shell:openPath'], path)
   },

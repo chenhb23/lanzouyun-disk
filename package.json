@@ -26,6 +26,7 @@
   "dependencies": {
     "antd": "^4.20.2",
     "cheerio": "^1.0.0-rc.10",
+    "darkreader": "^4.9.46",
     "electron-is-dev": "^2.0.0",
     "electron-store": "^8.0.1",
     "form-data-encoder": "^1.7.2",

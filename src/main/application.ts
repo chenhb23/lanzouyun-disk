@@ -2,7 +2,7 @@ import {app, session, BrowserWindow} from 'electron'
 import config from '../project.config'
 import store from '../common/store'
 import {safeUserAgent} from '../common/util'
-import {Extension} from './extension'
+import {Extension} from './extensions/extension'
 
 export abstract class Application {
   // app 准备事件
@@ -104,7 +104,7 @@ export abstract class Application {
       autoHideMenuBar: true,
       webPreferences: {
         webviewTag: true,
-        // preload: path.resolve(__dirname, 'main/preload.js'),
+        // preload: path.resolve(__dirname, 'preload.js'),
         webSecurity: false, // 不使用网页安全性，跨域
         nodeIntegration: true, // 开启后可在渲染线程 require()
         contextIsolation: false,

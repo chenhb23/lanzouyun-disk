@@ -122,7 +122,7 @@ const App = observer(() => {
                     {key: '6', label: '文件分割', icon: <ScissorOutlined />},
                   ],
                 },
-                {type: 'divider', style: {margin: '18px 0'}},
+                {type: 'divider', style: {margin: '12px 0'}},
                 {key: '8', label: '设置', icon: <SettingOutlined />},
               ]}
             />

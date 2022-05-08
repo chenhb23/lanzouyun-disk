@@ -1,10 +1,10 @@
-import {BrowserWindow, dialog, shell, ipcMain} from 'electron'
-import IpcEvent from '../common/IpcEvent'
+import {BrowserWindow, dialog, ipcMain, shell} from 'electron'
+import IpcEvent from '../../common/IpcEvent'
 import {Extension} from './extension'
-import type {Application} from './application'
+import type {Application} from '../application'
 
 // 不能返回无法序列号的对象，如：shell
-export class Ipc implements Extension {
+export class IpcExtension implements Extension {
   showOpenDialog(event: Electron.IpcMainInvokeEvent, options: Electron.OpenDialogOptions) {
     const win = BrowserWindow.fromWebContents(event.sender)
     return dialog.showOpenDialog(win, options)
@@ -39,20 +39,3 @@ export class Ipc implements Extension {
     ipcMain.on(IpcEvent.logout, this.logout.bind(this))
   }
 }
-
-type IpcEventApi<T> = Pick<
-  T,
-  {
-    [P in keyof T]: T[P] extends (event: infer Event, ...args: any[]) => any
-      ? Event extends Electron.IpcMainInvokeEvent | Electron.IpcMainEvent
-        ? P
-        : never
-      : never
-  }[keyof T]
->
-
-type RenderApi<T> = {
-  [K in keyof T]: T[K] extends (event: any, ...args: infer P) => infer R ? (...args: P) => R : never
-}
-
-export type ElectronApi = RenderApi<IpcEventApi<Ipc>>

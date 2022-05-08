@@ -17,12 +17,17 @@ const Setting = observer(() => {
             查看
           </Button>
         </Form.Item>
-        {/*todo:*/}
         <Form.Item label={'外观'}>
-          <Radio.Group defaultValue={'1'} disabled>
-            <Radio.Button value={'1'}>浅色</Radio.Button>
-            <Radio.Button value={'2'}>深色</Radio.Button>
-            <Radio.Button value={'3'}>跟随系统</Radio.Button>
+          <Radio.Group
+            defaultValue={config.themeSource}
+            onChange={async e => {
+              const theme = await electronApi.setTheme(e.target.value)
+              config.themeSource = theme.themeSource
+            }}
+          >
+            <Radio.Button value={'light'}>浅色</Radio.Button>
+            <Radio.Button value={'dark'}>深色</Radio.Button>
+            <Radio.Button value={'system'}>跟随系统</Radio.Button>
           </Radio.Group>
         </Form.Item>
         <Form.Item label={'下载位置'} wrapperCol={{flex: '400px'}}>
@@ -93,7 +98,7 @@ export function getDownloadDir() {
       resolve(config.downloadDir)
     } else {
       Modal.confirm({
-        title: '选择下载地址',
+        title: '选择下载路径',
         icon: null,
         maskClosable: true,
         content: <SelectDownloadDir />,

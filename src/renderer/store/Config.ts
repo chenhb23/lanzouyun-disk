@@ -1,6 +1,7 @@
 import {makeAutoObservable} from 'mobx'
 import {persist} from 'mobx-persist'
 import store from '../../common/store'
+import electronApi from '../electronApi'
 
 type BaseProps<T> = Partial<Pick<T, {[P in keyof T]: T[P] extends (...args: any) => any ? never : P}[keyof T]>>
 
@@ -17,10 +18,18 @@ export class Config {
   // 文件下载位置
   @persist downloadDir = ''
 
+  // 主题
+  themeSource: Electron.NativeTheme['themeSource']
+
   constructor() {
     makeAutoObservable(this)
     if (!this.downloadDir) {
       this.downloadDir = store.get('downloads')
+    }
+    if (!this.themeSource) {
+      electronApi.getTheme().then(value => {
+        this.themeSource = value.themeSource
+      })
     }
   }
 

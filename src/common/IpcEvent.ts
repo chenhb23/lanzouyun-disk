@@ -7,6 +7,10 @@ enum IpcEvent {
 
   // on
   logout = 'logout',
+
+  // theme
+  'theme:setTheme' = 'theme:setTheme',
+  'theme:getTheme' = 'theme:getTheme',
 }
 
 export default IpcEvent
