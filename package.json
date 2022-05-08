@@ -21,7 +21,7 @@
     "test": "craco test",
     "eject": "react-scripts eject",
     "tsc-electron-build": "tsc -p tsconfig.electron.json",
-    "postinstall": "cd app && yarn"
+    "postinstall": "electron-builder install-app-deps && cd app && yarn"
   },
   "dependencies": {
     "antd": "^4.20.2",

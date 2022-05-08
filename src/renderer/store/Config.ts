@@ -23,14 +23,6 @@ export class Config {
 
   constructor() {
     makeAutoObservable(this)
-    if (!this.downloadDir) {
-      this.downloadDir = store.get('downloads')
-    }
-    if (!this.themeSource) {
-      electronApi.getTheme().then(value => {
-        this.themeSource = value.themeSource
-      })
-    }
   }
 
   // update 过滤空项

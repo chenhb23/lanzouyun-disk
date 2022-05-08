@@ -4,6 +4,8 @@ import {Upload, UploadTask} from './Upload'
 import {Download, DownloadTask} from './Download'
 import {TaskStatus} from './AbstractTask'
 import {config} from './Config'
+import store from '../../common/store'
+import electronApi from '../electronApi'
 
 configure({
   enforceActions: 'never',
@@ -45,4 +47,12 @@ hydrate('upload', upload, (window as any).__STATE__?.upload).then(value => {
   })
 })
 
-hydrate('config', config, (window as any).__STATE__?.config)
+hydrate('config', config, (window as any).__STATE__?.config).then(async value => {
+  if (!value.downloadDir) {
+    value.downloadDir = store.get('downloads')
+  }
+  if (!value.themeSource) {
+    const theme = await electronApi.getTheme()
+    value.themeSource = theme.themeSource
+  }
+})
