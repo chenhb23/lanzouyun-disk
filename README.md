@@ -53,10 +53,8 @@ App 操作方式尽量符合平时的使用习惯，详细说明，可移步 [wi
 
 ## 支持
 
-1. 免费的 star
-2. 赞赏
-
-<img src="https://raw.githubusercontent.com/chenhb23/demo/master/img/support.png">
+- 点亮 star
+- [赞赏](https://raw.githubusercontent.com/chenhb23/demo/master/img/support.png)
 
 ## 免责声明
 
