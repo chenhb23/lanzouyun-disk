@@ -207,7 +207,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
 
       this.list.push(task)
     } catch (e: any) {
-      message.error(e)
+      message.error(e.message)
     }
   }
 
@@ -284,7 +284,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
         subTask.status = TaskStatus.pause
       } else {
         subTask.status = TaskStatus.fail
-        message.error(e)
+        // message.error(e.message)
       }
     } finally {
       delete this.taskSignal[signalId]

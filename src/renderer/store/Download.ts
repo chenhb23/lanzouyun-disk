@@ -282,7 +282,7 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
         subTask.status = TaskStatus.pause
       } else {
         subTask.status = TaskStatus.fail
-        // message.error(e)
+        // message.error(e.message)
       }
     } finally {
       delete this.taskSignal[subTask.url]

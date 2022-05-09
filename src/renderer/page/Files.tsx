@@ -540,7 +540,7 @@ export default function Files() {
               setSelectedRows([])
               listFile(currentFolder.folderid)
             } catch (e: any) {
-              message.error(e)
+              message.error(e.message)
             }
           }, 'move')
         }}
