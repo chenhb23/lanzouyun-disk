@@ -22,7 +22,7 @@ export default function SplitMerge() {
     if (file) {
       const task = splitTask(file, config.splitSize)
       setSplitInfo(task)
-      setOutput(`${task.file.path}.split`)
+      setOutput(path.join(path.dirname(task.file.path), `[sections]${task.file.name}`))
     } else {
       setSplitInfo(undefined)
       setOutput('')
@@ -76,7 +76,14 @@ export default function SplitMerge() {
               loading={loading['split']}
               onClick={async () => {
                 await listener(split(splitInfo.splitFiles, output), 'split')
-                message.success('分割完成')
+                message.success(
+                  <span>
+                    分割完成
+                    <Button type={'link'} size={'small'} onClick={() => electronApi.showItemInFolder(output)}>
+                      打开目录
+                    </Button>
+                  </span>
+                )
               }}
             >
               开始分割

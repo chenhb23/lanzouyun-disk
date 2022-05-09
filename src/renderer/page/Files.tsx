@@ -526,6 +526,7 @@ export default function Files() {
                   成功！移动文件：{fileCount}, 文件夹：{folderCount}
                   <Button
                     type={'link'}
+                    size={'small'}
                     onClick={() => {
                       dismiss()
                       lsNextFolder(folderId)
