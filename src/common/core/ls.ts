@@ -149,9 +149,7 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
           .join('-')
       }
     }
-    const size = $('meta[name=description]')
-      .attr('content')
-      .replace(/文件大小：(.+)\|/, '$1')
+    const size = $('meta[name=description]').attr('content').split('|')[0].replace('文件大小：', '')
     return {name, size, type: URLType.file, list: [{url, name, size, time}]}
   } else if (isPwdFile) {
     const ajaxData = Matcher.parsePwdAjax(html, pwd)
@@ -164,13 +162,11 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
       })
       .json<DownloadUrlRes>()
     const name = inf // 文件名
-    const size = $('meta[name=description]')
-      .attr('content')
-      .replace(/文件大小：(.+)\|/, '$1')
+    const size = $('meta[name=description]').attr('content').split('|')[0].replace('文件大小：', '')
     const time = $('.n_file_info > .n_file_infos:first-child').text()
     return {name, size, type: URLType.file, list: [{url, pwd, name, size, time}]}
   } else if (isFolder || isPwdFolder) {
-    const value = await lsShareFolder({pwd, url, html})
+    const value = await _lsShareFolder({pwd, url, html})
     return {
       name: title, // (文件夹名)
       type: URLType.folder,
@@ -192,7 +188,7 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
  * 发送 ajax，如有密码，则带上 pwd
  * @param options
  */
-export async function lsShareFolder({url, pwd, html}: {url: string; pwd?: string; html?: string}) {
+async function _lsShareFolder({url, pwd, html}: {url: string; pwd?: string; html?: string}) {
   if (!html) {
     const instance = http.share.get(url)
     const response = await instance
