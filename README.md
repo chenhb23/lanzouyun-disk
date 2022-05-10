@@ -45,11 +45,15 @@ https://wwn.lanzouf.com/b01tpefuf 密码:4hol
 
 ## 使用说明
 
-App 操作方式尽量符合平时的使用习惯，详细说明，可移步 [wiki](#) (待编写)
+App 操作方式尽量符合平时的使用习惯，详细说明，可移步 [wiki](./) (待编写)
 
 ## 问题 / 功能
 
 如发现软件的问题，或者有补充的功能，欢迎提 [issue](https://github.com/chenhb23/lanzouyun-disk/issues)。
+
+## Changelog
+
+每个版本的更改都记录在 [release](https://github.com/chenhb23/lanzouyun-disk/releases) 中。
 
 ## 支持
 
