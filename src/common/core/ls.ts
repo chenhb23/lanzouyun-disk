@@ -159,6 +159,7 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
         method: ajaxData.type,
         headers: {referer: url},
         form: ajaxData.data,
+        context: {hideMessage: true},
       })
       .json<DownloadUrlRes>()
     const name = inf // 文件名
@@ -210,6 +211,7 @@ async function _lsShareFolder({url, pwd, html}: {url: string; pwd?: string; html
         method: ajaxData.type,
         headers: {referer: url},
         form: {...ajaxData.data, pg: pg++, pwd},
+        context: {hideMessage: true},
       })
       .json<ShareFileRes>()
 

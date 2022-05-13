@@ -67,7 +67,12 @@ export class Matcher {
   static parseFolderAjax(html: string) {
     return this.parseAjaxData(
       html,
-      script => script.match(/([\s\S]+?)(function )?file\(\)/)?.[1].replace(/document\..+?;/g, ''),
+      script =>
+        script
+          .replace(/function sms[\s\S]+?}/, '') // vip 目录 folder-pwd-vip.html
+          .replace(/\$\(document\)\.keyup[\s\S]+?}\);/, '') // vip 目录 folder-pwd-vip.html
+          .match(/([\s\S]+?)(function )?file\(\)/)?.[1] // 或者使用 pgs = 1;
+          .replace(/document\..+?;/g, ''),
       script => script.replace(/function more\(\) {[\s\S]+}/, '').match(/\$\.ajax\(({[\s\S]+})\);/)?.[1]
     )
   }
@@ -118,3 +123,6 @@ export class Matcher {
     )
   }
 }
+
+// const html = fs.readFileSync('docs/pages/0513/folder-pwd-vip.html').toString()
+// console.log('html', Matcher.parseFolderAjax(html))

@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<!-- saved from url=(0040)https://xiyoufuman.lanzouf.com/b0172ka8j -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0">
+<title>xxx</title>
+<link rel="dns-prefetch" href="https://static.woozooo.com/">
+<link rel="dns-prefetch" href="https://statics.woozooo.com/">
+<script type="text/javascript" src="./folder-pwd-vip_files/jquery.js"></script>
+<script type="text/javascript" src="./folder-pwd-vip_files/qrcode.min.js"></script></head>
+<body>
+<div id="sms"><span id="smsspan"></span></div>
+<style>
+#info{display:none}
+#pwdload{position: fixed;background: #fff;background: rgba(255, 255, 255, .96);width: 100%;height: 100%;top: 0;bottom: 0;z-index: 98;}
+.passwddiv-center{width: 300px;height: 300px;position: absolute;bottom: 50%;margin-bottom: -100px;left: 50%;margin-left: -150px;}
+.passwddiv-userico{margin: auto;width: 90px;}
+.passwddiv-userico-img{width: 90px;height: 90px;border-radius: 50%;position: absolute;}
+.passwddiv-userico-0{background: #e9edef;width: 90px;height: 75px;border-radius: 50%;padding-top: 15px;}
+.passwddiv-userico-1{background: #fff;width: 30px;height: 30px;border-radius: 50%;margin: auto;}
+.passwddiv-userico-2{background: #fff;width: 59px;height: 26px;border-radius: 50%;margin: auto;margin-top: 3px;}
+.passwddiv-user{text-align: center;margin-top: 20px;font-size: 14px;}
+.passwddiv-user span{color: #000000;padding: 0 5px;}
+.passwddiv-input{width: 200px;margin: auto;padding:10px;border-radius:5px;margin-top: 20px;background: #e9edef;}
+.passwddiv-input:hover{background: #e1e7ea;}
+.passwdinput{font-size: 14px;border: 0;background: #e9edef;background: #ffffff\9;line-height: 30px;height: 30px;outline: 0;padding: 0;text-indent: 5px;width: 160px;}
+.passwdinput:focus{background: #e1e7ea;}
+.passwddiv-btn{width: 30px;height: 30px;background: #0af;border-radius: 50%;float: right;cursor: pointer;}
+.passwddiv-btn:hover{background: #569aff;}
+.passwddiv-btn:active{box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.25);}
+.passwddiv-btn-1{border-bottom: 1px solid #fff;width: 15px;margin-top: 14px;margin-left: 6px;}
+.passwddiv-btn-2{border-bottom: 1px solid #fff;border-right: 1px solid #fff;width: 10px;height: 10px;transform: rotate(-45deg);margin-top: -6px;margin-left: 8px;}
+.n_box_des{display:none}
+.filter{filter: blur(5px);}
+</style>
+<div id="pwdload">
+<div class="passwddiv-center">
+<div class="passwddiv-userico"><div class="passwddiv-userico-img" style="background:url();background-size:100%;background-repeat:no-repeat;background-position:50%;"></div><div class="passwddiv-userico-0"><div class="passwddiv-userico-1"></div><div class="passwddiv-userico-2"></div></div></div>
+<div class="passwddiv-user">获取<span>13**</span>的文件</div>
+<div class="passwddiv-input"><input type="text" name="pwd" class="passwdinput" id="pwd" value="" placeholder="输入密码">
+<div class="passwddiv-btn" onclick="file();"><div class="passwddiv-btn-1"></div><div class="passwddiv-btn-2"></div></div></div>
+</div>
+</div>
+<style>
+body{font-family:Tahoma,Arial,Roboto,”Droid Sans”,”Helvetica Neue”,”Droid Sans Fallback”,”Heiti SC”,sans-self;font-size:16px;color: #333;margin: 0;padding: 0;background-color:transparent; border-color:transparent;-webkit-appearance: none;-webkit-tap-highlight-color:rgba(0,0,0,0);-webkit-tap-highlight-color:rgba(0,0,0,0.0);}
+input:focus, textarea:focus {outline: none;}
+#infomores{clear: both;padding: 38px;    font-size: 14px;}
+#filemore{background: #33c5ff;width: 120px;margin: auto;border-radius: 50px;height: 40px;line-height: 40px;color: #fff;cursor: pointer;display: block;text-align: center;}
+#filemore:active{opacity: .7;}
+
+.load2 .loader,
+.load2 .loader:before,
+.load2 .loader:after {border-radius: 50%;}
+.load2 .loader:before,
+.load2 .loader:after {position: absolute;content: '';}
+.load2 .loader:before {width: 16px;height: 32px;background: #fff;border-radius: 32px 0 0 32px;top: -1px;left: -1px;transform-origin: 16px 16px;animation: load2 2s infinite ease 1.5s;}
+.load2 .loader {font-size: 11px;text-indent: -99999em;margin: auto;position: relative;width: 30px;height: 30px;box-shadow: inset 0 0 0 4px #09f;}
+.load2 .loader:after {width: 16px;height: 32px;background: #fff;border-radius: 0 31px 31px 0;top: -1px;left: 15px;transform-origin: 0px 16px;animation: load2 2s infinite ease;}
+@keyframes load2 {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.load2{position: fixed;width: 100%;background: #fff;height: 100%;z-index: 999;padding-top: 10%;display: none;}
+.loader2{text-align:center;padding-top: 30px;}
+
+
+.user-top{    height: 30px;
+    border-bottom: 1px solid #eee;
+    padding: 10px;}
+.user-ico{float: left;}
+.user-ico-img{width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    position: absolute;}
+.user-ico-div{    background: #bbb;
+    width: 30px;
+    height: 25px;
+    border-radius: 50%;
+    padding-top: 5px;}
+.user-ico-div-1{    background: #777;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin: auto;}
+.user-ico-div-2{background: #777;
+    width: 20px;
+    height: 10px;
+    border-radius: 50%;
+    margin: auto;
+    margin-top: 1px;}
+.user-name{    float: left;font-size: 14px;    color: #888;
+    line-height: 30px;
+    margin-left: 10px;}
+.user-name-txt{
+	color: #333;
+    margin-left: 10px;
+	display: none;
+}
+.user-radio{background: #f5f5f5;
+        padding: 8px 10px;
+    margin: 20px;margin-bottom: 25px;
+    border-radius: 3px;}
+.user-radio-0{    background: #f5f5f5;
+    width: 10px;
+    height: 10px;
+    position: absolute;
+    margin-top: -12px;
+    -webkit-transform: rotate(45deg);}
+.user-radio-1{font-size: 12px;padding: 3px;background: #de5823;color: #fff;border-radius: 3px 0 0 3px;}
+.user-radio-2{background:#666;margin-right:5px;border-radius: 0 3px 3px 0;}
+.user-title{display:none}
+.n_foot{display:none}
+.n_login{    padding: 6px 0;
+    font-size: 12px;
+    -webkit-transition: 0.2s;
+    float: right;
+    color: #888;text-decoration: none;}
+.file{       margin-top: -1px;}
+.mbx{padding: 0 20px;}
+.mbx:hover{    background: #f1f1f1;}
+.mbxfolder{border-bottom: 1px solid #f7f7f7;}
+#folder{    border-top: 1px solid #f7f7f7;}
+.mlink{    display: inline-block;    color: #333;
+    padding: 20px 0;
+    width: 100%;
+    height: 35px;}
+.mlink:visited{color: #77848a;}
+.fileimg{float: left;background: #eee;
+    width: 35px;
+    height: 35px;
+    margin-right: 10px;
+    border-radius: 7px;}
+.fileimg img{    margin: auto;width: 100%;    border-radius: 7px;}
+.filename{float: left;line-height: 1em;
+    overflow: hidden;
+    max-width: 250px;
+    text-overflow: ellipsis;    -webkit-transition: 0.1s;}
+.filesize{font-size: 12px;
+    color: #999;    padding-top: 3px;min-width: 200px;}
+.file_time{float: left;width: 70px;}
+.filedown{    color: #999;
+    background: rgba(255, 255, 255, .7);
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    border: 1px solid #5bccff;
+    border-radius: 50%;
+    right: 20px;}
+.filedown-1{height: 12px;
+    margin-top: 8px;
+    border-left: 1px solid #5bccff;
+    margin-left: 50%;}
+.filedown-2{    border-left: 1px solid #5bccff;
+    border-bottom: 1px solid #5bccff;
+    height: 8px;
+    width: 8px;
+    transform: rotate(-45deg);
+    margin-left: 12px;
+    margin-top: -9px;}
+.folderdown{
+    background: #eee;
+    float: right;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;    transform: rotate(-90deg);}
+.folderdown-2{    border-left: 1px solid #333;
+    border-bottom: 1px solid #333;
+    height: 8px;
+    width: 8px;
+    transform: rotate(-45deg);
+    margin-left: 12px;
+    margin-top: 10px;}
+.user-right{
+	position: fixed;
+    top: 80px;
+    right: 50%;
+    margin-right: -640px;
+    width: 180px;
+}
+.user-code{
+	border: 1px solid #e7e7e7;
+    height: 180px;
+    padding: 20px;
+	text-align:center;
+	border-radius: 6px;
+}
+.user-code-r{
+	padding-top: 20px;
+    font-size: 14px;
+}
+#sms{
+	display: none;
+	z-index: 99;
+    text-align: center;
+    position: fixed;
+    top: 40px;
+    left: 0px;
+    right: 0px;
+    width: 200px;
+    height: 30px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.2em;
+}
+#smsspan{
+	background: rgba(0, 0, 0, .7);
+    color: #fff;
+    font-size: 14px;
+    padding: 5px 8px;
+    border-radius: 3px;
+}
+@media (min-width: 768px){
+	.user-top{
+		position: fixed;
+    background: rgba(255, 255, 255, .9);
+    z-index: 8;
+    right: 0;
+    left: 0;
+	}
+	.off{width: 300px;
+    margin: 150px auto 30px auto;}
+	.input{width: 300px;}
+	.btnpwd{width: 300px;}
+	.user-name{   color:#ff6740; }
+	.n_login{display:block;background: #ffd1c5;    -webkit-transition: 0.2s;text-decoration: none;
+    padding: 0px 12px;    line-height: 30px;
+    font-size: 12px;
+    -webkit-transition: 0.2s;
+    float: right;
+    border-radius: 3px;}
+	.n_login:hover{    opacity: .7;}
+	.n_login font{color: #fff;}
+	.user-name-txt{display:initial}
+	.user-radio-0{background: #fff;}
+	.user-radio{    width: 776px;background: #fff;    line-height: 1.7em;margin: 10px auto 50px auto;}
+	.user-title{    display: block;
+    font-size: 32px;    font-weight: 700;
+    padding: 100px 0 20px 0;
+    width: 800px;
+    margin: auto;}
+	.file-box{    width: 800px; min-height: 450px;border-top: 3px solid #eee;
+    margin: auto;    margin-top: 20px;}
+	.mbx{  }
+	.mbx:hover{    background: #f7f7f7;}
+	#folder{    border-top: 0;}
+	.filename{    max-width: 600px;}
+	.filename:hover{color: #77848a;}
+	.filedown{position: inherit;float: right;}
+	.filedown:hover{opacity: .7;}
+	.n_foot{font-size: 12px;color: #999;padding: 20px;text-align: center;display:block}
+	#smsspan{
+    padding: 2px 5px;
+	}
+}
+.s_ad{    color: #fff;
+    background: #a4df70;
+    font-size: 12px;
+    margin-left: 5px;
+    padding: 1px 2px;
+    border-radius: 3px;}
+#s_search{    display: none;}
+.s_pc_input{float: left;margin-left: 50px;width: 200px;}
+.s_pcsubmit{width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    position: absolute;
+    margin-left: 171px;
+    margin-top: 2px;}
+.s_pcsubmit:hover{opacity: .8;}
+.s_pcsubmit_1{    border: 2px solid #555;
+    width: 8px;
+    height: 8px;
+    margin-top: 6px;
+    margin-left: 6px;
+    border-radius: 50%;}
+.s_pcsubmit_2{    border-bottom: 2px solid #555;
+    width: 6px;
+    height: 0px;
+    transform: rotate(45deg);
+    margin-top: -1px;
+    margin-left: 14px;}
+.spcinput{     background: #eee;
+    border: 0;
+    border-radius: 50px;
+    height: 30px;
+    text-indent: 10px;
+    width: 100%;
+    outline: 0;
+    font-size: 14px;padding: 0;}
+.spcinput:focus{ background: #ddd;}
+.s_box{width: 800px;
+    min-height: 650px;
+    margin: auto;
+    padding-top: 100px;}
+.s_loader,
+.s_loader:before,
+.s_loader:after {border-radius: 50%;}
+.s_loader:before,
+.s_loader:after {position: absolute;content: '';}
+.s_loader:before {width: 16px;height: 32px;background: #fff;border-radius: 50px 0 0 50px;top: -2px;left: -4px;transform-origin: 16px 16px;animation: sload 1s infinite ease 1.5s;}
+.s_loader {font-size: 11px;text-indent: -99999em;margin: auto;position: relative;width: 20px;height: 20px;box-shadow: inset 0 0 0 1px #09f;}
+.s_loader:after {width: 16px;height: 27px;background: #fff;border-radius: 0 50px 50px 0;top: -2px;left: 12px;transform-origin: 0px 13px;animation: sload 1s infinite ease;}
+@keyframes sload {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.s_load{position: absolute;width: 20px;background: #fff;height: 20px;z-index: 999;margin-top: -25px;display: none;margin-left: 210px;}
+@media (max-width: 768px){
+	.passwddiv-user{
+		    font-size: 16px;
+	}
+	.passwddiv-input{
+			padding: 8px;
+			width: 210px;
+	}
+	.passwdinput{
+			line-height: 34px;
+			height: 34px;
+	}
+	.passwddiv-btn{
+			width: 34px;
+			height: 34px;
+	}
+	.passwddiv-btn-1{
+		    margin-top: 16px;
+			margin-left: 8px;
+	}
+	.passwddiv-btn-2{
+			margin-left: 10px;
+	}
+	.folderdown{
+		    position: absolute;
+			right: 20px;
+	}
+}
+
+</style>
+<div class="user-top">
+<div class="user-ico">
+<div class="user-ico-img" style="background:url();background-size:100%;background-repeat:no-repeat;background-position:50%;"></div>
+<div class="user-ico-div"><div class="user-ico-div-1"></div><div class="user-ico-div-2"></div></div>
+</div>
+<div class="user-name">13**<span class="user-name-txt">的分享文件</span></div>
+<div class="s_pc_input"><div class="s_pcsubmit" onclick="s_post();"><div class="s_pcsubmit_1"></div><div class="s_pcsubmit_2"></div></div><input type="text" name="spcinput" class="spcinput" id="spcinput" value="" placeholder="文件"><div class="s_load" id="s_load"><div class="s_loader"></div></div></div><a href="https://xiyoufuman.lanzouf.com/q/jb/?f=4536869&amp;report=2" class="n_login"><font id="rpt">举报</font></a></div>
+<div class="user-right">
+<div class="user-code"><div id="code" title="https://xiyoufuman.lanzouf.com/b0172ka8j?cp=qasqhra.0.0"><canvas width="138" height="138" style="display: none;"></canvas><img style="display: block;" src="data:image/png;base64,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"></div><div class="user-code-r">手机下载请扫二维码</div></div>
+</div>
+<div id="s_search">
+<div class="s_box"><div id="s_file"></div></div>
+</div>
+<div id="fileview">
+<div class="user-title">xxx</div>
+
+<div class="load2" id="load2"><div class="loader"></div><div class="loader2">努力加载中...</div></div>
+<div class="file" id="info">
+<div class="file-box">
+<div id="infos"></div>
+</div>
+<!--filemore-->
+<div id="infomores"><span id="filemore" onclick="more();">更多</span></div>
+</div>
+</div>
+<div class="n_foot"><div class="n_copy">版权声明：不得利用云存储发布，存储，淫秽，诈骗等违法信息。<br>或者投诉邮箱：ta@lanzou.com</div>© 2022 Lanzou</div>
+<script type="text/javascript">
+	var search_lock = 1;//search lock
+	var pwd;
+	var pgs;
+	var ibhcqv = '1652451820';
+	var ihfoso = '625d922741bcfd11db1d6ea448e2adb3';
+	pgs =1;
+		document.getElementById('rpt').innerHTML='举报';
+//回车事件
+$(document).keyup(function (e) {
+	if (e.keyCode == 13) {
+		if(search_lock == 1){
+			file();
+		}
+	}
+});
+function sms(stx){
+	document.getElementById("sms").style.display="none";
+	$("#smsspan").text(stx);
+	document.getElementById("sms").style.display="block";
+	setTimeout('document.getElementById("sms").style.display="none";',5000);
+}
+function file(){
+		var pwd = document.getElementById('pwd').value;
+	$('#sub').val("提交中...");
+	if (pwd == '' || pwd == undefined || pwd == null) {
+			$(".passwdinput").focus();
+			return false;
+	}
+		$.ajax({
+			type : 'post',
+			url : '/filemoreajax.php',
+			data : {
+			'lx':2,
+			'fid':4536869,
+			'uid':'1365343',
+			'pg':pgs,
+			'rep':'0',
+			't':ibhcqv,
+			'k':ihfoso,
+			'up':1,
+			'vip':'0',
+			'webfoldersign':'',
+						'ls':1,
+			'pwd':pwd			},
+			dataType : 'json',
+			success:function(msg){
+				//隐藏
+				document.getElementById("load2").style.display="none";
+				if(msg.zt == '1'){
+										document.getElementById("pwdload").style.display="none";
+					document.getElementById("info").style.display="block";
+										var data = msg.text;
+					$.each(data, function(i, n){
+						search_lock = 2;//解除回车锁
+						var str;
+						var file_ico;
+						var alink = '/' + n.id;
+						var file_time ='';
+												if(n.t ==1){ //style 1
+							alink = n.id;
+							n.name_all = n.name_all + '<span class="s_ad">推广</span>';
+						}
+												file_ico = '<div class=fileimg><img src=/images/type/'+ n.icon +'.gif align=absmiddle border=0></div>';
+						if(n.p_ico ==1){
+							file_ico = '<div class=fileimg style=background:url(https://static.woozooo.com/ico/'+ n.ico +'?x-oss-process=image/auto-orient,1/resize,m_fill,w_100,h_100/format,png);background-size:100%;background-repeat:no-repeat;background-position:50%;></div>';
+						}
+						str ='<div id=ready><div class=mbx><a href=' + alink + ' target=_blank class="mlink minPx-top">'+ file_ico +'<div class=filename>' + n.name_all + '<div class=filesize>'+ file_time + '<div>' + n.size +'</div></div></div><div class=filedown><div class=filedown-1></div><div class=filedown-2></div></div></a></div></div>';
+												if(n.id != '-1'){
+							$(str).appendTo("#infos");
+						}
+					});
+					pgs++;
+					//少于50条，隐"more"
+					if(data.length<50){
+						document.getElementById("filemore").style.display="none";
+					}
+					//alert(data.length);
+
+				}else if(msg.zt == '2'){
+					//sms(msg.info);
+					document.getElementById("filemore").style.display="none";
+										document.getElementById("pwdload").style.display="none";
+					document.getElementById("info").style.display="block";
+									}else if(msg.zt == '3'){
+										sms(msg.info)
+					$('#sub').val("确认");
+									}else if(msg.zt == '6'){
+					document.getElementById("filemore").style.display="none";
+					sms(msg.info);
+										document.getElementById("pwdload").style.display="none";
+					document.getElementById("info").style.display="block";
+									}else{
+					sms(msg.info);
+				}
+			},
+			error:function(){
+				$("#infos").text("获取失败，请重试");
+			}
+
+	});
+}
+function more(){
+				var pwd = document.getElementById('pwd').value;
+				$("#filemore").text("文件获取中...");
+		$.ajax({
+			type : 'post',
+			url : '/filemoreajax.php',
+			data : {
+			'lx':2,
+			'fid':4536869,
+			'uid':'1365343',
+			'pg':pgs,
+			'rep':'0',
+			't':ibhcqv,
+			'k':ihfoso,
+			'up':1,
+			'vip':'0',
+			'webfoldersign':'',
+						'ls':1,
+			'pwd':pwd			},
+			dataType : 'json',
+			success:function(msg){
+				if(msg.zt == '1'){
+					var data = msg.text;
+					$.each(data, function(i, n){
+						var str;
+						var file_ico;
+						var alink = '/' + n.id;
+						var file_time ='';
+												if(n.t ==1){ //style 1
+							alink = n.id;
+							n.name_all = n.name_all + '<span class="s_ad">推广</span>';
+						}
+												file_ico = '<div class=fileimg><img src=/images/type/'+ n.icon +'.gif align=absmiddle border=0></div>';
+						if(n.p_ico ==1){
+							file_ico = '<div class=fileimg style=background:url(https://static.woozooo.com/ico/'+ n.ico +'?x-oss-process=image/auto-orient,1/resize,m_fill,w_100,h_100/format,png);background-size:100%;background-repeat:no-repeat;background-position:50%;></div>';
+						}
+						str ='<div id=ready><div class=mbx><a href=' + alink + ' target=_blank class="mlink minPx-top">'+ file_ico +'<div class=filename>' + n.name_all + '<div class=filesize>'+ file_time + '<div>' + n.size +'</div></div></div><div class=filedown><div class=filedown-1></div><div class=filedown-2></div></div></a></div></div>';
+												if(n.id != '-1'){
+							$(str).appendTo("#infos");
+						}
+					});
+					if(data.length<50){
+						document.getElementById("filemore").style.display="none";
+					}else{
+						$("#filemore").text("更多");
+					}
+					pgs++;
+
+				}else{
+					sms(msg.info);
+					document.getElementById("filemore").style.display="none";
+				}
+			},
+			error:function(){
+				$("filemore").text("获取失败，请重试");
+			}
+
+		});
+	}
+var urls =window.location.href + '?cp=qasqhra.0.0';
+var qrcode = new QRCode('code', {
+					text: urls,
+					width: 138,
+					height: 138,
+					colorDark : '#3f3f3f',
+					colorLight : '#ffffff',
+					correctLevel : QRCode.CorrectLevel.H
+				});
+function s_cl(){
+	$(".search").show();
+	$("#s_search").hide();
+	$("#fileview").show();
+	$("#s_file").html("");
+}
+//search post ajax
+function s_post(){
+		var wd = document.getElementById('spcinput').value;
+	$("#s_load").show();//load style
+			var pwd = document.getElementById('pwd').value;
+		$.ajax({
+			type : 'post',
+			url : '/search/s.php',
+			data : {
+			'wd':wd,
+			'sign':'UGFXMwliVDUDZlAyUDdXeQdpADAEaAI2BjlSYgZjVHpSa1plCC0AOgd+UTYEf1NjBGgAMFA9ATdRY1tsVTtXZFBgVy8JZA==',
+			//'pg':pgs,
+						'pwd':pwd			},
+			dataType : 'json',
+			success:function(msg){
+				if(msg.zt == '1'){
+					$("#s_file").html("");
+					$("#s_search").show();
+					var data = msg.item;
+					$.each(data, function(i, n){
+						var str;
+						var file_ico;
+						var alink = '/' + n.id;
+						var downstyle = '<div class=filedown><div class=filedown-1></div><div class=filedown-2></div></div>';
+						if(n.t ==1){
+							alink = n.id;
+							n.name_all = n.name_all + '<span class="s_ad">推广</span>';
+							downstyle = '';
+						}
+						file_ico = '<div class=fileimg><img src=/images/type/'+ n.icon +'.gif align=absmiddle border=0></div>';
+						if(n.p_ico ==1){
+							file_ico = '<div class=fileimg style=background:url(https://static.woozooo.com/ico/'+ n.ico +'?x-oss-process=image/auto-orient,1/resize,m_fill,w_100,h_100/format,png);background-size:100%;background-repeat:no-repeat;background-position:50%;></div>';
+						}
+						str ='<div id=ready><div class=mbx><a href=' + alink + ' target=_blank class="mlink minPx-top">'+ file_ico +'<div class=filename>' + n.name_all + '<div class=filesize>'+ n.size +'</div></div>'+ downstyle +'</a></div></div>';
+						$(str).appendTo("#s_file");
+					});
+										$("#fileview").hide();
+									}else{
+					sms(msg.msg);
+				}
+				//load style
+								setTimeout('document.getElementById("s_load").style.display="none";',1500);
+							},
+			error:function(){
+				sms("获取失败，请重试");
+			}
+
+		});
+}
+//huiche
+$(document).keyup(function (e) {
+	if (e.keyCode == 13) {
+		if(search_lock == 2){
+			s_post();
+		}
+	}
+});
+</script>
+
+<div style="display:none"><script src="./folder-pwd-vip_files/stat.php" language="JavaScript"></script><script src="./folder-pwd-vip_files/hm.js"></script></div>
+
+</body></html>

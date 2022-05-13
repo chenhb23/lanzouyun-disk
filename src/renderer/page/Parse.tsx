@@ -31,10 +31,14 @@ export default function Parse() {
   }, [merge, selectedRows.length])
 
   const parse = async () => {
-    const value = await listener(lsShare(urlForm), 'lsShare')
-    setShareFiles(value)
-    setMerge(URLType.folder === value.type && isFile(value.name))
-    setSelectedRows(prev => (prev.length ? [] : prev))
+    try {
+      const value = await listener(lsShare(urlForm), 'lsShare')
+      setShareFiles(value)
+      setMerge(URLType.folder === value.type && isFile(value.name))
+      setSelectedRows(prev => (prev.length ? [] : prev))
+    } catch (e: any) {
+      message.error(e.message)
+    }
   }
 
   return (
