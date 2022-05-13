@@ -35,6 +35,7 @@
     "mac": {
       "category": "org.chenhb23.lanzou.client",
       "artifactName": "lanzouyun-${version}-${arch}-${os}.${ext}",
+      "identity": null,
       "target": {
         "target": "dmg",
         "arch": [
