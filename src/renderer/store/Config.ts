@@ -19,7 +19,7 @@ export class Config {
   @persist downloadDir = ''
 
   // 主题
-  themeSource: Electron.NativeTheme['themeSource']
+  @persist themeSource: Electron.NativeTheme['themeSource']
 
   constructor() {
     makeAutoObservable(this)

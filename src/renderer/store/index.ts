@@ -51,8 +51,12 @@ hydrate('config', config, (window as any).__STATE__?.config).then(async value =>
   if (!value.downloadDir) {
     value.downloadDir = store.get('downloads')
   }
+
+  // 同步软件外观
+  const theme = await electronApi.getTheme()
   if (!value.themeSource) {
-    const theme = await electronApi.getTheme()
     value.themeSource = theme.themeSource
+  } else if (value.themeSource !== theme.themeSource) {
+    await electronApi.setTheme(value.themeSource)
   }
 })
