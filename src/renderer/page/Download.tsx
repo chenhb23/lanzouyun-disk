@@ -162,6 +162,7 @@ function _BatchTask(_, ref) {
 
   return (
     <Modal
+      destroyOnClose
       visible={visible}
       width={650}
       title={'批量下载任务'}
@@ -178,11 +179,8 @@ function _BatchTask(_, ref) {
         onFinish={async values => {
           if (!values.list?.length) return message.error('列表不能为空')
           const tasks = values.list.filter(item => item.url)
-          let failTimes = 0
-          for (const task of tasks) {
-            await download.addTask(task).catch(() => failTimes++)
-          }
-          message.success(`添加 ${tasks.length - failTimes} 项到下载列表`)
+          const count = await download.addTasks(tasks)
+          message.success(`添加 ${count} 项到下载列表`)
           setVisible(false)
         }}
       >
@@ -191,6 +189,7 @@ function _BatchTask(_, ref) {
             <Form.Item name={'urls'} labelCol={{flex: '30px'}} style={{marginBottom: 0}}>
               <Input.TextArea
                 allowClear
+                autoFocus
                 // style={{whiteSpace: 'nowrap'}}
                 autoSize={{minRows: 3, maxRows: 5}}
                 placeholder={'一个一行。格式：[文件名 ]https://....[ 密码|提取码:xxxx]'}

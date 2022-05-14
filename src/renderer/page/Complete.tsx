@@ -27,6 +27,7 @@ const Complete = observer(() => {
       <Table
         pagination={false}
         size={'small'}
+        // Warning: [antd: Table] `index` parameter of `rowKey` function is deprecated. There is no guarantee that it will work as expected.
         rowKey={(record, index) => `${record.url}${index}`}
         dataSource={[...download.finishList]}
         columns={[

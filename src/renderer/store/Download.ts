@@ -17,6 +17,7 @@ import {Matcher} from '../../common/core/matcher'
 import throttle from 'lodash.throttle'
 import {message} from 'antd'
 import {config} from './Config'
+import {getDownloadDir} from '../page/Setting'
 
 export interface DownloadSubTask {
   url: string
@@ -26,6 +27,15 @@ export interface DownloadSubTask {
   resolve: number
   status: TaskStatus
   size: number
+}
+
+// 分享链接的下载全部没有 name
+type AddTask = {
+  url: string
+  name?: string // 分享链接的下载全部没有 name
+  dir?: string // 指定下载目录
+  pwd?: string
+  merge?: boolean
 }
 
 /**
@@ -175,7 +185,7 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
   }
 
   canStart(task: DownloadTask) {
-    return this.queue < 3 // && info.status !== InitStatus.pending
+    return this.queue < 2 // && info.status !== InitStatus.pending
   }
 
   abortTask = (subTask: DownloadSubTask) => {
@@ -385,19 +395,28 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
     this.list.push(task)
   }
 
-  // todo: 在这里询问下载地址 addTasks() {}
+  /**
+   * ### 批量添加任务
+   * - 返回添加成功的数量
+   * - 询问下载地址
+   */
+  async addTasks(options: AddTask[]) {
+    const dir = await getDownloadDir()
+    let successTimes = 0
+    for (const option of options) {
+      await this.addTask({dir, ...option})
+        .then(() => ++successTimes)
+        .catch(reason => console.log(`addTasks`, reason))
+    }
+    return successTimes
+  }
 
   /**
-   * 先不解析，开始下载时再解析
-   * name, url, pwd?, merge?
+   * ### 单个下载
+   * - 先不解析，开始下载时再解析
+   * - 不询问下载地址
    */
-  async addTask(options: {
-    url: string
-    name?: string // 分享链接的下载全部没有 name
-    dir?: string // 指定下载目录
-    pwd?: string
-    merge?: boolean
-  }) {
+  async addTask(options: AddTask) {
     // name 加后缀最长 104
     const task = new DownloadTask()
     task.name = isSpecificFile(options.name) ? restoreFileName(options.name) : options.name

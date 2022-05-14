@@ -83,6 +83,9 @@ export const SelectDownloadDir = observer(() => (
         >
           更改
         </Button>
+        <Button type={'link'} onClick={() => electronApi.showItemInFolder(config.downloadDir)}>
+          打开
+        </Button>
       </Col>
     </Row>
     <Checkbox checked={config.setDefaultDownloadDir} onChange={e => (config.setDefaultDownloadDir = e.target.checked)}>

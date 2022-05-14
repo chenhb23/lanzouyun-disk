@@ -16,7 +16,7 @@ export default function Parse() {
 
   const [merge, setMerge] = useState(false)
 
-  const {loading, listener, listenerFn} = useLoading()
+  const {loading, listener} = useLoading()
   const [urlForm, setUrlForm] = useState({url: '', pwd: ''})
 
   const [selectedRows, setSelectedRows] = useState<LsShareObject['list']>([])
@@ -91,18 +91,17 @@ export default function Parse() {
                     // style={{minWidth: 100}}
                     loading={loading['download']}
                     onClick={async () => {
-                      const dir = await getDownloadDir()
-                      await listenerFn(async () => {
-                        for (const row of selectedRows) {
-                          await download.addTask({
+                      await listener(
+                        download.addTasks(
+                          selectedRows.map(row => ({
                             name: row.name,
                             url: row.url,
                             pwd: row.pwd,
                             merge: false,
-                            dir,
-                          })
-                        }
-                      }, 'download')
+                          }))
+                        ),
+                        'download'
+                      )
                       message.success(`已添加 ${selectedRows.length} 项任务到下载列表`)
                       setSelectedRows([])
                     }}
@@ -111,19 +110,18 @@ export default function Parse() {
                   </Button>
                 ) : (
                   <Button
-                    // style={{minWidth: 100}}
                     disabled={!shareFiles.list?.length}
                     loading={loading['addShareTask']}
                     onClick={async () => {
-                      const dir = await getDownloadDir()
                       await listener(
-                        download.addTask({
-                          name: shareFiles.name,
-                          url: urlForm.url,
-                          pwd: urlForm.pwd,
-                          merge: merge,
-                          dir,
-                        }),
+                        download.addTasks([
+                          {
+                            name: shareFiles.name,
+                            url: urlForm.url,
+                            pwd: urlForm.pwd,
+                            merge: merge,
+                          },
+                        ]),
                         'addShareTask'
                       )
                       message.success('下载任务添加成功')
@@ -192,14 +190,14 @@ export default function Parse() {
                 icon={<MyIcon iconName={'download'} />}
                 onClick={async event => {
                   event.stopPropagation()
-                  const dir = await getDownloadDir()
-                  await download.addTask({
-                    name: item.name,
-                    url: item.url,
-                    pwd: item.pwd,
-                    merge: false,
-                    dir,
-                  })
+                  await download.addTasks([
+                    {
+                      name: item.name,
+                      url: item.url,
+                      pwd: item.pwd,
+                      merge: false,
+                    },
+                  ])
                   await message.success('已添加到下载列表')
                 }}
               />

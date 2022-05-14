@@ -218,6 +218,7 @@ export default function Files() {
                     onClick={async () => {
                       await listener(shareAndWriteClipboard(selectedRows), 'oneClickShare')
                       message.success('分享链接已复制!')
+                      setSelectedRows([])
                     }}
                   >
                     分享 ({selectedRows.length})
