@@ -1,4 +1,4 @@
-import {app, BrowserWindow, nativeTheme} from 'electron'
+import {app, BrowserWindow} from 'electron'
 import path from 'path'
 import isDev from 'electron-is-dev'
 import store from '../common/store'
@@ -8,7 +8,6 @@ import {IpcExtension} from './extensions/ipc'
 import {MenuExtension} from './extensions/menu'
 import {ThemeExtension} from './extensions/theme'
 
-// todo: 根据 platform 显示不同外观
 console.log('process.platform', process.platform) // darwin, win32
 
 const loadURL = isDev ? 'http://localhost:3000' : `file://${path.join(__dirname, '..', 'index.html')}`
@@ -16,9 +15,6 @@ const loadURL = isDev ? 'http://localhost:3000' : `file://${path.join(__dirname,
 class App extends Application {
   constructor() {
     super()
-    app.on('window-all-closed', function () {
-      if (process.platform !== 'darwin') app.quit()
-    })
   }
 
   async ready() {
@@ -27,14 +23,6 @@ class App extends Application {
       store.set('downloads', app.getPath('downloads'))
     }
     this.createWindow()
-  }
-
-  closed() {
-    this.mainWindow = null
-  }
-
-  activate() {
-    if (!this.mainWindow) this.createWindow()
   }
 
   async windowReady(win: Electron.BrowserWindow) {

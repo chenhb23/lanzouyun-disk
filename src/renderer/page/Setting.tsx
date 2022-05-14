@@ -31,7 +31,16 @@ const Setting = observer(() => {
           </Radio.Group>
         </Form.Item>
         <Form.Item label={'下载位置'} wrapperCol={{flex: '400px'}}>
-          <SelectDownloadDir />
+          <Row>
+            <Col flex={1}>
+              <SelectDownloadDir />
+            </Col>
+            <Col>
+              <Button type={'link'} onClick={() => electronApi.showItemInFolder(config.downloadDir)}>
+                打开
+              </Button>
+            </Col>
+          </Row>
         </Form.Item>
         <Form.Item label={'最后登录'}>{config.lastLogin}</Form.Item>
         <Form.Item label={'账号'} style={{marginTop: 60}}>
@@ -82,9 +91,6 @@ export const SelectDownloadDir = observer(() => (
           }}
         >
           更改
-        </Button>
-        <Button type={'link'} onClick={() => electronApi.showItemInFolder(config.downloadDir)}>
-          打开
         </Button>
       </Col>
     </Row>
