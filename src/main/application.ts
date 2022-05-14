@@ -33,8 +33,9 @@ export abstract class Application {
   // 阻止左上角关闭事件，但可使用 cmd+Q、推盘右键退出、菜单栏 Quit 退出！
   private closeable = false
 
-  constructor() {
-    this._init()
+  protected constructor() {
+    // 单一实例锁
+    app.requestSingleInstanceLock() ? this._init() : app.quit()
   }
 
   private _instance: BrowserWindow
@@ -78,6 +79,12 @@ export abstract class Application {
     if (!this.mainWindow.isVisible()) {
       this.mainWindow.show()
     }
+    if (this.mainWindow.isMinimized()) {
+      this.mainWindow.restore()
+    }
+    if (!this.mainWindow.isFocused()) {
+      this.mainWindow.focus()
+    }
   }
 
   private async _init() {
@@ -88,6 +95,7 @@ export abstract class Application {
   }
 
   private _initApp() {
+    app.on('second-instance', this.show)
     app.on('activate', () => {
       if (!this.mainWindow) {
         this.createWindow()
