@@ -4,7 +4,7 @@ import {persist} from 'mobx-persist'
 import path from 'path'
 import Task, {TaskStatus} from './AbstractTask'
 import {fileDownUrl, pwdFileDownUrl} from '../../common/core/download'
-import {delay, isSpecificFile, restoreFileName, sizeToByte, streamToText} from '../../common/util'
+import {delay, isFile, isSpecificFile, restoreFileName, sizeToByte, streamToText} from '../../common/util'
 import {lsShare, URLType} from '../../common/core/ls'
 import {merge} from '../../common/merge'
 import * as http from '../../common/http'
@@ -37,7 +37,7 @@ export class DownloadTask {
   url: string
   // 任务类型，文件 | 文件夹 (初始化 task 的时候赋值)
   urlType: URLType
-  // 文件名（真实名称）
+  // 文件名（真实名称，可稍后初始化）
   name: string
   // 文件下载保存的地址（真实地址）
   dir: string
@@ -227,9 +227,9 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
     if (!this.canStart(task)) return
 
     if (!task.tasks?.length) {
-      await this.initTask(task)
+      await this.initTask(task).catch(reason => {})
       if (!task.tasks?.length) {
-        message.error('任务下载失败，列表为空！')
+        message.error(`${task.name ?? task.url} 初始化失败，已移除任务`)
         // 删除任务
         this.remove(url)
         return
@@ -329,7 +329,10 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
 
     task.urlType = type
     if (!task.name) {
-      task.name = name
+      task.name = task.urlType === URLType.file && isSpecificFile(name) ? restoreFileName(name) : name
+    }
+    if (task.merge === undefined && task.urlType === URLType.folder && isFile(task.name)) {
+      task.merge = true
     }
 
     const dir = path.join(task.dir, task.name) + '.downloading'
@@ -363,18 +366,21 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
   // 下载前检查：1.是否在下载列表；2.文件是否存在
   private async pushAndCheckList(task: DownloadTask) {
     if (this.list.find(value => value.url === task.url)) {
-      message.info(`"${task.name}"已存在下载列表！`)
-      throw new Error(`"${task.name}"已存在下载列表！`)
+      message.info(`"${task.name ?? task.url}"已存在下载列表！`)
+      throw new Error(`"${task.name ?? task.url}"已存在下载列表！`)
     }
 
-    const name = restoreFileName(path.join(task.dir, task.name))
-    if (fs.existsSync(name)) {
-      const result = confirm(`"${task.name}"已存在，是否删除并重新下载？`)
-      if (!result) {
-        throw new Error('取消重新下载')
-      }
+    if (task.name) {
+      // todo: 下载时也要检查文件是否存在
+      const name = restoreFileName(path.join(task.dir, task.name))
+      if (fs.existsSync(name)) {
+        const result = confirm(`"${task.name}"已存在，是否删除并重新下载？`)
+        if (!result) {
+          throw new Error('取消重新下载')
+        }
 
-      await fs.remove(name)
+        await fs.remove(name)
+      }
     }
     this.list.push(task)
   }
@@ -386,8 +392,8 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
    * name, url, pwd?, merge?
    */
   async addTask(options: {
-    name: string // 分享链接的下载全部没有 name
     url: string
+    name?: string // 分享链接的下载全部没有 name
     dir?: string // 指定下载目录
     pwd?: string
     merge?: boolean

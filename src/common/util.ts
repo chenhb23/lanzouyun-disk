@@ -69,6 +69,8 @@ export function getSuffix() {
  * 未命名.png.epub.zip
  */
 export function isSpecificFile(name: string) {
+  if (!name) return false
+
   // 兼容 v1 版本
   if (name.endsWith('.lzy.zip')) {
     name = name.replace(/\.lzy\.zip$/, '')
@@ -156,4 +158,27 @@ export async function asyncMap<T, R>(
     data.push(...values)
   }
   return data
+}
+
+/**
+ * 解析分享链接
+ * @param url
+ */
+export function parseShare(url: string): {url: string; pwd?: string} {
+  return url
+    .split(' ')
+    .filter(value => value)
+    .reduce<string[]>((prev, item, i) => {
+      if (i === 0) return [item]
+      return [prev[0], (prev[1] += item)]
+    }, [])
+    .reduce((prev, item) => {
+      if (item.startsWith('http')) {
+        return {...prev, url: item}
+      }
+      if (/[:：]/.test(item)) {
+        return {...prev, pwd: item.replace('：', ':').split(':').pop()}
+      }
+      return prev
+    }, null as {url: string; pwd?: string})
 }

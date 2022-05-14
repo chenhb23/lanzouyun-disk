@@ -7,11 +7,9 @@ import {MyBar} from '../component/Bar'
 import {MyIcon} from '../component/Icon'
 import {useLoading} from '../hook/useLoading'
 import {download} from '../store'
-import {isFile} from '../../common/util'
+import {isFile, parseShare} from '../../common/util'
 import {Button, Checkbox, Col, Input, message, Row, Table} from 'antd'
 import {getDownloadDir} from './Setting'
-
-const regExp = /^(.+) 密码: ?(.+)$/
 
 export default function Parse() {
   const [shareFiles, setShareFiles] = useState({} as LsShareObject)
@@ -49,29 +47,28 @@ export default function Parse() {
             <Row gutter={8} align={'middle'} wrap={false} style={{width: '100%'}}>
               <Col flex={1}>
                 <Input
+                  allowClear
                   value={urlForm.url}
-                  onKeyDown={event => event.key === 'Enter' && parse()}
+                  onPressEnter={parse}
+                  placeholder='* https://...  回车键解析'
                   onChange={event => {
-                    const value = event.target.value
-                    if (regExp.test(value)) {
-                      const [_, url, pwd] = value.match(regExp)
-                      setUrlForm(prevState => ({...prevState, url, pwd}))
+                    const url = event.target.value
+                    const parsed = parseShare(url)
+                    if (parsed) {
+                      setUrlForm(prevState => ({...prevState, ...parsed}))
                     } else {
-                      setUrlForm(prevState => ({...prevState, url: value}))
+                      setUrlForm(prevState => ({...prevState, url}))
                     }
                   }}
-                  placeholder='* https://...  回车键解析'
                 />
               </Col>
               <Col>
                 <Input
+                  allowClear
                   value={urlForm.pwd}
-                  onKeyDown={event => event.key === 'Enter' && parse()}
-                  onChange={event => {
-                    setUrlForm(prevState => ({...prevState, pwd: event.target.value}))
-                  }}
+                  onPressEnter={parse}
+                  onChange={event => setUrlForm(prevState => ({...prevState, pwd: event.target.value}))}
                   placeholder='提取密码，选填'
-                  // style={{width: 110, marginLeft: 10, marginRight: 10}}
                 />
               </Col>
               <Col>
