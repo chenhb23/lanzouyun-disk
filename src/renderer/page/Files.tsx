@@ -594,10 +594,10 @@ export default function Files() {
               setUploadMaskVisible(false)
 
               if (event.dataTransfer.files.length) {
-                message.success('上传中...')
                 for (const file of event.dataTransfer.files) {
                   await upload.addTask({folderId: currentFolder.folderid, file})
                 }
+                message.success('上传中...')
               }
             }}
           />

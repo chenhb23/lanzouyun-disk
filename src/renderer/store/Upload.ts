@@ -1,5 +1,5 @@
 import {EventEmitter} from 'events'
-import {resolve} from 'path'
+import path from 'path'
 import {autorun, makeAutoObservable, makeObservable, observable} from 'mobx'
 import {persist} from 'mobx-persist'
 import {FormData} from 'formdata-node'
@@ -16,7 +16,8 @@ import {mkdir} from '../../common/core/mkdir'
 import {splitTask} from '../../common/split'
 import * as http from '../../common/http'
 import {config} from './Config'
-import {message} from 'antd'
+import {message, Modal} from 'antd'
+import {calculate} from './Calculate'
 
 export type UploadFile = {
   size: File['size']
@@ -97,7 +98,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
   @persist('list') list: UploadTask[] = []
 
   private taskSignalId(task: Pick<UploadSubTask, 'sourceFile'>) {
-    return resolve(task.sourceFile.path, task.sourceFile.name)
+    return path.join(task.sourceFile.path, task.sourceFile.name)
   }
 
   get queue() {
@@ -119,7 +120,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
       this.remove(info.file.path)
     })
     this.on('finish-task', task => {
-      // delete this.taskSignal[resolve(info.file.path, task.name)]
+      // delete this.taskSignal[path.resolve(info.file.path, task.name)]
       if (task.tasks.every(item => item.status === TaskStatus.finish)) {
         this.emit('finish', task)
       } else {
@@ -156,8 +157,27 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
       .filter(filter)
   }
 
+  private checkWarningSize() {
+    return new Promise<void>((resolve, reject) => {
+      const recordSize = calculate.getRecordSize()
+      if (config.uploadWarningEnabled && recordSize >= sizeToByte(`${config.uploadWarningSize}g`)) {
+        Modal.confirm({
+          content: `当天上传总流量（${byteToSize(recordSize)}）已超过警戒线（${
+            config.uploadWarningSize
+          }G），是否继续上传？`,
+          okText: '上传',
+          onOk: () => resolve(),
+          onCancel: () => reject('上传流量超过警戒线，已选择取消'),
+        })
+      } else {
+        resolve()
+      }
+    })
+  }
+
   // 上传文件（夹）任务
   async addTask(options: {folderId: FolderId; file: UploadFile}) {
+    await this.checkWarningSize()
     const filePath = options.file.path
     const stat = await fs.stat(filePath)
     if (stat.isFile()) {
@@ -171,12 +191,12 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
         subFolderId = await mkdir({parentId: options.folderId, name: options.file.name})
       }
       for (const file of files) {
-        const path = resolve(filePath, file)
-        const fstat = await fs.stat(path)
+        const fullPath = path.resolve(filePath, file)
+        const fstat = await fs.stat(fullPath)
         if (fstat.isFile()) {
           this.addFileTask({
             folderId: subFolderId,
-            file: {size: fstat.size, name: file, type: '', path, lastModified: fstat.mtime.getTime()},
+            file: {size: fstat.size, name: file, type: '', path: fullPath, lastModified: fstat.mtime.getTime()},
           })
         }
       }
@@ -270,7 +290,9 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
     const signalId = this.taskSignalId(subTask)
     const form = createUploadForm(subTask, taskIndex)
 
+    const uid = `${Date.now()}${Math.floor(Math.random() * 100)}`
     const onProgress = throttle((progress: Progress) => {
+      calculate.setRecord(uid, progress.transferred)
       subTask.resolve = progress.transferred
     }, 1000)
     const req = http.request.post('fileup.php', {body: form}).on('uploadProgress', onProgress)
@@ -338,7 +360,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
   }
 
   canStart() {
-    return this.queue < 2
+    return this.queue < config.uploadMax
   }
 
   startAll() {

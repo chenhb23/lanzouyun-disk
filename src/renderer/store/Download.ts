@@ -185,7 +185,7 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
   }
 
   canStart(task: DownloadTask) {
-    return this.queue < 2 // && info.status !== InitStatus.pending
+    return this.queue < config.downloadMax // && info.status !== InitStatus.pending
   }
 
   abortTask = (subTask: DownloadSubTask) => {

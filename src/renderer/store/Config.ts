@@ -21,6 +21,14 @@ export class Config {
   // 主题
   @persist themeSource: Electron.NativeTheme['themeSource']
 
+  // 同时上传/下载数量
+  @persist uploadMax = 1
+  @persist downloadMax = 2
+
+  // 上传流量警戒线
+  @persist uploadWarningSize = 7 // 单位 G
+  @persist uploadWarningEnabled = true
+
   constructor() {
     makeAutoObservable(this)
   }

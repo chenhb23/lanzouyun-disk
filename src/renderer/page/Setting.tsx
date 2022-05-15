@@ -1,11 +1,13 @@
 import React from 'react'
-import {Button, Checkbox, Col, Form, Input, Modal, Radio, Row, Space} from 'antd'
+import {Button, Checkbox, Col, Form, Input, InputNumber, Modal, Radio, Row, Space, Typography} from 'antd'
 import {observer} from 'mobx-react'
 import {MyScrollView} from '../component/ScrollView'
 import {config} from '../store/Config'
 import electronApi from '../electronApi'
 import {download, upload} from '../store'
 import {TaskStatus} from '../store/AbstractTask'
+import {calculate} from '../store/Calculate'
+import {byteToSize} from '../../common/util'
 
 const Setting = observer(() => {
   return (
@@ -36,14 +38,59 @@ const Setting = observer(() => {
               <SelectDownloadDir />
             </Col>
             <Col>
-              <Button type={'link'} onClick={() => electronApi.showItemInFolder(config.downloadDir)}>
+              <Button type={'link'} onClick={() => electronApi.openPath(config.downloadDir)}>
                 打开
               </Button>
             </Col>
           </Row>
         </Form.Item>
-        <Form.Item label={'最后登录'}>{config.lastLogin}</Form.Item>
-        <Form.Item label={'账号'} style={{marginTop: 60}}>
+        <Form.Item label={'同时任务数'}>
+          <Space direction={'vertical'}>
+            <Space>
+              <InputNumber
+                keyboard
+                min={1}
+                max={3}
+                value={config.uploadMax}
+                onChange={value => (config.uploadMax = value)}
+              />
+              上传（1 - 3）
+              <Typography.Text type={'secondary'}>不建议修改</Typography.Text>
+            </Space>
+            <Space>
+              <InputNumber
+                keyboard
+                min={1}
+                max={5}
+                value={config.downloadMax}
+                onChange={value => (config.downloadMax = value)}
+              />
+              下载（1 - 5）
+            </Space>
+          </Space>
+        </Form.Item>
+        <Form.Item label={'上传流量警戒线'}>
+          <Space>
+            <InputNumber
+              style={{width: 88 + 33}}
+              min={1}
+              addonAfter={'G'}
+              value={config.uploadWarningSize}
+              onChange={value => (config.uploadWarningSize = value)}
+            />
+            <Checkbox
+              checked={config.uploadWarningEnabled}
+              onChange={e => (config.uploadWarningEnabled = e.target.checked)}
+            >
+              启用提示
+            </Checkbox>
+            <span>今日流量 {byteToSize(calculate.getRecordSize())}</span>
+          </Space>
+        </Form.Item>
+        <Form.Item label={'最后登录'} style={{marginTop: 70}}>
+          {config.lastLogin}
+        </Form.Item>
+        <Form.Item label={'账号'}>
           <Button
             onClick={() => {
               if ([download.list, upload.list].some(value => value.some(task => task.status === TaskStatus.pending))) {

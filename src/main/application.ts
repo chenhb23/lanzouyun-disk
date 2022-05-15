@@ -35,7 +35,11 @@ export abstract class Application {
 
   protected constructor() {
     // 单一实例锁
-    app.requestSingleInstanceLock() ? this._init() : app.quit()
+    if (!isDev && !app.requestSingleInstanceLock()) {
+      app.quit()
+    } else {
+      this._init()
+    }
   }
 
   private _instance: BrowserWindow
@@ -95,7 +99,10 @@ export abstract class Application {
   }
 
   private _initApp() {
-    app.on('second-instance', this.show)
+    if (!isDev) {
+      // 与单一实例锁关联
+      app.on('second-instance', this.show)
+    }
     app.on('activate', () => {
       if (!this.mainWindow) {
         this.createWindow()
