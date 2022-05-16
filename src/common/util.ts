@@ -4,7 +4,7 @@ import {Request} from 'got'
 export const delay = (ms = 1000) => new Promise(resolve => setTimeout(resolve, ms))
 
 // 95.0 M
-export function sizeToByte(size: string) {
+export function sizeToByte(size: string, step = 1024) {
   if (!size) return 0
   const getUnit = unit =>
     ({
@@ -12,16 +12,16 @@ export function sizeToByte(size: string) {
         return 1
       },
       get k() {
-        return 1024
+        return step
       },
       get m() {
-        return this.k * 1024
+        return this.k * step
       },
       get g() {
-        return this.m * 1024
+        return this.m * step
       },
       get t() {
-        return this.g * 1024
+        return this.g * step
       },
     }[unit] || 1) // todo: 1 是有问题的
   const [_, num, unit] = size
@@ -32,16 +32,16 @@ export function sizeToByte(size: string) {
   return +num * getUnit(unit)
 }
 
-export function byteToSize(byte: number) {
+export function byteToSize(byte: number, step = 1024) {
   const formatSize = (total, persize) => {
     const [integer, decimal = ''] = `${Math.floor((total * 100) / persize) / 100}`.split('.')
     return `${integer}.${decimal.padEnd(2, '0')}`
   }
 
-  if (byte < sizeToByte('1k')) return `0`
-  if (byte < sizeToByte('1m')) return `${formatSize(byte, sizeToByte('1k'))} K`
-  if (byte < sizeToByte('1g')) return `${formatSize(byte, sizeToByte('1m'))} M`
-  if (byte < sizeToByte('1t')) return `${formatSize(byte, sizeToByte('1g'))} G`
+  if (byte < sizeToByte('1k', step)) return `0`
+  if (byte < sizeToByte('1m', step)) return `${formatSize(byte, sizeToByte('1k', step))} K`
+  if (byte < sizeToByte('1g', step)) return `${formatSize(byte, sizeToByte('1m', step))} M`
+  if (byte < sizeToByte('1t', step)) return `${formatSize(byte, sizeToByte('1g', step))} G`
 }
 
 // const suffix = ['zip', 'tar', 'rar']

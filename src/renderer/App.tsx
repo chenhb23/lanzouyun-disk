@@ -1,7 +1,10 @@
 import React, {useState} from 'react'
 import {observer} from 'mobx-react'
 
+// 早点引入样式，确保后来的样式可以覆盖之前的
+import './App.less'
 import './component/Icon/lib/iconfont.js'
+
 import {download, upload} from './store'
 import {MyIcon} from './component/Icon'
 import electronApi from './electronApi'
@@ -31,8 +34,6 @@ import {
 } from '@ant-design/icons'
 
 import {Layout, Menu, Tabs} from 'antd'
-
-import './App.less'
 
 function taskLength<T>(tasks: T[]) {
   const len = tasks?.length

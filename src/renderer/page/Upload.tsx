@@ -8,7 +8,8 @@ import {upload} from '../store'
 import {Observer, observer} from 'mobx-react'
 import {TaskStatus, TaskStatusName} from '../store/AbstractTask'
 import path from 'path'
-import {Button, Modal, Progress, Space, Table} from 'antd'
+import {Button, Modal, Space, Table} from 'antd'
+import {SpeedProgress} from '../component/SpeedProgress'
 
 const Upload = observer(() => {
   const showSubTask = (task: UploadTask) => {
@@ -79,15 +80,7 @@ const Upload = observer(() => {
             width: 200,
             render: (_, item) => (
               <Observer>
-                {() => (
-                  <Progress
-                    style={{paddingRight: 16}}
-                    strokeColor={{from: '#4C89F7', to: '#87d068'}}
-                    format={percent => percent.toFixed(1) + '%'}
-                    percent={(item.resolve / item.file.size) * 100}
-                    status={item.status === TaskStatus.pending ? 'active' : 'normal'}
-                  />
-                )}
+                {() => <SpeedProgress resolve={item.resolve} status={item.status} total={item.file.size} />}
               </Observer>
             ),
           },

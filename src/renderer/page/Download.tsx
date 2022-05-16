@@ -7,8 +7,9 @@ import {byteToSize, parseShare} from '../../common/util'
 import {download} from '../store'
 import {TaskStatus} from '../store/AbstractTask'
 import path from 'path'
-import {Button, Col, Form, Input, message, Modal, Progress, Row, Space, Table} from 'antd'
+import {Button, Col, Form, Input, message, Modal, Row, Space, Table} from 'antd'
 import {MinusCircleFilled} from '@ant-design/icons'
+import {SpeedProgress} from '../component/SpeedProgress'
 
 const Download = observer(() => {
   const batchRef = useRef(null)
@@ -71,15 +72,7 @@ const Download = observer(() => {
             width: 200,
             render: (_, item) => (
               <Observer>
-                {() => (
-                  <Progress
-                    style={{paddingRight: 16}}
-                    strokeColor={{from: '#4C89F7', to: '#87d068'}}
-                    format={percent => percent.toFixed(1) + '%'}
-                    percent={(item.resolve / item.total) * 100}
-                    status={item.status === TaskStatus.pending ? 'active' : 'normal'}
-                  />
-                )}
+                {() => <SpeedProgress total={item.total} resolve={item.resolve} status={item.status} />}
               </Observer>
             ),
           },
