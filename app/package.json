@@ -1,6 +1,6 @@
 {
   "name": "lanzouyun-pan",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "private": true,
   "main": "build/main/index.js",
   "description": "蓝奏云网盘客户端",

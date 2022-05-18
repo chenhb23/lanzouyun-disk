@@ -155,6 +155,7 @@ export async function asyncMap<T, R>(
  */
 export function parseShare(url: string): {url: string; pwd?: string} {
   return url
+    .slice(url.indexOf('http'))
     .split(' ')
     .filter(value => value)
     .reduce<string[]>((prev, item, i) => {

@@ -7,7 +7,7 @@ import {MyBar} from '../component/Bar'
 import {MyIcon} from '../component/Icon'
 import {useLoading} from '../hook/useLoading'
 import {download} from '../store'
-import {isFile, parseShare} from '../../common/util'
+import {delay, isFile, parseShare} from '../../common/util'
 import {Button, Checkbox, Col, Input, message, Row, Table} from 'antd'
 import {getDownloadDir} from './Setting'
 
@@ -49,17 +49,16 @@ export default function Parse() {
                 <Input
                   allowClear
                   value={urlForm.url}
-                  onPressEnter={parse}
-                  placeholder='* https://...  回车键解析'
-                  onChange={event => {
-                    const url = event.target.value
-                    const parsed = parseShare(url)
+                  onPaste={async event => {
+                    const parsed = parseShare(event.clipboardData.getData('text/plain'))
                     if (parsed) {
-                      setUrlForm(prevState => ({...prevState, ...parsed}))
-                    } else {
-                      setUrlForm(prevState => ({...prevState, url}))
+                      await delay(16)
+                      setUrlForm(prevState => ({...prevState, url: parsed.url, pwd: parsed.pwd}))
                     }
                   }}
+                  onPressEnter={parse}
+                  placeholder='* https://...  回车键解析'
+                  onChange={event => setUrlForm(prevState => ({...prevState, url: event.target.value}))}
                 />
               </Col>
               <Col>
