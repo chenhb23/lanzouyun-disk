@@ -692,7 +692,7 @@ function SelectFolder(props: SelectFolderProps) {
       onCancel={props.onCancel}
       onOk={() => {
         setConfirmLoading(true)
-        props.onOk(select.key, select.pos.split('-').length - 1).finally(() => setConfirmLoading(false))
+        props.onOk(select.key, select.pos.split('-').length - 2).finally(() => setConfirmLoading(false))
       }}
       bodyStyle={{minHeight: 200}}
       destroyOnClose
