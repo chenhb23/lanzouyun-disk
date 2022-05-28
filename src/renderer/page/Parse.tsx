@@ -10,6 +10,7 @@ import {download} from '../store'
 import {delay, isFile, parseShare} from '../../common/util'
 import {Button, Checkbox, Col, Input, message, Row, Table} from 'antd'
 import {getDownloadDir} from './Setting'
+import {DownloadTask} from '../store/task/DownloadTask'
 
 export default function Parse() {
   const [shareFiles, setShareFiles] = useState({} as LsShareObject)
@@ -92,12 +93,21 @@ export default function Parse() {
                     onClick={async () => {
                       await listener(
                         download.addTasks(
-                          selectedRows.map(row => ({
-                            name: row.name,
-                            url: row.url,
-                            pwd: row.pwd,
-                            merge: false,
-                          }))
+                          // selectedRows.map(row => ({
+                          //   name: row.name,
+                          //   url: row.url,
+                          //   pwd: row.pwd,
+                          //   merge: false,
+                          // }))
+                          selectedRows.map(
+                            row =>
+                              new DownloadTask({
+                                name: row.name,
+                                url: row.url,
+                                pwd: row.pwd,
+                                merge: false,
+                              })
+                          )
                         ),
                         'download'
                       )
@@ -114,12 +124,18 @@ export default function Parse() {
                     onClick={async () => {
                       await listener(
                         download.addTasks([
-                          {
+                          // {
+                          //   name: shareFiles.name,
+                          //   url: urlForm.url,
+                          //   pwd: urlForm.pwd,
+                          //   merge: merge,
+                          // },
+                          new DownloadTask({
                             name: shareFiles.name,
                             url: urlForm.url,
                             pwd: urlForm.pwd,
                             merge: merge,
-                          },
+                          }),
                         ]),
                         'addShareTask'
                       )
@@ -190,12 +206,18 @@ export default function Parse() {
                 onClick={async event => {
                   event.stopPropagation()
                   await download.addTasks([
-                    {
+                    // {
+                    //   name: item.name,
+                    //   url: item.url,
+                    //   pwd: item.pwd,
+                    //   merge: false,
+                    // },
+                    new DownloadTask({
                       name: item.name,
                       url: item.url,
                       pwd: item.pwd,
                       merge: false,
-                    },
+                    }),
                   ])
                   await message.success('已添加到下载列表')
                 }}

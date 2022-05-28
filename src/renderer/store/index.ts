@@ -1,11 +1,13 @@
 import {configure} from 'mobx'
 import {create} from 'mobx-persist'
-import {Upload, UploadTask} from './Upload'
-import {Download, DownloadTask} from './Download'
+import {Upload} from './Upload'
+import {Download} from './Download'
 import {TaskStatus} from './AbstractTask'
 import {config} from './Config'
 import store from '../../common/store'
 import electronApi from '../electronApi'
+import {UploadTask} from './task/UploadTask'
+import {DownloadTask} from './task/DownloadTask'
 
 configure({
   enforceActions: 'never',

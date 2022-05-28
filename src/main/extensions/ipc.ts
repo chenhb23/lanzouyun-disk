@@ -18,6 +18,10 @@ export class IpcExtension implements Extension {
     return shell.openExternal(url, options)
   }
 
+  async trashItem(event: Electron.IpcMainInvokeEvent, path: string) {
+    return shell.trashItem(path)
+  }
+
   // 如果文件不存在，会返回提示信息（不是报错信息），如：Failed to open path
   async openPath(event: Electron.IpcMainInvokeEvent, path: string) {
     return shell.openPath(path)
@@ -36,6 +40,7 @@ export class IpcExtension implements Extension {
     ipcMain.handle(IpcEvent['shell:showItemInFolder'], this.showItemInFolder)
     ipcMain.handle(IpcEvent['shell:openExternal'], this.openExternal)
     ipcMain.handle(IpcEvent['shell:openPath'], this.openPath)
+    ipcMain.handle(IpcEvent['shell:trashItem'], this.trashItem)
     ipcMain.on(IpcEvent.logout, this.logout.bind(this))
   }
 }

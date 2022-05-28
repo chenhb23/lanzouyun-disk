@@ -18,7 +18,7 @@ export function useRate(transferred = 0) {
     queue.date = now
     setDiff(((queue.next - queue.prev) / time) * 1000)
 
-    const timer = setTimeout(() => setDiff(0), 1000 + 100)
+    const timer = setTimeout(() => setDiff(0), 1000 + 1000)
     return () => {
       clearTimeout(timer)
     }

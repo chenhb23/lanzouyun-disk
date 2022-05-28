@@ -1,87 +1,34 @@
 import {EventEmitter} from 'events'
 import path from 'path'
-import {autorun, makeAutoObservable, makeObservable, observable} from 'mobx'
+import {autorun, makeObservable, observable} from 'mobx'
 import {persist} from 'mobx-persist'
-import {FormData} from 'formdata-node'
 import fs from 'fs-extra'
-import type {CancelableRequest} from 'got'
 import type {Progress} from 'got/dist/source/core'
 import throttle from 'lodash.throttle'
 
 import Task, {TaskStatus} from './AbstractTask'
-import {supportList} from '../../project.config'
-import {byteToSize, createSpecificName, sizeToByte} from '../../common/util'
+import {byteToSize, sizeToByte} from '../../common/util'
 import {findFolderByName} from '../../common/core/isExist'
 import {mkdir} from '../../common/core/mkdir'
-import {splitTask} from '../../common/split'
-import * as http from '../../common/http'
 import {config} from './Config'
 import {message, Modal} from 'antd'
 import {calculate} from './Calculate'
-
-export type UploadFile = {
-  size: File['size']
-  name: File['name']
-  type: File['type']
-  path: File['path']
-  lastModified: File['lastModified']
-}
-
-export interface UploadSubTask {
-  name: string // 自定义
-  size: number // 自定义
-  type: string // 自定义 // todo: delete
-
-  sourceFile: UploadFile
-
-  folderId: FolderId // 小文件为当前目录id，大文件为新建文件的id
-  status: TaskStatus
-  resolve: number
-  startByte?: number
-  endByte?: number
-}
-
-export class UploadTask {
-  folderId: FolderId // = null
-  file: UploadFile // = null
-  tasks: UploadSubTask[] = []
-
-  constructor(props: Partial<UploadTask> = {}) {
-    makeAutoObservable(this)
-    Object.assign(this, props)
-  }
-
-  // 使用 file.size 代替
-  // get size() {
-  //   return this.tasks.reduce((total, item) => total + (item.size ?? 0), 0)
-  // }
-
-  get resolve() {
-    return this.tasks.reduce((total, item) => total + (item.resolve ?? 0), 0)
-  }
-
-  get status() {
-    // 上传状态
-    if (this.tasks.some(item => item.status === TaskStatus.fail)) return TaskStatus.fail
-    if (this.tasks.some(item => item.status === TaskStatus.pause)) return TaskStatus.pause
-    if (this.tasks.some(item => item.status === TaskStatus.pending)) return TaskStatus.pending
-    if (this.tasks.length && this.tasks.every(item => item.status === TaskStatus.finish)) return TaskStatus.finish
-    return TaskStatus.ready
-  }
-}
+import {pipeline} from 'stream/promises'
+import {UploadFile, UploadSubtask, UploadTask} from './task/UploadTask'
+import {UploadLinkTask} from './task/UploadLinkTask'
 
 export interface Upload {
   on(event: 'finish', listener: (info: UploadTask) => void): this
-  on(event: 'finish-task', listener: (info: UploadTask, task: UploadSubTask) => void): this
+  on(event: 'finish-task', listener: (info: UploadTask, task: UploadSubtask) => void): this
   // on(event: 'error', listener: (msg: string) => void): this
 
   // todo: 使用 off?
   removeListener(event: 'finish', listener: (info: UploadTask) => void): this
-  removeListener(event: 'finish-task', listener: (info: UploadTask, task: UploadSubTask) => void): this
+  removeListener(event: 'finish-task', listener: (info: UploadTask, task: UploadSubtask) => void): this
   // removeListener(event: 'error', listener: (msg: string) => void): this
 
   emit(event: 'finish', info: UploadTask)
-  emit(event: 'finish-task', info: UploadTask, task: UploadSubTask)
+  emit(event: 'finish-task', info: UploadTask, task: UploadSubtask)
   // emit(event: 'error', msg: string)
 }
 
@@ -93,11 +40,11 @@ export interface Upload {
 
 export class Upload extends EventEmitter implements Task<UploadTask> {
   handler: ReturnType<typeof autorun>
-  taskSignal: {[resolvePathName: string]: CancelableRequest} = {}
+  taskSignal: {[resolvePathName: string]: AbortController} = {}
 
   @persist('list') list: UploadTask[] = []
 
-  private taskSignalId(task: Pick<UploadSubTask, 'sourceFile'>) {
+  private taskSignalId(task: Pick<UploadSubtask, 'sourceFile'>) {
     return path.join(task.sourceFile.path, task.sourceFile.name)
   }
 
@@ -119,9 +66,10 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
     this.on('finish', info => {
       this.remove(info.file.path)
     })
-    this.on('finish-task', task => {
+    this.on('finish-task', async task => {
       // delete this.taskSignal[path.resolve(info.file.path, task.name)]
       if (task.tasks.every(item => item.status === TaskStatus.finish)) {
+        await task.finishTask()
         this.emit('finish', task)
       } else {
         this.start(task.file.path)
@@ -150,7 +98,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
     this.handler = null
   }
 
-  getList(filter: (item: UploadSubTask) => boolean) {
+  getList(filter: (item: UploadSubtask) => boolean) {
     return this.list
       .map(item => item.tasks)
       .flat()
@@ -175,20 +123,62 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
     })
   }
 
-  // 上传文件（夹）任务
-  async addTask(options: {folderId: FolderId; file: UploadFile}) {
+  async addTasks(tasks: UploadTask[]) {
     await this.checkWarningSize()
-    const filePath = options.file.path
+    try {
+      for (const task of tasks) {
+        await this.addTask(task)
+      }
+    } catch (e: any) {
+      message.error(e.message)
+      throw e
+    }
+  }
+
+  // 上传文件（夹）任务
+  // async addTask(options: {folderId: FolderId; file: UploadFile}) {
+  async addTask(task: UploadTask) {
+    await task.beforeAddTask()
+    this.list.push(task)
+
+    // const filePath = task.file.path
+    // const stat = await fs.stat(filePath)
+    // // 1. 检查文件大小
+    // const isFile = stat.isFile()
+    // const isDirectory = stat.isDirectory()
+    // if (isFile || isDirectory) {
+    //   if (stat.isFile()) {
+    //     this.beforeAddTask({size: stat.size})
+    //   } else if (stat.isDirectory()) {
+    //     // 2. 过滤空文件夹
+    //     const files = await fs.readdir(filePath)
+    //     if (!files.length) {
+    //       throw new Error('空文件夹')
+    //     }
+    //     for (const file of files) {
+    //       const fullPath = path.resolve(filePath, file)
+    //       const fstat = await fs.stat(fullPath)
+    //       if (fstat.isFile()) {
+    //         this.beforeAddTask({size: fstat.size})
+    //       }
+    //     }
+    //   }
+    //   this.list.push(task)
+    // } else {
+    //   console.log(`格式不支持: ${task.file.name}`)
+    // }
+
+    /*const filePath = task.file.path
     const stat = await fs.stat(filePath)
     if (stat.isFile()) {
-      this.addFileTask(options)
+      this.addFileTask(task)
     } else if (stat.isDirectory()) {
       const files = await fs.readdir(filePath)
-      if (!files.length) return
+      if (!files.length) throw new Error('空文件夹')
 
-      let subFolderId = await findFolderByName(options.folderId, options.file.name).then(value => value?.fol_id)
+      let subFolderId = await findFolderByName(task.folderId, task.file.name).then(value => value?.fol_id)
       if (!subFolderId) {
-        subFolderId = await mkdir({parentId: options.folderId, name: options.file.name})
+        subFolderId = await mkdir({parentId: task.folderId, name: task.file.name})
       }
       for (const file of files) {
         const fullPath = path.resolve(filePath, file)
@@ -201,78 +191,81 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
         }
       }
     } else {
-      console.log(`格式不支持: ${options.file.name}`)
-    }
+      console.log(`格式不支持: ${task.file.name}`)
+    }*/
   }
 
   // 校验上传文件
-  private beforeAddTask(file: UploadFile) {
-    if (file.size > sizeToByte(config.maxSize)) {
-      throw new Error(`文件大小(${byteToSize(file.size)}) 超出限制，最大允许上传 ${config.maxSize}`)
-    }
-  }
+  // private beforeAddTask(file: Pick<UploadFile, 'size'>) {
+  //   if (file.size > sizeToByte(config.maxSize)) {
+  //     throw new Error(`文件大小(${byteToSize(file.size)}) 超出限制，最大允许上传 ${config.maxSize}`)
+  //   }
+  // }
 
-  private addFileTask(options: {folderId: FolderId; file: UploadFile}) {
-    try {
-      this.beforeAddTask(options.file)
-
-      const file: UploadFile = {
-        size: options.file.size,
-        name: options.file.name,
-        type: options.file.type,
-        path: options.file.path,
-        lastModified: options.file.lastModified,
-      }
-      const task = new UploadTask({file, folderId: options.folderId})
-
-      this.list.push(task)
-    } catch (e: any) {
-      message.error(e.message)
-    }
-  }
+  // private addFileTask(options: {folderId: FolderId; file: UploadFile}) {
+  //   try {
+  //     this.beforeAddTask(options.file)
+  //
+  //     const file: UploadFile = {
+  //       size: options.file.size,
+  //       name: options.file.name,
+  //       type: options.file.type,
+  //       path: options.file.path,
+  //       lastModified: options.file.lastModified,
+  //     }
+  //     const task = new UploadSyncTask({file, folderId: options.folderId})
+  //
+  //     this.list.push(task)
+  //   } catch (e: any) {
+  //     message.error(e.message)
+  //   }
+  // }
 
   pause(path: string) {
-    this.list
-      .find(item => item.file.path === path)
-      ?.tasks?.forEach(task => {
-        if ([TaskStatus.ready, TaskStatus.pending].includes(task.status)) {
-          // todo: 让状态自动变为 TaskStatus.pause 而不是手动控制
-          task.status = TaskStatus.pause
-          this.abortTask(task)
+    const task = this.list.find(item => item.file.path === path)
+    if (task) {
+      task.tasks.forEach(subTask => {
+        switch (subTask.status) {
+          case TaskStatus.ready:
+            subTask.status = TaskStatus.pause
+            break
+          case TaskStatus.pending:
+            this.abortTask(subTask)
+            break
         }
       })
+    }
   }
 
   pauseAll() {
     this.list.forEach(item => this.pause(item.file.path))
   }
 
-  private abortTask = (subTask: UploadSubTask) => {
+  private abortTask = (subTask: UploadSubtask) => {
     const id = this.taskSignalId(subTask)
     if (this.taskSignal[id]) {
-      this.taskSignal[id].cancel('用户取消上传')
+      this.taskSignal[id].abort('用户取消上传')
       delete this.taskSignal[id] // todo
     }
   }
 
   remove(path: string) {
-    this.list.find(item => item.file.path === path)?.tasks?.forEach(this.abortTask)
-    this.list = this.list.filter(item => item.file.path !== path)
+    const task = this.list.find(item => item.file.path === path)
+    if (task) {
+      task.tasks.forEach(this.abortTask)
+      this.list = this.list.filter(item => item.file.path !== path)
+    }
   }
 
   removeAll() {
-    this.list.forEach(info => info.tasks.forEach(this.abortTask))
-    this.list = []
+    this.list.forEach(info => this.remove(info.file.path))
+    // this.list = []
   }
 
   async start(path: string, reset = false) {
     const task = this.list.find(item => item.file.path === path)
     if (!task) return
-    if (!this.canStart()) return
-
-    if (!task.tasks?.length) {
-      await this.initTask(task)
-    } else if (reset) {
+    if (reset && task.tasks?.length) {
       task.tasks.forEach(task => {
         if ([TaskStatus.pause, TaskStatus.fail].includes(task.status)) {
           task.status = TaskStatus.ready
@@ -280,82 +273,52 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
       })
     }
 
+    if (!this.canStart()) return
+
+    if (!task.tasks?.length) {
+      await task.initTask()
+    }
+
     if ([TaskStatus.pause, TaskStatus.fail].includes(task.status)) return
 
     const taskIndex = task.tasks.findIndex(item => TaskStatus.ready === item.status)
     if (taskIndex === -1) return
+    const subtask = task.tasks[taskIndex]
 
-    const subTask = task.tasks[taskIndex]
-    subTask.status = TaskStatus.pending
-    const signalId = this.taskSignalId(subTask)
-    const form = createUploadForm(subTask, taskIndex)
+    subtask.status = TaskStatus.pending
+    const signalId = this.taskSignalId(subtask)
+    // const form = createUploadForm(subtask, taskIndex)
 
-    const uid = `${Date.now()}${Math.floor(Math.random() * 100)}`
-    const onProgress = throttle((progress: Progress) => {
-      calculate.setRecord(uid, progress.transferred)
-      subTask.resolve = progress.transferred
-    }, 1000)
-    const req = http.request.post('fileup.php', {body: form}).on('uploadProgress', onProgress)
+    const abort = new AbortController()
+    // const encoder = new FormDataEncoder(form)
+    // const stream = http.request.stream.post('fileup.php', {headers: encoder.headers})
     try {
-      this.taskSignal[signalId] = req
-      await req
-      subTask.status = TaskStatus.finish
-      this.emit('finish-task', task, subTask)
+      const {from, to: stream} = task.getStream(subtask)
+
+      const uid = `${Date.now()}${Math.floor(Math.random() * 100)}`
+      const onProgress = throttle((progress: Progress) => {
+        calculate.setRecord(uid, progress.transferred)
+        subtask.resolve = progress.transferred
+      }, 1000)
+      stream.on('uploadProgress', onProgress)
+      this.taskSignal[signalId] = abort
+      await pipeline(
+        //
+        from,
+        stream,
+        {signal: abort.signal}
+      )
+      subtask.status = TaskStatus.finish
+      this.emit('finish-task', task, subtask)
     } catch (e: any) {
-      if (req.isCanceled) {
-        subTask.status = TaskStatus.pause
+      if (abort.signal.aborted) {
+        subtask.status = TaskStatus.pause
       } else {
-        subTask.status = TaskStatus.fail
+        subtask.status = TaskStatus.fail
         // message.error(e.message)
       }
     } finally {
       delete this.taskSignal[signalId]
-    }
-  }
-
-  private async initTask(task: UploadTask) {
-    if (task.tasks?.length) return
-
-    const file = task.file
-    const folderId = task.folderId
-
-    if (file.size <= sizeToByte(config.maxSize)) {
-      let supportName = file.name
-      let type = file.type
-      if (supportList.every(ext => !file.path.endsWith(`.${ext}`))) {
-        supportName = createSpecificName(supportName)
-        type = null
-      }
-      task.tasks = [
-        {
-          name: supportName,
-          type: type,
-          size: file.size,
-          sourceFile: file,
-          folderId: folderId,
-          status: TaskStatus.ready,
-          resolve: 0,
-        },
-      ]
-    } else {
-      let subFolderId = await findFolderByName(folderId, file.name).then(value => value?.fol_id)
-      if (!subFolderId) {
-        subFolderId = await mkdir({parentId: folderId, name: file.name})
-      }
-      const result = splitTask(file, config.splitSize)
-      task.tasks.push(
-        ...result.splitFiles.map(value => ({
-          name: value.name,
-          size: value.size,
-          type: null,
-          sourceFile: value.sourceFile,
-          status: TaskStatus.ready,
-          folderId: subFolderId,
-          resolve: 0,
-          startByte: value.startByte,
-          endByte: value.endByte,
-        }))
-      )
     }
   }
 
@@ -374,37 +337,4 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
       this.start(info.file.path)
     })
   }
-}
-
-function createUploadForm(subTask: UploadSubTask, taskIndex: number) {
-  const form = new FormData()
-  const sourceFile = subTask.sourceFile
-  const type = subTask.type || 'application/octet-stream'
-
-  const fr = subTask.endByte
-    ? fs.createReadStream(sourceFile.path, {start: subTask.startByte, end: subTask.endByte})
-    : fs.createReadStream(sourceFile.path)
-
-  form.append('task', 1)
-  form.append('ve', 2)
-  form.append('lastModifiedDate', new Date(sourceFile.lastModified))
-  form.append('type', type)
-  form.append('id', `WU_FILE_${taskIndex}`)
-  form.append('folder_id_bb_n', subTask.folderId)
-  form.append('size', subTask.size)
-  form.append('name', subTask.name)
-  form.append(
-    'upload_file',
-    {
-      [Symbol.toStringTag]: 'File',
-      size: subTask.size,
-      name: subTask.name,
-      type,
-      stream() {
-        return fr
-      },
-    },
-    subTask.name
-  )
-  return form
 }

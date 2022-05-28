@@ -4,6 +4,7 @@ enum IpcEvent {
   'shell:showItemInFolder' = 'shell:showItemInFolder',
   'shell:openExternal' = 'shell:openExternal',
   'shell:openPath' = 'shell:openPath',
+  'shell:trashItem' = 'shell:trashItem',
 
   // on
   logout = 'logout',

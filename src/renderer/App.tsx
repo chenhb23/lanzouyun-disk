@@ -31,9 +31,12 @@ import {
   LinkOutlined,
   ScissorOutlined,
   SettingOutlined,
+  CloudSyncOutlined,
 } from '@ant-design/icons'
 
 import {Layout, Menu, Tabs} from 'antd'
+import Sync from './page/Sync'
+import {sync} from './store/Sync'
 
 function taskLength<T>(tasks: T[]) {
   const len = tasks?.length
@@ -110,6 +113,7 @@ const App = observer(() => {
                   type: 'group',
                   label: '传输列表',
                   children: [
+                    {key: '9', label: `同步任务 ${taskLength(sync.list)}`, icon: <CloudSyncOutlined />},
                     {key: '2', label: `正在上传 ${taskLength(upload.list)}`, icon: <CloudUploadOutlined />},
                     {key: '3', label: `正在下载 ${taskLength(download.list)}`, icon: <CloudDownloadOutlined />},
                     {key: '4', label: `已完成 ${taskLength(download.finishList)}`, icon: <CheckCircleOutlined />},
@@ -155,6 +159,9 @@ const App = observer(() => {
             <Tabs.TabPane key={'7'}>{visible && <webview src={recycleUrl} style={{height: '100%'}} />}</Tabs.TabPane>
             <Tabs.TabPane key={'8'}>
               <Setting />
+            </Tabs.TabPane>
+            <Tabs.TabPane key={'9'}>
+              <Sync />
             </Tabs.TabPane>
           </Tabs>
         </Layout.Content>

@@ -10,6 +10,7 @@ import path from 'path'
 import {Button, Col, Form, Input, message, Modal, Row, Space, Table} from 'antd'
 import {MinusCircleFilled} from '@ant-design/icons'
 import {SpeedProgress} from '../component/SpeedProgress'
+import {DownloadTask} from '../store/task/DownloadTask'
 
 const Download = observer(() => {
   const batchRef = useRef(null)
@@ -172,7 +173,7 @@ function _BatchTask(_, ref) {
         onFinish={async values => {
           if (!values.list?.length) return message.error('列表不能为空')
           const tasks = values.list.filter(item => item.url)
-          const count = await download.addTasks(tasks)
+          const count = await download.addTasks(tasks.map(value => new DownloadTask(value)))
           message.success(`添加 ${count} 项到下载列表`)
           setVisible(false)
         }}

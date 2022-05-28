@@ -3,6 +3,9 @@ import IpcEvent from '../common/IpcEvent'
 import type {ElectronApi} from '../main/electronApi'
 
 const electronApi: ElectronApi = {
+  async trashItem(path: string) {
+    return ipcRenderer.invoke(IpcEvent['shell:trashItem'], path)
+  },
   async getTheme() {
     return ipcRenderer.invoke(IpcEvent['theme:getTheme'])
   },

@@ -1,11 +1,11 @@
 import React from 'react'
 import {Progress} from 'antd'
-import {DownloadTask} from '../store/Download'
 import {useRate} from '../hook/useRate'
 import {byteToSize} from '../../common/util'
 import {TaskStatus} from '../store/AbstractTask'
 
 import './SpeedProgress.less'
+import {DownloadTask} from '../store/task/DownloadTask'
 
 export const SpeedProgress = (props: Pick<DownloadTask, 'total' | 'resolve' | 'status'>) => {
   const diff = useRate(props.resolve)

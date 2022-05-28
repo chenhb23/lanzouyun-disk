@@ -1,85 +1,27 @@
 import {EventEmitter} from 'events'
-import {autorun, makeAutoObservable, makeObservable, observable} from 'mobx'
+import {autorun, makeObservable, observable} from 'mobx'
 import {persist} from 'mobx-persist'
 import path from 'path'
 import Task, {TaskStatus} from './AbstractTask'
-import {fileDownUrl, pwdFileDownUrl} from '../../common/core/download'
-import {delay, isFile, isSpecificFile, restoreFileName, sizeToByte, streamToText} from '../../common/util'
-import {lsShare, URLType} from '../../common/core/ls'
-import {merge} from '../../common/merge'
-import * as http from '../../common/http'
+import {delay, isSpecificFile, restoreFileName} from '../../common/util'
 
 import fs from 'fs-extra'
 import {Progress} from 'got/dist/source/core'
 import {pipeline} from 'stream/promises'
-import {Request} from 'got'
-import {Matcher} from '../../common/core/matcher'
 import throttle from 'lodash.throttle'
 import {message} from 'antd'
 import {config} from './Config'
 import {getDownloadDir} from '../page/Setting'
-
-export interface DownloadSubTask {
-  url: string
-  pwd?: string
-  dir: string // 临时地址
-  name: string // 真实名称
-  resolve: number
-  status: TaskStatus
-  size: number
-}
+import {DownloadSubTask, DownloadTask} from './task/DownloadTask'
 
 // 分享链接的下载全部没有 name
-type AddTask = {
-  url: string
-  name?: string // 分享链接的下载全部没有 name
-  dir?: string // 指定下载目录
-  pwd?: string
-  merge?: boolean
-}
-
-/**
- * 1. 文件：获取 url
- * 2. 文件夹：
- */
-export class DownloadTask {
-  // 分享链接
-  url: string
-  // 任务类型，文件 | 文件夹 (初始化 task 的时候赋值)
-  urlType: URLType
-  // 文件名（真实名称，可稍后初始化）
-  name: string
-  // 文件下载保存的地址（真实地址）
-  dir: string
-  // 分享链接的密码
-  pwd?: string
-  // 自定合并 tasks 的文件。如果需要合并，则会创建 文件名+.download 的临时文件夹
-  merge?: boolean
-
-  tasks: DownloadSubTask[] = []
-
-  constructor(props: Partial<DownloadTask> = {}) {
-    makeAutoObservable(this)
-    Object.assign(this, props)
-  }
-
-  get total() {
-    return this.tasks.reduce((total, item) => total + item.size, 0)
-  }
-
-  get resolve() {
-    return this.tasks.reduce((total, item) => total + item.resolve, 0)
-  }
-
-  // 下载状态
-  get status() {
-    if (this.tasks.some(item => item.status === TaskStatus.fail)) return TaskStatus.fail
-    if (this.tasks.some(item => item.status === TaskStatus.pause)) return TaskStatus.pause
-    if (this.tasks.some(item => item.status === TaskStatus.pending)) return TaskStatus.pending
-    if (this.tasks.length && this.tasks.every(item => item.status === TaskStatus.finish)) return TaskStatus.finish
-    return TaskStatus.ready
-  }
-}
+// type AddTask = {
+//   url: string
+//   name?: string // 分享链接的下载全部没有 name
+//   dir?: string // 指定下载目录
+//   pwd?: string
+//   merge?: boolean
+// }
 
 export interface Download {
   on(event: 'finish', listener: (info: DownloadTask) => void): this
@@ -117,42 +59,23 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
 
   private init = () => {
     this.startQueue()
-    this.on('finish', info => {
-      delay(200).then(() => this.onTaskFinish(info))
+    this.on('finish', async info => {
+      // await delay(200)
+      // await info.finishTask()
+      // await this.onTaskFinish(info)
       this.remove(info.url)
       this.finishList.push(info)
     })
-    this.on('finish-task', (task, subTask) => {
+    this.on('finish-task', async (task, subTask) => {
       if (task.tasks.every(item => item.status === TaskStatus.finish)) {
+        await delay(200)
+        await task.finishTask()
+
         this.emit('finish', task)
       } else {
         this.start(task.url)
       }
     })
-  }
-
-  async onTaskFinish(task: DownloadTask) {
-    const resolveTarget = path.join(task.dir, task.name)
-    const subTask = task.tasks[0]
-    switch (task.urlType) {
-      case URLType.file:
-        await fs.rename(path.join(subTask.dir, subTask.name), resolveTarget)
-        await fs.remove(subTask.dir)
-        break
-      case URLType.folder:
-        if (task.merge) {
-          // 读取目录下文件（会自动排序）
-          const files = (await fs.readdir(subTask.dir)).map(name => path.join(subTask.dir, name))
-          // 合并后删除
-          await merge(files, resolveTarget)
-          await delay(200)
-          await fs.remove(subTask.dir)
-        } else {
-          // 重命名
-          await fs.rename(subTask.dir, subTask.dir.replace(/\.downloading$/, ''))
-        }
-        break
-    }
   }
 
   startQueue() {
@@ -164,6 +87,7 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
     )
   }
 
+  // todo: delete
   stopQueue() {
     this.handler?.()
     this.handler = null
@@ -199,8 +123,13 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
     const task = this.list.find(value => value.url === url)
     if (task) {
       task.tasks.forEach(subTask => {
-        if (TaskStatus.pending === subTask.status) {
-          this.abortTask(subTask)
+        switch (subTask.status) {
+          case TaskStatus.ready:
+            subTask.status = TaskStatus.pause
+            break
+          case TaskStatus.pending:
+            this.abortTask(subTask)
+            break
         }
       })
     }
@@ -219,8 +148,8 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
   }
 
   removeAll() {
-    this.list.forEach(info => info.tasks.forEach(this.abortTask))
-    this.list = []
+    this.list.forEach(info => this.remove(info.url))
+    // this.list = []
   }
 
   removeAllFinish() {
@@ -234,17 +163,7 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
   async start(url: string, reset = false) {
     const task = this.list.find(value => value.url === url)
     if (!task) return
-    if (!this.canStart(task)) return
-
-    if (!task.tasks?.length) {
-      await this.initTask(task).catch(reason => {})
-      if (!task.tasks?.length) {
-        message.error(`${task.name ?? task.url} 初始化失败，已移除任务`)
-        // 删除任务
-        this.remove(url)
-        return
-      }
-    } else if (reset) {
+    if (reset && task.tasks?.length) {
       task.tasks.forEach(value => {
         if ([TaskStatus.pause, TaskStatus.fail].includes(value.status)) {
           value.status = TaskStatus.ready
@@ -252,113 +171,62 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
       })
     }
 
-    const subTask = task.tasks.find(value => value.status === TaskStatus.ready)
-    if (!subTask) return
+    if (!this.canStart(task)) return
 
-    subTask.status = TaskStatus.pending
+    if (!task.tasks?.length) {
+      await task.initTask()
+      if (!task.tasks?.length) {
+        message.error(`${task.name ?? task.url} 初始化失败，已移除任务`)
+        // 删除任务
+        this.remove(url)
+        return
+      }
+    }
+
+    const subtask = task.tasks.find(value => value.status === TaskStatus.ready)
+    if (!subtask) return
+
+    subtask.status = TaskStatus.pending
     const abort = new AbortController()
+    const signalId = subtask.url
 
     try {
-      const {url: downloadUrl} = subTask.pwd
-        ? await pwdFileDownUrl(subTask.url, subTask.pwd)
-        : await fileDownUrl(subTask.url)
+      const {from: stream, to} = await task.getStream(subtask)
 
-      await fs.ensureDir(subTask.dir)
+      await fs.ensureDir(subtask.dir)
 
-      const stream = await this.createStream(downloadUrl)
       const headers = stream.response.headers
+      console.log('response headers', headers)
       if (headers['content-disposition']) {
         // 将精确的 content-length 覆盖原 subTask 的 size
-        subTask.size = Number(headers['content-length'])
+        subtask.size = Number(headers['content-length'])
       }
       const onProgress = throttle((progress: Progress) => {
-        subTask.resolve = progress.transferred
+        subtask.resolve = progress.transferred
       }, 1000)
 
       stream.on('downloadProgress', onProgress)
 
-      this.taskSignal[subTask.url] = abort
+      this.taskSignal[signalId] = abort
 
       await pipeline(
         // 流下载
         stream,
-        fs.createWriteStream(path.join(subTask.dir, subTask.name)),
+        to,
         {signal: abort.signal}
       )
-      subTask.status = TaskStatus.finish
-      this.emit('finish-task', task, subTask)
+      subtask.status = TaskStatus.finish
+      this.emit('finish-task', task, subtask)
     } catch (e: any) {
       if (abort.signal.aborted) {
-        subTask.status = TaskStatus.pause
+        subtask.status = TaskStatus.pause
       } else {
-        subTask.status = TaskStatus.fail
+        subtask.status = TaskStatus.fail
         // message.error(e.message)
       }
     } finally {
-      delete this.taskSignal[subTask.url]
+      delete this.taskSignal[signalId]
     }
-  }
-
-  createStream(downloadUrl: string) {
-    return new Promise<Request>((resolve, reject) => {
-      const stream = http.share.stream(downloadUrl)
-      stream
-        .once('response', async (response: typeof stream.response) => {
-          // 下载环境异常会跳转到验证页面
-          if (response.headers['content-type'] === 'text/html') {
-            // 解析下载验证页面
-            const html = await streamToText(stream)
-            const ajaxData = Matcher.parseValidateAjax(html)
-            if (ajaxData) {
-              await delay(2000) // important! 模拟验证页面的延时，去掉会导致验证失败！
-              const {url} = await http
-                .share(new URL(ajaxData.url, downloadUrl), {
-                  method: ajaxData.type,
-                  headers: {referer: downloadUrl},
-                  form: ajaxData.data,
-                })
-                .json<{url: string}>()
-              resolve(this.createStream(url))
-            } else {
-              reject('下载验证页面解析出错')
-            }
-          } else {
-            resolve(stream)
-          }
-        })
-        .once('error', err => {
-          reject(err.message)
-        })
-    })
-  }
-
-  private async initTask(task: DownloadTask) {
-    if (task.tasks?.length) return
-    const {name, type, list} = await lsShare(task)
-    if (!list?.length) return
-
-    task.urlType = type
-    if (!task.name) {
-      task.name = task.urlType === URLType.file && isSpecificFile(name) ? restoreFileName(name) : name
-    }
-    if (task.merge === undefined && task.urlType === URLType.folder && isFile(task.name)) {
-      task.merge = true
-    }
-
-    const dir = path.join(task.dir, task.name) + '.downloading'
-    task.tasks = list.map(value => {
-      const name = !task.merge && isSpecificFile(value.name) ? restoreFileName(value.name) : value.name
-
-      return {
-        url: value.url,
-        pwd: value.pwd,
-        dir,
-        name: name,
-        size: sizeToByte(value.size),
-        resolve: 0,
-        status: TaskStatus.ready,
-      }
-    })
   }
 
   startAll() {
@@ -374,39 +242,40 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
   }
 
   // 下载前检查：1.是否在下载列表；2.文件是否存在
-  private async pushAndCheckList(task: DownloadTask) {
-    if (this.list.find(value => value.url === task.url)) {
-      message.info(`"${task.name ?? task.url}"已存在下载列表！`)
-      throw new Error(`"${task.name ?? task.url}"已存在下载列表！`)
-    }
-
-    if (task.name) {
-      // todo: 下载时也要检查文件是否存在
-      const name = restoreFileName(path.join(task.dir, task.name))
-      if (fs.existsSync(name)) {
-        const result = confirm(`"${task.name}"已存在，是否删除并重新下载？`)
-        if (!result) {
-          throw new Error('取消重新下载')
-        }
-
-        await fs.remove(name)
-      }
-    }
-    this.list.push(task)
-  }
+  // private async pushAndCheckList(task: DownloadTask) {
+  //   if (this.list.find(value => value.url === task.url)) {
+  //     message.info(`"${task.name ?? task.url}"已存在下载列表！`)
+  //     throw new Error(`"${task.name ?? task.url}"已存在下载列表！`)
+  //   }
+  //
+  //   if (task.name) {
+  //     // todo: 下载时也要检查文件是否存在
+  //     const name = restoreFileName(path.join(task.dir, task.name))
+  //     if (fs.existsSync(name)) {
+  //       const result = confirm(`"${task.name}"已存在，是否删除并重新下载？`)
+  //       if (!result) {
+  //         throw new Error('取消重新下载')
+  //       }
+  //
+  //       await fs.remove(name)
+  //     }
+  //   }
+  //   this.list.push(task)
+  // }
 
   /**
    * ### 批量添加任务
    * - 返回添加成功的数量
    * - 询问下载地址
    */
-  async addTasks(options: AddTask[]) {
+  async addTasks(tasks: DownloadTask[]) {
     const dir = await getDownloadDir()
     let successTimes = 0
-    for (const option of options) {
-      await this.addTask({dir, ...option})
+    for (const option of tasks) {
+      option.dir = dir
+      await this.addTask(option)
         .then(() => ++successTimes)
-        .catch(reason => console.log(`addTasks`, reason))
+        .catch(reason => console.log(`download addTasks error`, reason))
     }
     return successTimes
   }
@@ -416,15 +285,17 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
    * - 先不解析，开始下载时再解析
    * - 不询问下载地址
    */
-  async addTask(options: AddTask) {
+  async addTask(tasks: DownloadTask) {
+    await tasks.beforeAddTask()
+    this.list.push(tasks)
     // name 加后缀最长 104
-    const task = new DownloadTask()
-    task.name = isSpecificFile(options.name) ? restoreFileName(options.name) : options.name
-    task.url = options.url
-    task.pwd = options.pwd
-    task.merge = options.merge
-    task.dir = options.dir ?? config.downloadDir
-
-    await this.pushAndCheckList(task)
+    // const task = new DownloadTask()
+    // task.name = isSpecificFile(tasks.name) ? restoreFileName(tasks.name) : tasks.name
+    // task.url = tasks.url
+    // task.pwd = tasks.pwd
+    // task.merge = tasks.merge
+    // task.dir = tasks.dir ?? config.downloadDir
+    //
+    // await this.pushAndCheckList(task)
   }
 }

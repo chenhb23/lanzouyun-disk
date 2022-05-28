@@ -3,13 +3,13 @@ import {MyScrollView} from '../component/ScrollView'
 import {MyHeader} from '../component/Header'
 import {MyIcon} from '../component/Icon'
 import {byteToSize} from '../../common/util'
-import {UploadTask} from '../store/Upload'
 import {upload} from '../store'
 import {Observer, observer} from 'mobx-react'
 import {TaskStatus, TaskStatusName} from '../store/AbstractTask'
 import path from 'path'
 import {Button, Modal, Space, Table} from 'antd'
 import {SpeedProgress} from '../component/SpeedProgress'
+import {UploadTask} from '../store/task/UploadTask'
 
 const Upload = observer(() => {
   const showSubTask = (task: UploadTask) => {
@@ -72,7 +72,7 @@ const Upload = observer(() => {
             title: '大小',
             width: 150,
             render: (_, item) => (
-              <Observer>{() => <span>{`${byteToSize(item.resolve)} / ${byteToSize(item.file.size)}`}</span>}</Observer>
+              <Observer>{() => <span>{`${byteToSize(item.resolve)} / ${byteToSize(item.size)}`}</span>}</Observer>
             ),
           },
           {
@@ -80,7 +80,7 @@ const Upload = observer(() => {
             width: 200,
             render: (_, item) => (
               <Observer>
-                {() => <SpeedProgress resolve={item.resolve} status={item.status} total={item.file.size} />}
+                {() => <SpeedProgress resolve={item.resolve} status={item.status} total={item.size} />}
               </Observer>
             ),
           },

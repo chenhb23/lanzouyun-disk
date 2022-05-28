@@ -1,6 +1,6 @@
 import {createSpecificIndexName, getSuffix, sizeToByte} from './util'
 
-import type {UploadFile} from '../renderer/store/Upload'
+import type {UploadFile} from '../renderer/store/task/UploadTask'
 
 // interface SplitData {
 //   path: string
