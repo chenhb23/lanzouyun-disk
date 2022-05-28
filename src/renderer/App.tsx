@@ -37,11 +37,7 @@ import {
 import {Layout, Menu, Tabs} from 'antd'
 import Sync from './page/Sync'
 import {sync} from './store/Sync'
-
-function taskLength<T>(tasks: T[]) {
-  const len = tasks?.length
-  return len ? `（${len}）` : ''
-}
+import {taskLength} from './utils/task'
 
 const recycleUrl = new URL(project.page.recycle, project.lanzouUrl).toString()
 
@@ -116,7 +112,7 @@ const App = observer(() => {
                     {key: '9', label: `同步任务 ${taskLength(sync.list)}`, icon: <CloudSyncOutlined />},
                     {key: '2', label: `正在上传 ${taskLength(upload.list)}`, icon: <CloudUploadOutlined />},
                     {key: '3', label: `正在下载 ${taskLength(download.list)}`, icon: <CloudDownloadOutlined />},
-                    {key: '4', label: `已完成 ${taskLength(download.finishList)}`, icon: <CheckCircleOutlined />},
+                    {key: '4', label: `已完成`, icon: <CheckCircleOutlined />},
                   ],
                 },
                 {

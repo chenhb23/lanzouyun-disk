@@ -13,6 +13,7 @@ import {message} from 'antd'
 import {config} from './Config'
 import {getDownloadDir} from '../page/Setting'
 import {DownloadSubTask, DownloadTask} from './task/DownloadTask'
+import {finish} from './Finish'
 
 // 分享链接的下载全部没有 name
 // type AddTask = {
@@ -41,7 +42,6 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
   handler: ReturnType<typeof autorun>
   taskSignal: {[taskUrl: string]: AbortController} = {}
   @persist('list') list: DownloadTask[] = []
-  @persist('list') finishList: DownloadTask[] = []
 
   get queue() {
     return this.getList(item => item.status === TaskStatus.pending).length
@@ -51,7 +51,6 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
     super()
     makeObservable(this, {
       list: observable,
-      finishList: observable,
     })
 
     process.nextTick(this.init)
@@ -64,7 +63,7 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
       // await info.finishTask()
       // await this.onTaskFinish(info)
       this.remove(info.url)
-      this.finishList.push(info)
+      finish.downloadList.push(info)
     })
     this.on('finish-task', async (task, subTask) => {
       if (task.tasks.every(item => item.status === TaskStatus.finish)) {
@@ -152,10 +151,6 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
     // this.list = []
   }
 
-  removeAllFinish() {
-    this.finishList = []
-  }
-
   /**
    *
    * 如果要从 reset 暂停恢复到下载状态，传 true
@@ -196,7 +191,6 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
       await fs.ensureDir(subtask.dir)
 
       const headers = stream.response.headers
-      console.log('response headers', headers)
       if (headers['content-disposition']) {
         // 将精确的 content-length 覆盖原 subTask 的 size
         subtask.size = Number(headers['content-length'])

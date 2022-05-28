@@ -8,6 +8,8 @@ import store from '../../common/store'
 import electronApi from '../electronApi'
 import {UploadTask} from './task/UploadTask'
 import {DownloadTask} from './task/DownloadTask'
+import {finish} from './Finish'
+import {SyncTask} from './task/SyncTask'
 
 configure({
   enforceActions: 'never',
@@ -37,10 +39,6 @@ hydrate('download', download, (window as any).__STATE__?.download).then(value =>
     const task = makePause(item)
     return new DownloadTask(task)
   })
-  value.finishList = value.finishList.map(item => {
-    const task = makePause(item)
-    return new DownloadTask(task)
-  })
 })
 hydrate('upload', upload, (window as any).__STATE__?.upload).then(value => {
   value.list = value.list.map(item => {
@@ -61,4 +59,10 @@ hydrate('config', config, (window as any).__STATE__?.config).then(async value =>
   } else if (value.themeSource !== theme.themeSource) {
     await electronApi.setTheme(value.themeSource)
   }
+})
+
+hydrate('finish', finish).then(value => {
+  value.downloadList = value.downloadList.map(item => new DownloadTask(item))
+  value.uploadList = value.uploadList.map(item => new UploadTask(item))
+  value.syncList = value.syncList.map(item => new SyncTask(item))
 })

@@ -18,6 +18,7 @@ const electronApi: ElectronApi = {
   async logout() {
     localStorage.removeItem('upload')
     localStorage.removeItem('download')
+    localStorage.removeItem('finish')
     // 页面卸载后自动销毁 got 实例，上传/下载任务自动停止
     ipcRenderer.send(IpcEvent.logout)
   },

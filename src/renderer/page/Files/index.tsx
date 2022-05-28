@@ -640,8 +640,6 @@ export default function Files() {
                   : new DownloadTask({url: data.url, pwd: data.pwd, dir}),
             })
           )
-          console.log('任务已添加')
-
           setSyncVisible(false)
         }}
       />

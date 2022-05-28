@@ -48,18 +48,10 @@ function createStream(link: string) {
     const stream = share.stream(link, {timeout: {connect: 5000}})
     stream.once('response', (response: typeof stream.response) => {
       const headers = response.headers
-      console.log('headers', headers)
       // if (headers['content-type'] === 'application/octet-stream') {
       if (headers['content-type'] !== 'text/html') {
         resolve(stream)
-        // const disposition = headers['content-disposition']
-        // resolve({
-        //   lastModified: headers['last-modified'],
-        //   size: +headers['content-length'],
-        //   filename: disposition ? disposition.match(/filename=(.*)/)?.[1]?.trim() : link.split('/').pop(),
-        // })
       } else {
-        console.log('response', response)
         reject('文件不是 application/octet-stream 类型')
       }
     })

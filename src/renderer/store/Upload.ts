@@ -16,6 +16,7 @@ import {calculate} from './Calculate'
 import {pipeline} from 'stream/promises'
 import {UploadFile, UploadSubtask, UploadTask} from './task/UploadTask'
 import {UploadLinkTask} from './task/UploadLinkTask'
+import {finish} from './Finish'
 
 export interface Upload {
   on(event: 'finish', listener: (info: UploadTask) => void): this
@@ -65,6 +66,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
     this.startQueue()
     this.on('finish', info => {
       this.remove(info.file.path)
+      finish.uploadList.push(info)
     })
     this.on('finish-task', async task => {
       // delete this.taskSignal[path.resolve(info.file.path, task.name)]

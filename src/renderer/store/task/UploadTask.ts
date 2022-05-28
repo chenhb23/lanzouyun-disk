@@ -42,7 +42,7 @@ export class UploadTask implements BaseTask {
   file: UploadFile // = null
   tasks: UploadSubtask[] = []
 
-  constructor(props: Partial<UploadTask> = {}) {
+  constructor({file, ...props}: Partial<UploadTask> = {}) {
     // makeAutoObservable(this)
     makeObservable(this, {
       folderId: observable,
@@ -50,6 +50,10 @@ export class UploadTask implements BaseTask {
       tasks: observable,
     })
     Object.assign(this, props)
+    // 不能直接保存 file 对象
+    if (file) {
+      this.file = {size: file.size, name: file.name, type: file.type, path: file.path, lastModified: file.lastModified}
+    }
   }
 
   // 使用 file.size 代替

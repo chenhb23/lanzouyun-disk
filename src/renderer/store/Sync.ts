@@ -7,6 +7,7 @@ import {download, upload} from './index'
 import {UploadLinkTask} from './task/UploadLinkTask'
 import {SyncTask} from './task/SyncTask'
 import electronApi from '../electronApi'
+import {finish} from './Finish'
 
 export class Sync extends EventEmitter implements Task<SyncTask> {
   // todo: 持久化
@@ -51,12 +52,11 @@ export class Sync extends EventEmitter implements Task<SyncTask> {
     upload.on('finish', async info => {
       const task = this.list.find(value => value.upload.file.path === info.file.path)
       if (task) {
-        // todo: 移到 finish 中去
         this.list = this.list.filter(value => value.uid !== task.uid)
+        finish.syncList.push(task)
         if (task.trashOnFinish) {
           await electronApi.trashItem(path.join(task.download.dir, task.download.name))
         }
-        console.log('完成同步任务')
       }
     })
   }
