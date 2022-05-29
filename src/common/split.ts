@@ -100,13 +100,22 @@ export interface SplitTaskFile {
   endByte?: number
 }
 
+export interface SplitTaskOptions {
+  file: UploadFile
+  splitSize: string
+  filename?: string
+  suffix?: string
+}
+
 /**
  * 返回文件分割信息（不进行文件分割）
  */
-export function splitTask(file: UploadFile, splitSize: string): SplitTaskResult {
-  const fSize = file.size
-  const splitByte = sizeToByte(splitSize)
+export function splitTask(options: SplitTaskOptions): SplitTaskResult {
+  const fSize = options.file.size
+  const splitByte = sizeToByte(options.splitSize)
 
+  const file = options.file
+  const filename = options.filename || file.name
   const info: SplitTaskResult = {file, splitFiles: []}
 
   if (fSize <= splitByte) {
@@ -114,14 +123,14 @@ export function splitTask(file: UploadFile, splitSize: string): SplitTaskResult 
       {
         sourceFile: file,
         size: file.size,
-        name: file.name,
+        name: filename,
       },
     ]
   } else {
     const count = Math.ceil(fSize / splitByte)
-    const suffix = getSuffix()
+    const suffix = options.suffix || getSuffix()
     info.splitFiles = Array.from({length: count}).map((_, i) => {
-      const indexName = createSpecificIndexName(file.name, suffix, i + 1, count)
+      const indexName = createSpecificIndexName(filename, suffix, i + 1, count)
       const startByte = splitByte * i
       const endByte = Math.min(fSize, splitByte * (i + 1) - 1)
       return {

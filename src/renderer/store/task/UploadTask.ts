@@ -130,7 +130,7 @@ export class UploadTask implements BaseTask {
       if (!subFolderId) {
         subFolderId = await mkdir({parentId: folderId, name: file.name})
       }
-      const result = splitTask(file, config.splitSize)
+      const result = splitTask({file, splitSize: config.splitSize})
       this.tasks.push(
         ...result.splitFiles.map(value => ({
           name: value.name,

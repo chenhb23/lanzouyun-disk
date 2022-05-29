@@ -120,7 +120,7 @@ const App = observer(() => {
                   label: '实用工具',
                   children: [
                     {key: '5', label: '解析 URL', icon: <LinkOutlined />},
-                    {key: '6', label: '文件分割', icon: <ScissorOutlined />},
+                    {key: '6', label: '文件分割 / 合并', icon: <ScissorOutlined />},
                   ],
                 },
                 {type: 'divider', style: {margin: '12px 0'}},

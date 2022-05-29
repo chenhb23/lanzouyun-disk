@@ -1,5 +1,5 @@
 import config, {supportList} from '../project.config'
-import {Request} from 'got'
+import type {Request} from 'got'
 
 export const delay = (ms = 1000) => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -48,7 +48,11 @@ export function byteToSize(byte: number, step = 1024) {
 function getRandomItem(list: string[]) {
   return list[Math.round(Math.random() * (list.length - 1))]
 }
-// 前面不带 .
+
+/**
+ * 前面不带 .
+ * 例如: xxx.yyy
+ */
 export function getSuffix() {
   return `${getRandomItem(config.safeSuffixList)}.${getRandomItem(config.safeSuffixList)}`
 }
@@ -77,13 +81,15 @@ export function isSpecificFile(name: string) {
     return !/\d$/.test(name)
   }
 
-  if (supportList.some(value => name.endsWith(`.${value}`))) {
+  // v2: .原后缀.后缀.后缀
+  const ext = supportList.find(value => name.endsWith(`.${value}`))
+  if (ext) {
     name = name.replace(/\.\w+?$/, '')
-    const ends = supportList.find(value => name.endsWith(value))
+    const ends = supportList.find(value => name.endsWith(`.${value}`))
     if (ends) {
-      name = name.replace(new RegExp(`${ends}$`), '')
-      // todo: 判断是否还有后缀
-      return !/\d$/.test(name)
+      name = name.replace(/\.\w+?$/, '')
+      if (/\.\d+$/.test(name)) return false
+      return /\.\w+$/.test(name)
     }
   }
   return false
@@ -106,9 +112,11 @@ export function restoreFileName(name: string) {
  * suffix 无需带 .
  */
 export function createSpecificIndexName(fileName: string, suffix: string, index: number, total: number) {
-  const sign = suffix.split('.').pop()?.[0]
+  // const sign = suffix.split('.').pop()?.[0]
+  // const padLength = `${total}`.length
+  // return `${fileName}.${sign}${`${index}`.padStart(padLength, '0')}${suffix}`
   const padLength = `${total}`.length
-  return `${fileName}.${sign}${`${index}`.padStart(padLength, '0')}${suffix}`
+  return `${fileName}.${`${index}`.padStart(padLength, '0')}.${suffix}`
 }
 
 export function createSpecificName(fileName: string) {
@@ -145,6 +153,30 @@ export async function asyncMap<T, R>(
       Array.from({length: nextThread}).map((_, index) => asyncCallback(array[i + index], i + index))
     )
     data.push(...values)
+  }
+  return data
+}
+
+/**
+ * 数组 filter 的异步版本
+ */
+export async function asyncFilter<T>(
+  array: T[],
+  asyncCallback: (value: T, index: number) => Promise<boolean>,
+  options = {} as {thread: number}
+): Promise<T[]> {
+  const thread = options.thread || 1
+  const data = []
+  for (let i = 0; i < array.length; i += thread) {
+    const nextThread = i + (thread - 1) < array.length ? thread : array.length - i
+    const values = await Promise.all(
+      Array.from({length: nextThread}).map((_, index) => asyncCallback(array[i + index], i + index))
+    )
+    for (let j = 0; j < values.length; j++) {
+      if (values[j]) {
+        data.push(array[i + j])
+      }
+    }
   }
   return data
 }
