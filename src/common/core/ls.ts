@@ -1,4 +1,5 @@
 import cheerio from 'cheerio'
+import type {Cheerio} from 'cheerio'
 import {byteToSize, delay, sizeToByte} from '../util'
 import {Matcher} from './matcher'
 import * as http from '../http'
@@ -138,18 +139,26 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
   const title = $('title').text()
   if (isFile) {
     const name = title.replace(' - 蓝奏云', '') // '(文件名) - 蓝奏云',
+    const size = $('meta[name=description]').attr('content').split('|')[0].replace('文件大小：', '')
+
     let time = html.match(/上传时间：<\/span>(.*?)<br>/)?.[1]
     if (!time) {
+      // https://xiaodao.lanzoui.com/iejwp06dnwyj
+      let fileInfos: Cheerio<any> = null
+      if ((fileInfos = $('.n_file_info > .n_file_infos')) && fileInfos.length > 1) {
+        time = fileInfos.first().text()
+      }
+    }
+    if (!time) {
       // https://dkbd.lanzoui.com/dkbdv7
-      const memberFile = $('.filename img')
-      if (memberFile.length) {
-        time = new URL(memberFile.attr('src')).pathname
+      const src = $('.filename img').attr('src')
+      if (src) {
+        time = new URL(src).pathname
           .split('/')
           .filter(value => /^\d+$/.test(value))
           .join('-')
       }
     }
-    const size = $('meta[name=description]').attr('content').split('|')[0].replace('文件大小：', '')
     return {name, size, type: URLType.file, list: [{url, name, size, time}]}
   } else if (isPwdFile) {
     const ajaxData = Matcher.parsePwdAjax(html, pwd)

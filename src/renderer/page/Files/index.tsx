@@ -13,6 +13,7 @@ import {download, upload} from '../../store'
 import {fileDetail, folderDetail, share} from '../../../common/core/detail'
 import {editFile, editFileInfo, editFolder, setAccess} from '../../../common/core/edit'
 import {countTree, mv} from '../../../common/core/mv'
+import debounce from 'lodash.debounce'
 
 import './Files.css'
 
@@ -114,7 +115,8 @@ export default function Files() {
   }, [listFile])
 
   useEffect(() => {
-    const refresh = () => listFile(currentFolder.folderid)
+    // 防抖，防止并发查询时，目录刷新不正确
+    const refresh = debounce(() => listFile(currentFolder.folderid), 500)
     upload.on('finish', refresh)
     return () => {
       upload.removeListener('finish', refresh)
