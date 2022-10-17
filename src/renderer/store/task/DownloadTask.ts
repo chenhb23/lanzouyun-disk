@@ -100,7 +100,10 @@ export class DownloadTask implements BaseTask {
 
     this.urlType = type
     if (!this.name) {
-      this.name = this.urlType === URLType.file && isSpecificFile(name) ? restoreFileName(name) : name
+      this.name = name
+    }
+    if (this.urlType === URLType.file && isSpecificFile(name)) {
+      this.name = restoreFileName(this.name)
     }
     if (this.merge === undefined && this.urlType === URLType.folder && isFile(this.name)) {
       this.merge = true
@@ -108,6 +111,7 @@ export class DownloadTask implements BaseTask {
 
     const dir = path.join(this.dir, this.name) + '.downloading'
     this.tasks = list.map(value => {
+      // 多选下载，也需要还原列表文件的名称
       const name = !this.merge && isSpecificFile(value.name) ? restoreFileName(value.name) : value.name
 
       return {
