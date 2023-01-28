@@ -29,6 +29,11 @@ export class Config {
   @persist uploadWarningSize = 7 // 单位 G
   @persist uploadWarningEnabled = true
 
+  @persist('object') more = {
+    url: '',
+    data: {vei: ''},
+  }
+
   constructor() {
     makeAutoObservable(this)
   }

@@ -1,5 +1,6 @@
 import * as http from '../http'
 import cheerio from 'cheerio'
+import {Matcher} from './matcher'
 
 enum PROFILE_EL {
   个性域名 = '个性域名', // domain
@@ -10,27 +11,41 @@ enum PROFILE_EL {
 }
 
 export async function profile() {
-  const html = await http.request.get('mydisk.php?item=profile&action=mypower').text()
-  const $ = cheerio.load(html)
-  return $('.mf')
+  const [main, my] = await Promise.all([
+    http.request.get('mydisk.php').text(),
+    http.request.get('mydisk.php?item=profile&action=mypower').text(),
+  ])
+
+  const $main = cheerio.load(main)
+  const $my = cheerio.load(my)
+  const profiles = $my('.mf')
     .filter((index, value) => {
-      return Object.values(PROFILE_EL).some(name => $('.mf1', value).text()?.includes(name))
+      return Object.values(PROFILE_EL).some(name => $my('.mf1', value).text()?.includes(name))
     })
     .toArray()
     .reduce((prev, el) => {
-      const label = $('.mf1', el).text().trim().replace(/:$/, '')
+      const label = $my('.mf1', el).text().trim().replace(/:$/, '')
       switch (label) {
         case PROFILE_EL.个性域名:
-          return {...prev, domain: $('#domaindiynow', el).text()}
+          return {...prev, domain: $my('#domaindiynow', el).text()}
         case PROFILE_EL.最近登录时间:
-          return {...prev, lastLogin: $('.mf2', el).text()}
+          return {...prev, lastLogin: $my('.mf2', el).text()}
         case PROFILE_EL.允许上传类型:
-          return {...prev, supportList: $('.mf2', el).html().split('<br>').join(',').split(',')}
+          return {...prev, supportList: $my('.mf2', el).html().split('<br>').join(',').split(',')}
         case PROFILE_EL.单个文件大小:
-          return {...prev, maxSize: $('font', el).text().trim()}
+          return {...prev, maxSize: $my('font', el).text().trim()}
         case PROFILE_EL.安全验证:
-          return {...prev, verification: $('#phone_id', el).text().trim()}
+          return {...prev, verification: $my('#phone_id', el).text().trim()}
       }
       return prev
     }, {})
+
+  const iframe = $main('iframe').attr('src')
+  const mainPage = await http.request.get(iframe).text()
+  const ajaxData = Matcher.parseFileMoreAjax(mainPage)
+
+  return {
+    ...profiles,
+    more: ajaxData,
+  }
 }

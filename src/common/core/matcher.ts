@@ -42,6 +42,11 @@ export class Matcher {
 
   /**
    * script -> ajaxData
+   * getVariable:
+   *  拼凑变量值，防止报错；如：_ => `var pgs = 1;`
+   *  或者使用正则匹配
+   * getData:
+   *  获取 ajax 的 data 参数
    */
   static parseAjaxData(
     html: ParseInput,
@@ -120,6 +125,17 @@ export class Matcher {
       $,
       _ => `var ${elKey} = ${elValue};`,
       script => script.match(/\$\.ajax\(({[\s\S]+})\);/)?.[1]
+    )
+  }
+
+  /**
+   * 获取请求文件列表的参数
+   */
+  static parseFileMoreAjax(html: string) {
+    return this.parseAjaxData(
+      html,
+      _ => `var pgs = 1; var folder_id = '';`,
+      script => script.replace(/\$\.each\([\s\S]+?}\);/g, '').match(/\$\.ajax\(({[\s\S]+?})\);/)?.[1]
     )
   }
 }

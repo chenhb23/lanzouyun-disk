@@ -18,6 +18,11 @@ const base = got.extend({
     'user-agent': store.get('userAgent'),
   },
   hooks: {
+    // beforeRequest: [
+    //   options => {
+    //     console.log(options.url.toString(), options)
+    //   },
+    // ],
     afterResponse: [
       async response => {
         // 返回值状态判断。 蓝奏云返回类型: text/json，github 返回类型: application/json

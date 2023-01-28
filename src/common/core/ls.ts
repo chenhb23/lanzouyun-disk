@@ -3,6 +3,7 @@ import type {Cheerio} from 'cheerio'
 import {byteToSize, delay, sizeToByte} from '../util'
 import {Matcher} from './matcher'
 import * as http from '../http'
+import {config} from '../../renderer/store/Config'
 
 export enum URLType {
   file = 'file', // https://wws.lanzous.com/ivvHsi3qyef
@@ -74,7 +75,9 @@ export async function lsFile(folder_id: FolderId) {
   const fileList: Task5Res['text'] = []
   do {
     const {text} = await http.request
-      .post('doupload.php', {form: {task: 5, folder_id, pg: pg++} as Task5})
+      .post(config.more.url?.replace(/^\//, ''), {
+        form: {task: 5, folder_id, pg: pg++, vei: config.more.data?.vei} as Task5,
+      })
       .json<Task5Res>()
     // todo: 蓝奏分页数量：api：18，分享页：50
     next = Array.isArray(text) && text.length >= 18

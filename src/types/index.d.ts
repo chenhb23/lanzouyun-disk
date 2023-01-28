@@ -100,6 +100,7 @@ interface Task5 {
   task: 5 // 列举目录下的文件
   folder_id: FolderId
   pg: number
+  vei: string
 }
 
 interface Task5Res {
