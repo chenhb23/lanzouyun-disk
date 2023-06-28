@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useMemo, useState} from 'react'
 import path from 'path'
 import {MyScrollView} from '../component/ScrollView'
 import {MyHeader} from '../component/Header'
@@ -7,13 +7,14 @@ import {MyBar} from '../component/Bar'
 import {MyIcon} from '../component/Icon'
 import {useLoading} from '../hook/useLoading'
 import {download} from '../store'
-import {delay, isFile, parseShare} from '../../common/util'
+import {isFile} from '../../common/util'
 import {Button, Checkbox, Col, Input, message, Row, Table} from 'antd'
-import {getDownloadDir} from './Setting'
 import {DownloadTask} from '../store/task/DownloadTask'
 
 export default function Parse() {
-  const [shareFiles, setShareFiles] = useState({} as LsShareObject)
+  const [shareFiles, setShareFiles] = useState<LsShareObject[]>([])
+  const total = useMemo(() => shareFiles.reduce((prev, value) => prev + value.list.length, 0), [shareFiles])
+  const list = useMemo(() => shareFiles.map(value => value.list).flat(), [shareFiles])
 
   const [merge, setMerge] = useState(false)
 
@@ -31,9 +32,20 @@ export default function Parse() {
 
   const parse = async () => {
     try {
-      const value = await listener(lsShare(urlForm), 'lsShare')
+      const rows = parseForm(urlForm)
+      if (!rows.length) return
+
+      // const value = await listener(lsShare(urlForm), 'lsShare')
+      const value = await listener(Promise.all(rows.map(row => lsShare(row))), 'lsShare')
       setShareFiles(value)
-      setMerge(URLType.folder === value.type && isFile(value.name))
+      if (value.length === 1) {
+        const item = value[0]
+
+        setMerge(URLType.folder === item.type && isFile(item.name))
+      } else {
+        setMerge(false)
+      }
+
       setSelectedRows(prev => (prev.length ? [] : prev))
     } catch (e: any) {
       message.error(e.message)
@@ -45,20 +57,15 @@ export default function Parse() {
       HeaderComponent={
         <>
           <MyHeader>
-            <Row gutter={8} align={'middle'} wrap={false} style={{width: '100%'}}>
+            <Row gutter={8} wrap={false} style={{width: '100%'}}>
               <Col flex={1}>
-                <Input
+                <Input.TextArea
+                  // rows={1}
+                  autoSize={{minRows: 1, maxRows: 6}}
                   allowClear
                   value={urlForm.url}
-                  onPaste={async event => {
-                    const parsed = parseShare(event.clipboardData.getData('text/plain'))
-                    if (parsed) {
-                      await delay(16)
-                      setUrlForm(prevState => ({...prevState, url: parsed.url, pwd: parsed.pwd}))
-                    }
-                  }}
                   onPressEnter={parse}
-                  placeholder='* https://...  回车键解析'
+                  placeholder='* https://...  可同时解析多行'
                   onChange={event => setUrlForm(prevState => ({...prevState, url: event.target.value}))}
                 />
               </Col>
@@ -93,12 +100,6 @@ export default function Parse() {
                     onClick={async () => {
                       await listener(
                         download.addTasks(
-                          // selectedRows.map(row => ({
-                          //   name: row.name,
-                          //   url: row.url,
-                          //   pwd: row.pwd,
-                          //   merge: false,
-                          // }))
                           selectedRows.map(
                             row =>
                               new DownloadTask({
@@ -119,24 +120,21 @@ export default function Parse() {
                   </Button>
                 ) : (
                   <Button
-                    disabled={!shareFiles.list?.length}
+                    disabled={!total}
                     loading={loading['addShareTask']}
                     onClick={async () => {
                       await listener(
-                        download.addTasks([
-                          // {
-                          //   name: shareFiles.name,
-                          //   url: urlForm.url,
-                          //   pwd: urlForm.pwd,
-                          //   merge: merge,
-                          // },
-                          new DownloadTask({
-                            name: shareFiles.name,
-                            url: urlForm.url,
-                            pwd: urlForm.pwd,
-                            merge: merge,
-                          }),
-                        ]),
+                        download.addTasks(
+                          list.map(
+                            row =>
+                              new DownloadTask({
+                                name: row.name,
+                                url: row.url,
+                                pwd: row.pwd,
+                                merge: merge,
+                              })
+                          )
+                        ),
                         'addShareTask'
                       )
                       message.success('下载任务添加成功')
@@ -149,7 +147,7 @@ export default function Parse() {
             </Row>
           </MyHeader>
           <MyBar>
-            <span>{shareFiles.name ? `${shareFiles.name}（${shareFiles.size}）` : '文件列表'}</span>
+            <span>{shareFiles.length === 1 ? `${shareFiles[0].name}（${shareFiles[0].size}）` : '文件列表'}</span>
             <Checkbox
               disabled={!!selectedRows.length}
               checked={merge}
@@ -164,9 +162,10 @@ export default function Parse() {
       <Table
         pagination={false}
         size={'small'}
-        rowKey={'url'}
+        // rowKey={'url'}
+        rowKey={record => record.url}
         sticky
-        dataSource={shareFiles.list}
+        dataSource={list}
         onRow={record => ({
           onClick: () => {
             setSelectedRows(prev =>
@@ -228,4 +227,27 @@ export default function Parse() {
       />
     </MyScrollView>
   )
+}
+
+function parseRow(url: string) {
+  const items = url
+    .split(' ')
+    .map(value => value.trim())
+    .filter(Boolean)
+  if (!items.length) return null
+
+  return {
+    url: items.find(item => /^https?:\/\//.test(item)),
+    pwd: items.find(item => /^密码[:：]/.test(item))?.replace(/^密码[:：]/, ''),
+  }
+}
+
+// 解析 form 表单，url 支持输入多行
+function parseForm(form: {url: string; pwd: string}) {
+  const rows = form.url.split('\n').filter(Boolean).map(parseRow)
+  if (!rows.length) return
+  if (rows.length === 1 && !rows[0].pwd && form.pwd) {
+    rows[0].pwd = form.pwd
+  }
+  return rows
 }
