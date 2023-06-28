@@ -152,7 +152,7 @@ export class UploadTask implements BaseTask {
     const encoder = new FormDataEncoder(form)
     return {
       from: Readable.from(encoder),
-      to: http.request.stream.post('fileup.php', {headers: encoder.headers}),
+      to: http.request.stream.post('html5up.php', {headers: encoder.headers}),
     }
   }
 
@@ -171,6 +171,7 @@ function createUploadForm(subTask: UploadSubtask, taskIndex: number) {
     : fs.createReadStream(sourceFile.path)
 
   form.append('task', 1)
+  form.append('vie', 2)
   form.append('ve', 2)
   form.append('lastModifiedDate', new Date(sourceFile.lastModified))
   form.append('type', type)
