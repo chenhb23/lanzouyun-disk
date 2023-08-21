@@ -313,6 +313,7 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
       subtask.status = TaskStatus.finish
       this.emit('finish-task', task, subtask)
     } catch (e: any) {
+      console.error(e)
       if (abort.signal.aborted) {
         subtask.status = TaskStatus.pause
       } else {

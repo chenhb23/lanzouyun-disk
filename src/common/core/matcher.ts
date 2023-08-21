@@ -30,14 +30,16 @@ export class Matcher {
     const script = scripts.eq(0).html()
     if (!script) throw new Error('script 获取失败')
 
-    return prettier.format(script, {
-      plugins: [parserBabel],
-      parser: 'babel',
-      semi: true, // 加上分号
-      trailingComma: 'none', // 不加尾逗号
-      singleQuote: false, // 使用双冒号
-      printWidth: 1000, // 为了让代码尽量不换行
-    })
+    return (
+      prettier.format(script, {
+        plugins: [parserBabel],
+        parser: 'babel',
+        semi: true, // 加上分号
+        trailingComma: 'none', // 不加尾逗号
+        singleQuote: false, // 使用双冒号
+        printWidth: 1000, // 为了让代码尽量不换行
+      }) + '\n'
+    )
   }
 
   /**
@@ -57,7 +59,7 @@ export class Matcher {
 
     const variable = getVariable(script)
     const data = getData(script)
-    const body = eval(`${variable}(${data})`)
+    const body = eval(`(() => {${variable}return ${data}})()`)
 
     if (typeof body.data === 'string') {
       body.data = queryString.parse(body.data)
@@ -88,10 +90,11 @@ export class Matcher {
    * data 为 object 类型
    */
   static parseAjax(html: string) {
+    const cleanReg = /function .+?\(\) {[\s\S]+?}\n/g
     return this.parseAjaxData(
       html,
-      script => script.match(/([\s\S]+)\$\.ajax/)[1],
-      script => script.match(/\$\.ajax\(([\s\S]+)\)/)[1]
+      script => script.replace(cleanReg, '').match(/([\s\S]+)\$\.ajax/)[1],
+      script => script.replace(cleanReg, '').match(/\$\.ajax\(([\s\S]+)\)/)[1]
     )
   }
 
@@ -101,10 +104,15 @@ export class Matcher {
    * data 由 string 转为 object 类型
    */
   static parsePwdAjax(html: string, password = '') {
+    const cleanReg = /function down_p\(\) {([\s\S]+?)\n}\n/
     return this.parseAjaxData(
       html,
-      _ => `var pwd = "${password}";`,
-      script => script.match(/\$\.ajax\(({[\s\S]+?})\);/)?.[1]
+      script =>
+        script
+          .match(cleanReg)?.[1]
+          ?.replace(/var pwd.*?\n/, `var pwd = "${password}";\n`)
+          .match(/([\s\S]+)\$\.ajax/)[1],
+      script => script.match(cleanReg)?.[1]?.match(/\$\.ajax\(({[\s\S]+?})\);/)?.[1]
     )
   }
 
