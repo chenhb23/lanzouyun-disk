@@ -5,12 +5,13 @@ import {MyHeader} from '../component/Header'
 import {MyIcon} from '../component/Icon'
 import {byteToSize, parseShare} from '../../common/util'
 import {download} from '../store'
-import {TaskStatus} from '../store/AbstractTask'
+import {TaskStatus, TaskStatusName} from '../store/AbstractTask'
 import path from 'path'
 import {Button, Col, Form, Input, message, Modal, Row, Space, Table} from 'antd'
 import {MinusCircleFilled} from '@ant-design/icons'
 import {SpeedProgress} from '../component/SpeedProgress'
 import {DownloadTask} from '../store/task/DownloadTask'
+import {URLType} from '../../common/core/ls'
 
 const Download = observer(() => {
   const batchRef = useRef(null)
@@ -53,7 +54,31 @@ const Download = observer(() => {
                   const extname = path.extname(item.name).replace(/^\./, '')
                   return (
                     <>
-                      <MyIcon iconName={extname} defaultIcon={'file'} />
+                      <MyIcon
+                        iconName={extname}
+                        defaultIcon={'file'}
+                        onClick={() => {
+                          if (item.urlType !== URLType.folder) return
+                          Modal.confirm({
+                            icon: null,
+                            width: 700,
+                            title: `文件列表 (${item.tasks.length})`,
+                            maskClosable: true,
+                            content: (
+                              <div className={'max-h-96 overflow-y-auto'}>
+                                {item.tasks.map(task => {
+                                  return (
+                                    <div key={task.url} className={'mb-1'}>
+                                      {task.name} | {TaskStatusName[task.status]}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            ),
+                            cancelButtonProps: {className: 'hidden'},
+                          })
+                        }}
+                      />
                       <span title={item.dir}>{item.name}</span>
                     </>
                   )
