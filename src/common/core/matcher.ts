@@ -27,19 +27,30 @@ export class Matcher {
   static formatScript(html: ParseInput) {
     const $ = typeof html === 'string' ? cheerio.load(html) : html
     const scripts = $('html script:not([src])')
-    const script = scripts.eq(0).html()
-    if (!script) throw new Error('script 获取失败')
+    if (!scripts.length) throw new Error('script 获取失败')
 
-    return (
-      prettier.format(script, {
-        plugins: [parserBabel],
-        parser: 'babel',
-        semi: true, // 加上分号
-        trailingComma: 'none', // 不加尾逗号
-        singleQuote: false, // 使用双冒号
-        printWidth: 1000, // 为了让代码尽量不换行
-      }) + '\n'
-    )
+    return [
+      ...scripts.map((i, el) => {
+        const script = $(el).html()
+
+        try {
+          return (
+            prettier.format(script, {
+              plugins: [parserBabel],
+              parser: 'babel',
+              semi: true, // 加上分号
+              trailingComma: 'none', // 不加尾逗号
+              singleQuote: false, // 使用双冒号
+              printWidth: 1000, // 为了让代码尽量不换行
+            }) + '\n'
+          )
+        } catch (e) {
+          return ''
+        }
+      }),
+    ]
+      .filter(Boolean)
+      .join('\n')
   }
 
   /**
