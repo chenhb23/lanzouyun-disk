@@ -1,7 +1,5 @@
 import {makeAutoObservable} from 'mobx'
 import {persist} from 'mobx-persist'
-import store from '../../common/store'
-import electronApi from '../electronApi'
 
 type BaseProps<T> = Partial<Pick<T, {[P in keyof T]: T[P] extends (...args: any) => any ? never : P}[keyof T]>>
 

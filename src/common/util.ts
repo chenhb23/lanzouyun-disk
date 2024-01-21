@@ -91,6 +91,11 @@ export function restoreFileName(name: string) {
   return name
 }
 
+// 移除文件名的非法字符
+export function fixFileName(name: string) {
+  return name.replace(/[\\/:*?"<>|]/g, '_')
+}
+
 /**
  * 1.22.3.dmg.t4iso.tar
  * suffix 无需带 .

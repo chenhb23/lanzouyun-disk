@@ -36,7 +36,7 @@ const base = got.extend({
             case 9:
               message.error('登录信息失效，请重新登录')
               await delay()
-              electronApi.logout()
+              await electronApi.logout()
               return response
             default:
               throw new Error(typeof body.info === 'string' ? body.info : body.text)
@@ -50,7 +50,6 @@ const base = got.extend({
         // todo: 记录
         console.error(error)
         if (!error.options?.context?.hideMessage) {
-          // my_message.error(error.message)
           message.error(error.message)
         }
         return error

@@ -2,7 +2,15 @@ import {TaskStatus} from '../AbstractTask'
 import {lsShare, URLType} from '../../../common/core/ls'
 import {makeObservable, observable} from 'mobx'
 import {BaseTask} from './BaseTask'
-import {delay, isFile, isSpecificFile, restoreFileName, sizeToByte, streamToText} from '../../../common/util'
+import {
+  delay,
+  fixFileName,
+  isFile,
+  isSpecificFile,
+  restoreFileName,
+  sizeToByte,
+  streamToText,
+} from '../../../common/util'
 import path from 'path'
 import {fileDownUrl, pwdFileDownUrl} from '../../../common/core/download'
 import {Request} from 'got'
@@ -102,6 +110,7 @@ export class DownloadTask implements BaseTask {
     if (!this.name) {
       this.name = name
     }
+    this.name = fixFileName(this.name)
     if (this.urlType === URLType.file && isSpecificFile(name)) {
       this.name = restoreFileName(this.name)
     }

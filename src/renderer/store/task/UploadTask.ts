@@ -196,6 +196,7 @@ function createUploadForm(subTask: UploadSubtask, taskIndex: number) {
 }
 
 function beforeAddTask(file: {size: number}) {
+  if (window.skipCheck) return
   if (file.size > sizeToByte(config.maxSize)) {
     throw new Error(`文件大小(${byteToSize(file.size)}) 超出限制，最大允许上传 ${config.maxSize}`)
   }
