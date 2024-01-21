@@ -65,6 +65,9 @@ export class DownloadTask implements BaseTask {
     })
     // Object.assign(this, {uid: `${Date.now()}`}, props)
     Object.assign(this, props)
+    if (props.name) {
+      this.name = fixFileName(props.name)
+    }
   }
 
   get total() {
@@ -110,7 +113,6 @@ export class DownloadTask implements BaseTask {
     if (!this.name) {
       this.name = name
     }
-    this.name = fixFileName(this.name)
     if (this.urlType === URLType.file && isSpecificFile(name)) {
       this.name = restoreFileName(this.name)
     }

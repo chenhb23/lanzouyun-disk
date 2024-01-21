@@ -93,6 +93,7 @@ export function restoreFileName(name: string) {
 
 // 移除文件名的非法字符
 export function fixFileName(name: string) {
+  if (!name) return name
   return name.replace(/[\\/:*?"<>|]/g, '_')
 }
 
