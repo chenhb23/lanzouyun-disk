@@ -186,9 +186,9 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
     const signalId = subtask.url
 
     try {
-      const {from: stream, to} = await task.getStream(subtask)
-
       await fs.ensureDir(subtask.dir)
+
+      const {from: stream, to} = await task.getStream(subtask)
 
       const headers = stream.response.headers
       if (headers['content-disposition']) {
@@ -198,17 +198,13 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
       const onProgress = throttle((progress: Progress) => {
         subtask.resolve = progress.transferred
       }, 1000)
-
       stream.on('downloadProgress', onProgress)
 
       this.taskSignal[signalId] = abort
 
-      await pipeline(
-        // 流下载
-        stream,
-        to,
-        {signal: abort.signal}
-      )
+      // 流下载
+      await pipeline(stream, to, {signal: abort.signal})
+
       subtask.status = TaskStatus.finish
       this.emit('finish-task', task, subtask)
     } catch (e: any) {
@@ -217,7 +213,8 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
         subtask.status = TaskStatus.pause
       } else {
         subtask.status = TaskStatus.fail
-        // message.error(e.message)
+        const msg = typeof e === 'string' ? e : typeof e === 'object' && 'message' in e ? e.message : '未知错误'
+        message.error(msg)
       }
     } finally {
       delete this.taskSignal[signalId]
@@ -236,28 +233,6 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
     })
   }
 
-  // 下载前检查：1.是否在下载列表；2.文件是否存在
-  // private async pushAndCheckList(task: DownloadTask) {
-  //   if (this.list.find(value => value.url === task.url)) {
-  //     message.info(`"${task.name ?? task.url}"已存在下载列表！`)
-  //     throw new Error(`"${task.name ?? task.url}"已存在下载列表！`)
-  //   }
-  //
-  //   if (task.name) {
-  //     // todo: 下载时也要检查文件是否存在
-  //     const name = restoreFileName(path.join(task.dir, task.name))
-  //     if (fs.existsSync(name)) {
-  //       const result = confirm(`"${task.name}"已存在，是否删除并重新下载？`)
-  //       if (!result) {
-  //         throw new Error('取消重新下载')
-  //       }
-  //
-  //       await fs.remove(name)
-  //     }
-  //   }
-  //   this.list.push(task)
-  // }
-
   /**
    * ### 批量添加任务
    * - 返回添加成功的数量
@@ -265,14 +240,14 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
    */
   async addTasks(tasks: DownloadTask[]) {
     const dir = await getDownloadDir()
-    let successTimes = 0
-    for (const option of tasks) {
-      option.dir = dir
-      await this.addTask(option)
-        .then(() => ++successTimes)
-        .catch(reason => console.log(`download addTasks error`, reason))
+    let success = 0
+    for (const task of tasks) {
+      task.dir = dir
+      await this.addTask(task)
+        .then(() => ++success)
+        .catch(console.error)
     }
-    return successTimes
+    return success
   }
 
   /**
@@ -283,14 +258,5 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
   async addTask(tasks: DownloadTask) {
     await tasks.beforeAddTask()
     this.list.push(tasks)
-    // name 加后缀最长 104
-    // const task = new DownloadTask()
-    // task.name = isSpecificFile(tasks.name) ? restoreFileName(tasks.name) : tasks.name
-    // task.url = tasks.url
-    // task.pwd = tasks.pwd
-    // task.merge = tasks.merge
-    // task.dir = tasks.dir ?? config.downloadDir
-    //
-    // await this.pushAndCheckList(task)
   }
 }

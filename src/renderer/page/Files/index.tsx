@@ -149,7 +149,7 @@ export default function Files() {
         })
       }
     })
-    await download.addTasks(tasks)
+    return download.addTasks(tasks)
   }, [])
 
   // 获取分享信息并复制到粘贴板，可选是否包含文件名
@@ -249,9 +249,11 @@ export default function Files() {
                     type={'primary'}
                     loading={loading['multiDownload']}
                     onClick={async () => {
-                      await listener(downloadFile(selectedRows), 'multiDownload')
-                      message.success('已经添加到下载列表！')
-                      setSelectedRows([])
+                      const count = await listener(downloadFile(selectedRows), 'multiDownload')
+                      if (count) {
+                        message.success('已经添加到下载列表！')
+                        setSelectedRows([])
+                      }
                     }}
                   >
                     下载 ({selectedRows.length})
@@ -389,7 +391,6 @@ export default function Files() {
                     <div className='handle' onClick={event => event.stopPropagation()}>
                       <Button
                         title={'编辑'}
-                        size={'small'}
                         icon={<MyIcon iconName={'edit'} />}
                         type={'text'}
                         onClick={async () => {
@@ -406,7 +407,6 @@ export default function Files() {
                       />
                       <Button
                         title={'分享'}
-                        size={'small'}
                         icon={<MyIcon iconName={'share'} />}
                         type={'text'}
                         loading={loading['fileShare']}
@@ -423,13 +423,12 @@ export default function Files() {
                       />
                       <Button
                         title={'下载'}
-                        size={'small'}
                         icon={<MyIcon iconName={'download'} />}
                         type={'text'}
                         loading={loading['download']}
                         onClick={async () => {
-                          await listener(downloadFile([item]), 'download')
-                          message.success('已经添加到下载列表！')
+                          const count = await listener(downloadFile([item]), 'download')
+                          count && message.success('已经添加到下载列表！')
                         }}
                       />
                       <Popconfirm
@@ -440,7 +439,6 @@ export default function Files() {
                       >
                         <Button
                           title={'删除'}
-                          size={'small'}
                           icon={<MyIcon iconName={'delete'} />}
                           type={'text'}
                           loading={loading['rmFile']}

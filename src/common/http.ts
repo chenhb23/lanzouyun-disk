@@ -69,7 +69,7 @@ const base = got.extend({
         //     // maxFreeSockets: 256,
         //     // scheduling: 'lifo',
         //     rejectUnauthorized: false,
-        //     proxy: 'http://127.0.0.1:9091',
+        //     proxy: 'http://127.0.0.1:8888',
         //   }),
         // },
       }
@@ -83,4 +83,5 @@ export const request = got.extend(base, {
 
 export const share = got.extend(base, {
   cookieJar: shareCookieJar,
+  ignoreInvalidCookies: true,
 })

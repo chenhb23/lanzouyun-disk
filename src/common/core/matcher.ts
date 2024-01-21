@@ -27,7 +27,7 @@ export class Matcher {
   static formatScript(html: ParseInput) {
     const $ = typeof html === 'string' ? cheerio.load(html) : html
     const scripts = $('html script:not([src])')
-    if (!scripts.length) throw new Error('script 获取失败')
+    if (!scripts.length) return ''
 
     return [
       ...scripts.map((i, el) => {
@@ -156,6 +156,11 @@ export class Matcher {
       _ => `var pgs = 1; var folder_id = '';`,
       script => script.replace(/\$\.each\([\s\S]+?}\);/g, '').match(/\$\.ajax\(({[\s\S]+?})\);/)?.[1]
     )
+  }
+
+  static parseErrorPage(html: string) {
+    const $ = cheerio.load(html)
+    return $('.off').text()
   }
 }
 

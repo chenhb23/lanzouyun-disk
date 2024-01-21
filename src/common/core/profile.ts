@@ -1,6 +1,7 @@
 import * as http from '../http'
 import cheerio from 'cheerio'
 import {Matcher} from './matcher'
+import type {Config} from '../../renderer/store/Config'
 
 enum PROFILE_EL {
   个性域名 = '个性域名', // domain
@@ -13,7 +14,7 @@ enum PROFILE_EL {
 export async function profile() {
   const [main, my] = await Promise.all([
     http.request.get('mydisk.php').text(),
-    http.request.get('mydisk.php?item=profile&action=mypower').text(),
+    http.request.get('mydisk.php?item=profile&action=mypower', {context: {hideMessage: true}}).text(),
   ])
 
   const $main = cheerio.load(main)
@@ -38,7 +39,7 @@ export async function profile() {
           return {...prev, verification: $my('#phone_id', el).text().trim()}
       }
       return prev
-    }, {})
+    }, {} as Pick<Config, 'domain' | 'lastLogin' | 'maxSize' | 'verification'> & {supportList: string[]})
 
   const iframe = $main('iframe').attr('src')
   const mainPage = await http.request.get(iframe).text()

@@ -45,7 +45,7 @@ export function byteToSize(byte: number, step = 1024) {
 }
 
 // const suffix = ['zip', 'tar', 'rar']
-function getRandomItem(list: string[]) {
+function randomItem(list: string[]) {
   return list[Math.round(Math.random() * (list.length - 1))]
 }
 
@@ -54,19 +54,8 @@ function getRandomItem(list: string[]) {
  * 例如: xxx.yyy
  */
 export function getSuffix() {
-  return `${getRandomItem(config.safeSuffixList)}.${getRandomItem(config.safeSuffixList)}`
+  return `${randomItem(config.safeSuffixList)}.${randomItem(config.safeSuffixList)}`
 }
-
-// todo: delete
-// const suffixTypeMap = {
-//   zip: 'application/zip',
-//   tar: 'application/x-tar',
-//   rar: 'application/x-rar',
-// }
-// export function getFileType(filename: string, defaultType = 'application/octet-stream') {
-//   const ext = filename.replace(/.+\.(\w+)$/, '$1')
-//   return suffixTypeMap[ext] || defaultType
-// }
 
 /**
  * whether it is special file
@@ -92,11 +81,6 @@ export function isSpecificFile(name: string) {
       return /\.\w+$/.test(name)
     }
   }
-  return false
-}
-
-export function isSpecificIndexFile(name: string) {
-  // TODO：
   return false
 }
 

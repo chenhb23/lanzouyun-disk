@@ -1,6 +1,6 @@
 import {TaskStatus} from '../AbstractTask'
 import {lsShare, URLType} from '../../../common/core/ls'
-import {makeAutoObservable, makeObservable, observable} from 'mobx'
+import {makeObservable, observable} from 'mobx'
 import {BaseTask} from './BaseTask'
 import {delay, isFile, isSpecificFile, restoreFileName, sizeToByte, streamToText} from '../../../common/util'
 import path from 'path'
@@ -184,7 +184,8 @@ export function createDownloadStream(downloadUrl: string) {
               .json<{url: string}>()
             resolve(createDownloadStream(url))
           } else {
-            reject('下载验证页面解析出错')
+            const errorMsg = Matcher.parseErrorPage(html)
+            reject(errorMsg || '解析出错')
           }
         } else {
           resolve(stream)

@@ -138,90 +138,10 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
   }
 
   // 上传文件（夹）任务
-  // async addTask(options: {folderId: FolderId; file: UploadFile}) {
   async addTask(task: UploadTask) {
     await task.beforeAddTask()
     this.list.push(task)
-
-    // const filePath = task.file.path
-    // const stat = await fs.stat(filePath)
-    // // 1. 检查文件大小
-    // const isFile = stat.isFile()
-    // const isDirectory = stat.isDirectory()
-    // if (isFile || isDirectory) {
-    //   if (stat.isFile()) {
-    //     this.beforeAddTask({size: stat.size})
-    //   } else if (stat.isDirectory()) {
-    //     // 2. 过滤空文件夹
-    //     const files = await fs.readdir(filePath)
-    //     if (!files.length) {
-    //       throw new Error('空文件夹')
-    //     }
-    //     for (const file of files) {
-    //       const fullPath = path.resolve(filePath, file)
-    //       const fstat = await fs.stat(fullPath)
-    //       if (fstat.isFile()) {
-    //         this.beforeAddTask({size: fstat.size})
-    //       }
-    //     }
-    //   }
-    //   this.list.push(task)
-    // } else {
-    //   console.log(`格式不支持: ${task.file.name}`)
-    // }
-
-    /*const filePath = task.file.path
-    const stat = await fs.stat(filePath)
-    if (stat.isFile()) {
-      this.addFileTask(task)
-    } else if (stat.isDirectory()) {
-      const files = await fs.readdir(filePath)
-      if (!files.length) throw new Error('空文件夹')
-
-      let subFolderId = await findFolderByName(task.folderId, task.file.name).then(value => value?.fol_id)
-      if (!subFolderId) {
-        subFolderId = await mkdir({parentId: task.folderId, name: task.file.name})
-      }
-      for (const file of files) {
-        const fullPath = path.resolve(filePath, file)
-        const fstat = await fs.stat(fullPath)
-        if (fstat.isFile()) {
-          this.addFileTask({
-            folderId: subFolderId,
-            file: {size: fstat.size, name: file, type: '', path: fullPath, lastModified: fstat.mtime.getTime()},
-          })
-        }
-      }
-    } else {
-      console.log(`格式不支持: ${task.file.name}`)
-    }*/
   }
-
-  // 校验上传文件
-  // private beforeAddTask(file: Pick<UploadFile, 'size'>) {
-  //   if (file.size > sizeToByte(config.maxSize)) {
-  //     throw new Error(`文件大小(${byteToSize(file.size)}) 超出限制，最大允许上传 ${config.maxSize}`)
-  //   }
-  // }
-
-  // private addFileTask(options: {folderId: FolderId; file: UploadFile}) {
-  //   try {
-  //     this.beforeAddTask(options.file)
-  //
-  //     const file: UploadFile = {
-  //       size: options.file.size,
-  //       name: options.file.name,
-  //       type: options.file.type,
-  //       path: options.file.path,
-  //       lastModified: options.file.lastModified,
-  //     }
-  //     const task = new UploadSyncTask({file, folderId: options.folderId})
-  //
-  //     this.list.push(task)
-  //   } catch (e: any) {
-  //     message.error(e.message)
-  //   }
-  // }
 
   pause(path: string) {
     const task = this.list.find(item => item.file.path === path)
@@ -303,13 +223,11 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
         subtask.resolve = progress.transferred
       }, 1000)
       stream.on('uploadProgress', onProgress)
+
       this.taskSignal[signalId] = abort
-      await pipeline(
-        //
-        from,
-        stream,
-        {signal: abort.signal}
-      )
+
+      await pipeline(from, stream, {signal: abort.signal})
+
       subtask.status = TaskStatus.finish
       this.emit('finish-task', task, subtask)
     } catch (e: any) {
@@ -318,7 +236,8 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
         subtask.status = TaskStatus.pause
       } else {
         subtask.status = TaskStatus.fail
-        // message.error(e.message)
+        const msg = typeof e === 'string' ? e : typeof e === 'object' && 'message' in e ? e.message : '未知错误'
+        message.error(msg)
       }
     } finally {
       delete this.taskSignal[signalId]
