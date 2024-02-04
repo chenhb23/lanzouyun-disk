@@ -192,7 +192,9 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
       })),
     }
   } else {
-    throw new Error($('.off').text())
+    // 解析错误: https://hzgzs.lanzoui.com/s/iv1hxrmbpgb
+    const errorMsg = $('.off').text() || `解析错误：${url}`
+    throw new Error(errorMsg)
   }
 }
 

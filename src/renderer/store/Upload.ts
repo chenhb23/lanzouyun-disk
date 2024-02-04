@@ -2,21 +2,19 @@ import {EventEmitter} from 'events'
 import path from 'path'
 import {autorun, makeObservable, observable} from 'mobx'
 import {persist} from 'mobx-persist'
-import fs from 'fs-extra'
+import type Request from 'got/dist/source/core'
 import type {Progress} from 'got/dist/source/core'
 import throttle from 'lodash.throttle'
 
 import Task, {TaskStatus} from './AbstractTask'
 import {byteToSize, sizeToByte} from '../../common/util'
-import {findFolderByName} from '../../common/core/isExist'
-import {mkdir} from '../../common/core/mkdir'
 import {config} from './Config'
 import {message, Modal} from 'antd'
 import {calculate} from './Calculate'
 import {pipeline} from 'stream/promises'
-import {UploadFile, UploadSubtask, UploadTask} from './task/UploadTask'
-import {UploadLinkTask} from './task/UploadLinkTask'
+import {UploadSubtask, UploadTask} from './task/UploadTask'
 import {finish} from './Finish'
+import * as stream from 'stream'
 
 export interface Upload {
   on(event: 'finish', listener: (info: UploadTask) => void): this
@@ -215,18 +213,24 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
     // const encoder = new FormDataEncoder(form)
     // const stream = http.request.stream.post('fileup.php', {headers: encoder.headers})
     try {
-      const {from, to: stream} = task.getStream(subtask)
+      const {from, to} = task.getStream(subtask)
 
       const uid = `${Date.now()}${Math.floor(Math.random() * 100)}`
       const onProgress = throttle((progress: Progress) => {
         calculate.setRecord(uid, progress.transferred)
         subtask.resolve = progress.transferred
       }, 1000)
-      stream.on('uploadProgress', onProgress)
+      to.on('uploadProgress', onProgress)
 
       this.taskSignal[signalId] = abort
 
-      await pipeline(from, stream, {signal: abort.signal})
+      const ref = collectStream(to)
+      // 需要 new stream.PassThrough() 才不会错过时点
+      await pipeline(from, to, new stream.PassThrough(), {signal: abort.signal})
+      if (ref.current?.zt === 0) {
+        subtask.status = TaskStatus.fail
+        throw new Error(`文件名：${subtask.name}；接口返回：${ref.current.info}`)
+      }
 
       subtask.status = TaskStatus.finish
       this.emit('finish-task', task, subtask)
@@ -259,4 +263,19 @@ export class Upload extends EventEmitter implements Task<UploadTask> {
       this.start(info.file.path)
     })
   }
+}
+
+function collectStream(st: Request) {
+  const ref: {current: Html5upRes} = {current: null}
+  let str = ''
+  st.on('data', chunk => (str += chunk.toString()))
+  st.on('end', () => {
+    try {
+      ref.current = JSON.parse(str)
+    } catch (e) {
+      console.log('collectStream error: ', str)
+    }
+  })
+
+  return ref
 }

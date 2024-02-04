@@ -168,24 +168,26 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
 
     if (!this.canStart(task)) return
 
-    if (!task.tasks?.length) {
-      await task.initTask()
-      if (!task.tasks?.length) {
-        message.error(`${task.name ?? task.url} 初始化失败，已移除任务`)
-        // 删除任务
-        this.remove(url)
-        return
-      }
-    }
-
-    const subtask = task.tasks.find(value => value.status === TaskStatus.ready)
-    if (!subtask) return
-
-    subtask.status = TaskStatus.pending
+    let subtask: DownloadSubTask
+    let signalId: string
     const abort = new AbortController()
-    const signalId = subtask.url
 
     try {
+      if (!task.tasks?.length) {
+        await task.initTask()
+        if (!task.tasks?.length) {
+          // 删除任务
+          this.remove(url)
+          throw new Error(`${task.name ?? task.url} 初始化失败，已移除任务`)
+        }
+      }
+
+      subtask = task.tasks.find(value => value.status === TaskStatus.ready)
+      if (!subtask) return
+
+      subtask.status = TaskStatus.pending
+      signalId = subtask.url
+
       await fs.ensureDir(subtask.dir)
 
       const {from: stream, to} = await task.getStream(subtask)
@@ -209,15 +211,15 @@ export class Download extends EventEmitter implements Task<DownloadTask> {
       this.emit('finish-task', task, subtask)
     } catch (e: any) {
       console.error(e)
-      if (abort.signal.aborted) {
-        subtask.status = TaskStatus.pause
+      if (abort?.signal?.aborted) {
+        subtask && (subtask.status = TaskStatus.pause)
       } else {
-        subtask.status = TaskStatus.fail
+        subtask && (subtask.status = TaskStatus.fail)
         const msg = typeof e === 'string' ? e : typeof e === 'object' && 'message' in e ? e.message : '未知错误'
         message.error(msg)
       }
     } finally {
-      delete this.taskSignal[signalId]
+      signalId && delete this.taskSignal[signalId]
     }
   }
 

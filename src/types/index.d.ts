@@ -8,6 +8,12 @@ type FileId = string | number
 type FolderId = string | number
 
 ///////////////////////////////////////////////////////////////////
+interface Html5upRes {
+  zt: number
+  info: string
+  text: any
+}
+///////////////////////////////////////////////////////////////////
 // 面包屑文件夹
 interface CrumbsInfo {
   folder_des: string
