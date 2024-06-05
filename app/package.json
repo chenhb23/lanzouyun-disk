@@ -45,8 +45,13 @@
       }
     },
     "win": {
-      "target": "zip",
-      "artifactName": "lanzouyun-${version}-${arch}-${os}.${ext}"
+      "artifactName": "lanzouyun-${version}-${arch}-${os}.${ext}",
+      "target": {
+        "target": "zip",
+        "arch": [
+          "x64"
+        ]
+      }
     }
   }
 }
