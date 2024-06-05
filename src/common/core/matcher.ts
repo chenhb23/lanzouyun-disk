@@ -1,4 +1,4 @@
-import cheerio from 'cheerio'
+import * as cheerio from 'cheerio'
 import prettier from 'prettier/standalone'
 import parserBabel from 'prettier/parser-babel'
 import queryString from 'querystring'
@@ -13,6 +13,8 @@ interface AjaxData {
 
 type ParseInput = string | CheerioAPI
 
+const blackList = [/jquery\.js/, /qrcode\.min\.js/, /bd\.js/, /hm\.js/]
+
 /**
  * 获取页面各种元素
  */
@@ -21,36 +23,56 @@ export class Matcher {
     return cheerio.load(html)('iframe').attr()?.src
   }
 
+  static scriptToText = (sources: string[]) => {
+    return Promise.all(
+      sources.map(src =>
+        fetch(src)
+          .then(value => value.text())
+          .catch(() => '')
+      )
+    ).then(value => value.join('\n'))
+  }
+
+  static format(script: string) {
+    try {
+      return (
+        prettier.format(script, {
+          plugins: [parserBabel],
+          parser: 'babel',
+          semi: true, // 加上分号
+          trailingComma: 'none', // 不加尾逗号
+          singleQuote: false, // 使用双冒号
+          printWidth: 1000, // 为了让代码尽量不换行
+        }) + '\n'
+      )
+    } catch (e) {
+      return ''
+    }
+  }
+
   /**
    * 规范化获取 script
    */
-  static formatScript(html: ParseInput) {
+  static async formatScript(html: ParseInput): Promise<[string, string]> {
     const $ = typeof html === 'string' ? cheerio.load(html) : html
-    const scripts = $('html script:not([src])')
-    if (!scripts.length) return ''
+    const $$ = $('html script')
+
+    const sources = $$.map((_, el) => $(el).attr('src'))
+      .toArray()
+      .filter(src => src && blackList.every(reg => !reg.test(src)))
+
+    const $scripts = $$.filter((_, el) => !$(el).attr('src'))
+
+    if (!$scripts.length) return ['', '']
+
+    const extraScript = await this.scriptToText(sources).then(this.format)
 
     return [
-      ...scripts.map((i, el) => {
-        const script = $(el).html()
-
-        try {
-          return (
-            prettier.format(script, {
-              plugins: [parserBabel],
-              parser: 'babel',
-              semi: true, // 加上分号
-              trailingComma: 'none', // 不加尾逗号
-              singleQuote: false, // 使用双冒号
-              printWidth: 1000, // 为了让代码尽量不换行
-            }) + '\n'
-          )
-        } catch (e) {
-          return ''
-        }
-      }),
+      // 执行脚本
+      [...$scripts.map((i, el) => this.format($(el).html()))].filter(Boolean).join('\n'),
+      // 前置脚本
+      extraScript,
     ]
-      .filter(Boolean)
-      .join('\n')
   }
 
   /**
@@ -61,16 +83,16 @@ export class Matcher {
    * getData:
    *  获取 ajax 的 data 参数
    */
-  static parseAjaxData(
+  static async parseAjaxData(
     html: ParseInput,
     getVariable: (script: string) => string,
     getData: (script: string) => string
-  ): AjaxData {
-    const script = this.formatScript(html)
+  ): Promise<AjaxData> {
+    const [script, extra] = await this.formatScript(html)
 
     const variable = getVariable(script)
     const data = getData(script)
-    const body = eval(`(() => {${variable}return ${data}})()`)
+    const body = eval(`(() => {${extra}${variable}return ${data}})()`)
 
     if (typeof body.data === 'string') {
       body.data = queryString.parse(body.data)
@@ -130,9 +152,9 @@ export class Matcher {
   /**
    * 下载验证页面的参数
    */
-  static parseValidateAjax(html: string) {
+  static async parseValidateAjax(html: string) {
     const $ = cheerio.load(html)
-    const format = this.formatScript($)
+    const [format] = await this.formatScript($)
     const elKey = format.match(/function .+?\((.+?)\)/)?.[1]
     const id = format.match(/\$\("(.+)"\).+提交中/)?.[1]
     if (!id) return null

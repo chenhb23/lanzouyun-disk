@@ -43,7 +43,7 @@ export async function profile() {
 
   const iframe = $main('iframe').attr('src')
   const mainPage = await http.request.get(iframe).text()
-  const ajaxData = Matcher.parseFileMoreAjax(mainPage)
+  const ajaxData = await Matcher.parseFileMoreAjax(mainPage)
 
   return {
     ...profiles,

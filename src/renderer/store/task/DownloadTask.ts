@@ -183,7 +183,7 @@ export function createDownloadStream(downloadUrl: string) {
         if (response.headers['content-type'] === 'text/html') {
           // 解析下载验证页面
           const html = await streamToText(stream)
-          const ajaxData = Matcher.parseValidateAjax(html)
+          const ajaxData = await Matcher.parseValidateAjax(html)
           if (ajaxData) {
             await delay(2000) // important! 模拟验证页面的延时，去掉会导致验证失败！
             const {url} = await http

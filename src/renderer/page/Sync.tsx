@@ -8,7 +8,6 @@ import {MyIcon} from '../component/Icon'
 import path from 'path'
 import {TaskStatus} from '../store/AbstractTask'
 import {MyHeader} from '../component/Header'
-import {upload} from '../store'
 
 const Sync = observer(() => {
   return (

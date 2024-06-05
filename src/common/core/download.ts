@@ -11,7 +11,7 @@ export async function pwdFileDownUrl(url: string, pwd: string) {
   url = response.url
   const html = await instance.text()
 
-  const ajaxData = Matcher.parsePwdAjax(html, pwd)
+  const ajaxData = await Matcher.parsePwdAjax(html, pwd)
 
   const value = await http
     .share(new URL(ajaxData.url, url), {
@@ -45,7 +45,7 @@ export async function fileDownUrl(url: string) {
   const iframeUrl = new URL(iframe, url).toString()
   const downHtml = await http.share.get(iframeUrl).text()
 
-  const ajaxData = Matcher.parseAjax(downHtml)
+  const ajaxData = await Matcher.parseAjax(downHtml)
   const value = await http
     .share(new URL(ajaxData.url, url), {
       method: ajaxData.type,

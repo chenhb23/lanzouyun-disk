@@ -1,9 +1,8 @@
 import {EventEmitter} from 'events'
 import {autorun, makeObservable, observable} from 'mobx'
 import {persist} from 'mobx-persist'
-import path from 'path'
 import Task, {TaskStatus} from './AbstractTask'
-import {delay, isSpecificFile, restoreFileName} from '../../common/util'
+import {delay} from '../../common/util'
 
 import fs from 'fs-extra'
 import {Progress} from 'got/dist/source/core'

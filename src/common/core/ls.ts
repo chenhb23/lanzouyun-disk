@@ -164,7 +164,7 @@ export async function lsShare({url, pwd}: {url: string; pwd?: string}): Promise<
     }
     return {name, size, type: URLType.file, list: [{url, name, size, time}]}
   } else if (isPwdFile) {
-    const ajaxData = Matcher.parsePwdAjax(html, pwd)
+    const ajaxData = await Matcher.parsePwdAjax(html, pwd)
 
     const {inf} = await http
       .share(new URL(ajaxData.url, url), {
@@ -214,7 +214,7 @@ async function _lsShareFolder({url, pwd, html}: {url: string; pwd?: string; html
   const $ = cheerio.load(html)
   const title = $('title').text()
 
-  const ajaxData = Matcher.parseFolderAjax(html)
+  const ajaxData = await Matcher.parseFolderAjax(html)
 
   let pg = 1
   const shareFiles: ShareFile[] = []

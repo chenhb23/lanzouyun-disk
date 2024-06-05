@@ -1,6 +1,6 @@
 {
   "name": "lanzouyun-pan",
-  "version": "3.4.8",
+  "version": "3.4.9",
   "private": true,
   "main": "build/main/index.js",
   "description": "蓝奏云网盘客户端",
@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "antd": "^4.20.2",
-    "cheerio": "^1.0.0-rc.10",
+    "cheerio": "^1.0.0-rc.12",
     "darkreader": "^4.9.46",
     "electron-is-dev": "^2.0.0",
     "electron-store": "^8.0.1",

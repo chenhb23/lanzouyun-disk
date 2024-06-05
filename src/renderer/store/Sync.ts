@@ -1,7 +1,7 @@
 import EventEmitter from 'events'
 import fs from 'fs-extra'
 import path from 'path'
-import {autorun, makeObservable, observable} from 'mobx'
+import {makeObservable, observable} from 'mobx'
 import Task, {TaskStatus} from './AbstractTask'
 import {download, upload} from './index'
 import {UploadLinkTask} from './task/UploadLinkTask'
