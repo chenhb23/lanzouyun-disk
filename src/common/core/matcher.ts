@@ -34,6 +34,7 @@ export class Matcher {
   }
 
   static format(script: string) {
+    script = script.replace(/<!--.+?-->/g, '')
     try {
       return (
         prettier.format(script, {
