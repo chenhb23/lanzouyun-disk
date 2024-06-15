@@ -20,7 +20,8 @@ const AuthGate = props => {
               key: name,
               ...(expirationDate ? {expires: new Date(expirationDate * 1000)} : {}),
             }),
-            (cookie.secure ? 'https://' : 'http://') + cookie.domain.replace(/^\./, '') + cookie.path
+            (cookie.secure ? 'https://' : 'http://') + cookie.domain.replace(/^\./, '') + cookie.path,
+            {ignoreError: true}
           )
         )
       )
