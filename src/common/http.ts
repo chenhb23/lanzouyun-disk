@@ -77,7 +77,7 @@ const base = got.extend({
 
 export const request = got.extend(base, {
   cookieJar,
-  prefixUrl: config.lanzouUrl,
+  prefixUrl: store.get('lanzouUrl'),
 })
 
 export const share = got.extend(base, {

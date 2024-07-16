@@ -6,6 +6,7 @@ export interface StoreValues {
   downloads: string // 下载路径 // 如果没有设置，从主线程拿 downloads
   userAgent: string // 和登录的 ua 一致，不然接口无返回数据
   // referrer: string
+  lanzouUrl: string
 }
 
 /**
@@ -16,6 +17,8 @@ export interface StoreValues {
  * 之后，会把 __internal__.migrations.version 设置为 2.0.0(当前版本号)
  *
  * 如果是从高版本到低版本，则不会执行 migrations
+ *
+ * 配置文件存储位置: ~/Library/Application Support/lanzouyun-pan/config.json
  */
 const store = new Store<StoreValues>({
   // watch: true,
@@ -29,6 +32,9 @@ const store = new Store<StoreValues>({
     },
     '3.0.0': s => {
       s.delete('cookies') // 使用新的 cookie 类型
+    },
+    '3.5.0': s => {
+      s.delete('cookies') // 重新登录
     },
   },
 })

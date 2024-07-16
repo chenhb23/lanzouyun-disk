@@ -1,5 +1,6 @@
 const project = {
-  lanzouUrl: 'https://pc.woozooo.com',
+  // lanzouUrl: 'https://up.woozooo.com',
+  rootUrl: 'https://www.lanzou.com',
   page: {
     home: '/mydisk.php',
     login: '/account.php?action=login',

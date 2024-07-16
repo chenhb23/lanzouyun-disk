@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useMemo, useState} from 'react'
 import {observer} from 'mobx-react'
 
 // 早点引入样式，确保后来的样式可以覆盖之前的
@@ -38,13 +38,14 @@ import {Layout, Menu, Tabs} from 'antd'
 import Sync from './page/Sync'
 import {sync} from './store/Sync'
 import {taskLength} from './utils/task'
-
-const recycleUrl = new URL(project.page.recycle, project.lanzouUrl).toString()
+import store from '../common/store'
 
 const App = observer(() => {
   const [activeKey, setActiveKey] = useState('1')
   const [visible, setVisible] = useState(true)
   const latestVersion = useLatestRelease()
+
+  const recycleUrl = useMemo(() => new URL(project.page.recycle, store.get('lanzouUrl')).toString(), [])
 
   return (
     <Layout>

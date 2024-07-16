@@ -51,8 +51,10 @@ class App extends Application {
   }
 
   async loadAuth(win: BrowserWindow) {
-    await win.loadURL(config.lanzouUrl + config.page.login)
+    await win.loadURL(config.rootUrl + config.page.login)
     await win.webContents.insertCSS('*{visibility:hidden}.p1{visibility:visible}.p1 *{visibility:inherit}')
+    const lanzouUrl = new URL(win.webContents.getURL()).origin
+    this.initSession(lanzouUrl)
   }
 }
 

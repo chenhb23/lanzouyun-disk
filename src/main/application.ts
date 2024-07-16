@@ -5,6 +5,7 @@ import {Extension} from './extensions/extension'
 import {isMacOS, safeUserAgent} from './util'
 import isDev from 'electron-is-dev'
 import path from 'path'
+import * as process from 'node:process'
 
 export abstract class Application {
   // app 准备事件
@@ -93,7 +94,7 @@ export abstract class Application {
 
   private async _init() {
     await app.whenReady()
-    this._initSession()
+    this._initUA()
     this._initApp()
     this.ready()
   }
@@ -131,13 +132,8 @@ export abstract class Application {
     }
   }
 
-  private _initSession() {
-    this._initUA()
-
-    session.defaultSession.webRequest.onResponseStarted(
-      {urls: [config.lanzouUrl + config.page.home]},
-      this._login.bind(this)
-    )
+  public initSession(lanzouUrl: string) {
+    session.defaultSession.webRequest.onResponseStarted({urls: [lanzouUrl + config.page.home]}, this._login.bind(this))
   }
 
   private _initUA() {
@@ -148,8 +144,10 @@ export abstract class Application {
   }
 
   private async _login(detail: Electron.OnResponseStartedListenerDetails) {
+    await new Promise<void>(resolve => process.nextTick(() => resolve()))
     const cookies = await session.defaultSession.cookies.get({})
-    store.set('cookies', cookies)
+    const lanzouUrl = new URL(detail.url).origin
+    store.set({cookies, lanzouUrl})
     this.onLogin(this.mainWindow, detail)
   }
 
