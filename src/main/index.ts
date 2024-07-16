@@ -7,8 +7,7 @@ import {Application} from './application'
 import {IpcExtension} from './extensions/ipc'
 import {MenuExtension} from './extensions/menu'
 import {ThemeExtension} from './extensions/theme'
-
-console.log('process.platform', process.platform) // darwin, win32
+import process from 'node:process'
 
 const loadURL = isDev ? 'http://localhost:3000' : `file://${path.join(__dirname, '..', 'index.html')}`
 
@@ -51,9 +50,18 @@ class App extends Application {
   }
 
   async loadAuth(win: BrowserWindow) {
-    await win.loadURL(config.rootUrl + config.page.login)
+    let lanzouUrl: string
+    await win.loadURL(config.rootUrl + config.page.login).catch(reason => {
+      if (typeof reason === 'object' && reason.code === 'ERR_ABORTED') {
+        lanzouUrl = new URL(reason.url).origin
+      }
+    })
+    await new Promise<void>(resolve => process.nextTick(() => resolve()))
     await win.webContents.insertCSS('*{visibility:hidden}.p1{visibility:visible}.p1 *{visibility:inherit}')
-    const lanzouUrl = new URL(win.webContents.getURL()).origin
+    if (!lanzouUrl) {
+      lanzouUrl = new URL(win.webContents.getURL()).origin
+    }
+    console.log('lanzouUrl', lanzouUrl)
     this.initSession(lanzouUrl)
   }
 }
