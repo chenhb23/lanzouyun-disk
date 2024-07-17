@@ -5,6 +5,7 @@ type BaseProps<T> = Partial<Pick<T, {[P in keyof T]: T[P] extends (...args: any)
 
 export class Config {
   @persist domain = '' // https://wwn.lanzouf.com
+  @persist referer = ''
   @persist lastLogin = '' // "2022-04-23 21:03:29"
   // @persist('list') supportList: string[] = [] // ['tar']
   @persist verification = '' // 188****8888

@@ -152,7 +152,9 @@ export class UploadTask implements BaseTask {
     const encoder = new FormDataEncoder(form)
     return {
       from: Readable.from(encoder),
-      to: http.request.stream.post('html5up.php', {headers: encoder.headers}),
+      to: http.request.stream.post('html5up.php', {
+        headers: {Referer: config.referer, ...encoder.headers},
+      }),
     }
   }
 

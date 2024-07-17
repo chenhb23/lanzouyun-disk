@@ -1,10 +1,10 @@
 import got from 'got'
 import {cookieJar, shareCookieJar} from './cookie'
-import config from '../project.config'
 import store from './store'
 import {delay} from './util'
 import electronApi from '../renderer/electronApi'
 import {message} from 'antd'
+import {config} from '../renderer/store/Config'
 
 const base = got.extend({
   headers: {
@@ -78,6 +78,18 @@ const base = got.extend({
 export const request = got.extend(base, {
   cookieJar,
   prefixUrl: store.get('lanzouUrl'),
+  hooks: {
+    beforeRequest: [
+      options => {
+        if (config.referer && (!options.headers['referer'] || !options.headers['Referer'])) {
+          const url = typeof options.url === 'string' ? new URL(options.url) : options.url
+          if (url.origin === new URL(config.referer).origin) {
+            options.headers['referer'] = config.referer
+          }
+        }
+      },
+    ],
+  },
 })
 
 export const share = got.extend(base, {

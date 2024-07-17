@@ -2,6 +2,7 @@ import * as http from '../http'
 import cheerio from 'cheerio'
 import {Matcher} from './matcher'
 import type {Config} from '../../renderer/store/Config'
+import store from '../store'
 
 enum PROFILE_EL {
   个性域名 = '个性域名', // domain
@@ -39,7 +40,7 @@ export async function profile() {
           return {...prev, verification: $my('#phone_id', el).text().trim()}
       }
       return prev
-    }, {} as Pick<Config, 'domain' | 'lastLogin' | 'maxSize' | 'verification'> & {supportList: string[]})
+    }, {} as Pick<Config, 'referer' | 'domain' | 'lastLogin' | 'maxSize' | 'verification'> & {supportList: string[]})
 
   const iframe = $main('iframe').attr('src')
   const mainPage = await http.request.get(iframe).text()
@@ -48,5 +49,6 @@ export async function profile() {
   return {
     ...profiles,
     more: ajaxData,
+    referer: new URL(iframe, store.get('lanzouUrl')).href,
   }
 }
