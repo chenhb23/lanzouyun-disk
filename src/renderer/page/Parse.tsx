@@ -48,6 +48,7 @@ export default function Parse() {
 
       setSelectedRows(prev => (prev.length ? [] : prev))
     } catch (e: any) {
+      console.error('e', e)
       message.error(e.message)
     }
   }

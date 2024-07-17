@@ -26,7 +26,8 @@ export function sizeToByte(size: string, step = 1024) {
     }[unit] || 1) // todo: 1 是有问题的
   const [_, num, unit] = size
     .toLowerCase()
-    .replace(' ', '')
+    .replaceAll(' ', '')
+    .replaceAll(',', '')
     .match(/^(\d+\.?\d*)([bkmgt]?)$/)
 
   return +num * getUnit(unit)
