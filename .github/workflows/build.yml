@@ -1,6 +1,9 @@
 name: Build and Release
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -24,14 +27,8 @@ jobs:
       - name: Build app
         run: yarn build
 
-      # - name: Build Electron app
-      #   run: yarn electron-build
-
-      # - name: Package and release
-      #   run: yarn release
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+      - name: Build Electron app
+        run: yarn electron-build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
